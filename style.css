@@ -143,6 +143,54 @@ body {
     font-size: 0.85rem;
 }
 
+/* ========================================== */
+/* UI DATA MASTER & POPUP DETAIL SELISIH      */
+/* ========================================== */
+
+/* Efek Hover untuk Baris Tabel yang Bisa Diklik */
+.table-clickable tbody tr {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.table-clickable tbody tr:hover {
+    background-color: #f1f5f9 !important;
+    transform: scale(1.005);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Penanda Baris Selisih di Data Master */
+.row-selisih {
+    border-left: 5px solid #dc3545 !important;
+    background-color: #fffafa !important;
+}
+.row-aman {
+    border-left: 5px solid #198754 !important;
+}
+
+/* Kotak Informasi Modern pada Popup */
+.info-box {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    height: 100%;
+}
+.info-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #6c757d;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    display: block;
+}
+.info-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #2b3a4a;
+    margin: 0;
+}
+
 /* Dark Mode Adjustments */
 [data-bs-theme="dark"] body { background-color: #121212; }
 [data-bs-theme="dark"] .glass-card, 
