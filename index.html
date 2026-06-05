@@ -24,6 +24,7 @@
                         <li class="nav-item"><a class="nav-link active menu-btn" href="#" onclick="showPage('dashboard')"><i class="bi bi-grid-1x2-fill"></i> Beranda</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn" href="#" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill"></i> Upload</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn" href="#" onclick="showPage('analisa')"><i class="bi bi-search"></i> Analisa</a></li>
+                        <li class="nav-item"><a class="nav-link menu-btn" href="#" onclick="showPage('datamaster')"><i class="bi bi-database-fill"></i> Data Master</a></li>
                     </ul>
                 </div>
             </nav>
@@ -115,6 +116,55 @@
                     </div>
                 </div>
 
+                <div id="datamaster" class="page-section d-none fade-in">
+                    <h3 class="fw-bold mb-4 mt-2">Database GL & EJ</h3>
+                    
+                    <div class="card glass-card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label text-secondary fw-medium small">Tanggal Mulai</label>
+                                    <input type="date" id="filterStart" class="form-control rounded-pill">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label text-secondary fw-medium small">Tanggal Akhir</label>
+                                    <input type="date" id="filterEnd" class="form-control rounded-pill">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-secondary fw-medium small">Sumber Data</label>
+                                    <select id="filterSumber" class="form-select rounded-pill">
+                                        <option value="SEMUA">Semua</option>
+                                        <option value="GL">Data GL</option>
+                                        <option value="EJ">Data EJ</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label text-secondary fw-medium small">Status Data</label>
+                                    <select id="filterStatus" class="form-select rounded-pill">
+                                        <option value="SEMUA">Semua</option>
+                                        <option value="SELISIH">Hanya Selisih</option>
+                                        <option value="AMAN">Aman (Cocok)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary banking-btn w-100 rounded-pill fw-bold" onclick="renderDataMaster()"><i class="bi bi-funnel-fill"></i> Terapkan</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-4 shadow-sm bg-white" style="max-height: 60vh;">
+                        <table class="table align-middle mb-0 text-nowrap">
+                            <thead class="table-light sticky-top shadow-sm">
+                                <tr><th>Sumber</th><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Status</th></tr>
+                            </thead>
+                            <tbody id="tableBodyDataMaster">
+                                <tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-database fs-1 d-block mb-2"></i> Memuat database...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </main>
         </div>
     </div>
@@ -130,8 +180,45 @@
             <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn" onclick="showPage('analisa')">
                 <i class="bi bi-search fs-4 d-block"></i><span class="small">Analisa</span>
             </a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn" onclick="showPage('datamaster')">
+                <i class="bi bi-database-fill fs-4 d-block"></i><span class="small">Data</span>
+            </a>
         </div>
     </nav>
+
+    <div class="modal fade" id="detailSelisihModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div id="detailModalHeader" class="modal-header border-0 py-3 text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-search me-2"></i> Investigasi Selisih</h5>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    
+                    <div class="text-center mb-4">
+                        <span id="detailJenisBadge" class="badge rounded-pill fs-6 px-4 py-2 shadow-sm mb-2"></span>
+                        <h2 id="detailNominal" class="fw-bolder text-dark mb-0">Rp 0</h2>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6"><div class="info-box"><span class="info-label"><i class="bi bi-calendar-event"></i> Tanggal</span><p id="detailTanggal" class="info-value">-</p></div></div>
+                        <div class="col-6"><div class="info-box"><span class="info-label"><i class="bi bi-pc-display"></i> ID Mesin ATM</span><p id="detailAtm" class="info-value text-primary">-</p></div></div>
+                        <div class="col-12"><div class="info-box"><span class="info-label"><i class="bi bi-receipt"></i> Nomor Resi</span><p id="detailResi" class="info-value">-</p></div></div>
+                    </div>
+
+                    <div class="alert alert-warning border-warning shadow-sm rounded-3">
+                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Kronologi Sistem:</h6>
+                        <span id="detailKeterangan" class="text-dark"></span>
+                    </div>
+
+                    <div class="alert bg-white border shadow-sm rounded-3 mb-0">
+                        <h6 class="fw-bold mb-1 text-primary"><i class="bi bi-lightbulb-fill text-primary me-1"></i> Tindakan Disarankan:</h6>
+                        <span id="detailSaran" class="text-secondary small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
