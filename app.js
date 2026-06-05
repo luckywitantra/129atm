@@ -64,11 +64,13 @@ function processGL() {
             const match = line.match(regex);
             if (match) {
                 const rawResi = match[2];
-                const noResi = rawResi.split('KTM')[0]; 
+                
+                // FIX LEADING ZEROS: Ubah "0683" menjadi "683"
+                const noResi = parseInt(rawResi.split('KTM')[0], 10).toString(); 
+                
                 const nominal = parseFloat(match[3].replace(/,/g, ''));
                 const atm = "KTM" + rawResi.split('KTM')[1]; 
                 
-                // Ubah format DD-MM-YYYY menjadi YYYY-MM-DD
                 const tglSplit = match[1].split('-');
                 const formatTgl = `${tglSplit[2]}-${tglSplit[1]}-${tglSplit[0]}`;
 
@@ -127,7 +129,6 @@ function processEJ() {
                 if (currentTx.noResi) saveCurrentTransaction();
             }
 
-            // Ubah format DD/MM/YY menjadi YYYY-MM-DD
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
                 currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; 
@@ -139,10 +140,12 @@ function processEJ() {
             }
 
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
-            if (resiMatch) currentTx.noResi = resiMatch[1];
+            // FIX LEADING ZEROS EJ: "0683" menjadi "683"
+            if (resiMatch) currentTx.noResi = parseInt(resiMatch[1], 10).toString();
             
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
-            if (smartEmvMatch) currentTx.noResi = smartEmvMatch[1];
+            // FIX LEADING ZEROS SMART EMV
+            if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
 
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI")) {
                 currentTx.jenis = "TARIK TUNAI";
