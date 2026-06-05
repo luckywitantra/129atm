@@ -17,3 +17,100 @@ body {
 [data-bs-theme="dark"] .sidebar {
     border-right: 1px solid rgba(255,255,255,0.1);
 }
+
+:root {
+    --primary-color: #4e73df;
+    --primary-gradient: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    --bg-light: #f8f9fc;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    padding-top: 60px; /* Spacer for fixed top header */
+}
+
+/* Gradient Header */
+.bg-gradient-primary {
+    background: var(--primary-gradient) !important;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+}
+
+/* Icon Box */
+.icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    font-size: 1.5rem;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.4s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modern Tab Navigation */
+.nav-pills .nav-link {
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+.nav-pills .nav-link.active {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 10px rgba(78, 115, 223, 0.3);
+}
+
+/* Mobile Bottom Navigation */
+.bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav .nav-item {
+    flex: 1;
+    color: #6c757d;
+    transition: color 0.3s;
+}
+.bottom-nav .active-bottom {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+}
+.bottom-nav .active-bottom i {
+    transform: scale(1.1);
+    transition: transform 0.2s;
+}
+
+/* Sidebar styling */
+.sidebar {
+    background: white;
+    z-index: 1000;
+}
+.sidebar .nav-link.active {
+    background-color: #eef2ff;
+    color: var(--primary-color);
+    font-weight: 600;
+    border-right: 4px solid var(--primary-color);
+    border-radius: 0 8px 8px 0;
+}
+
+/* Dark Mode Adjustments */
+[data-bs-theme="dark"] body { background-color: #121212; }
+[data-bs-theme="dark"] .glass-card, 
+[data-bs-theme="dark"] .bottom-nav,
+[data-bs-theme="dark"] .sidebar { background: #1e1e1e !important; border-color: #2d2d2d !important;}
+[data-bs-theme="dark"] .nav-pills { background: #1e1e1e !important; }
