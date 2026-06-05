@@ -1,28 +1,41 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbyDAzjzdg6QvXPrTK-hvEptq2i8SlRC_4WQcBBd4WXYTabFYoeQYd4hSc6t1bD-B6uH/exec'; // Masukkan Web App URL dari Langkah 2
+const API_URL = 'https://script.google.com/macros/s/AKfycbyDAzjzdg6QvXPrTK-hvEptq2i8SlRC_4WQcBBd4WXYTabFYoeQYd4hSc6t1bD-B6uH/exec';
 
-// UI Router Sederhana dengan Null-Check
+// ==========================================
+// 1. UI ROUTER & NAVIGASI SUPER APP
+// ==========================================
 function showPage(pageId) {
     // Sembunyikan semua halaman
     document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
     
     // Cari halaman target
     const targetPage = document.getElementById(pageId);
-    
-    // Pengecekan: Jika halaman ditemukan, tampilkan. Jika tidak, log error ke console.
     if (targetPage) {
         targetPage.classList.remove('d-none');
     } else {
         console.error(`Halaman dengan ID '${pageId}' belum dibuat di HTML.`);
-        return; // Hentikan fungsi agar tidak terjadi error lanjutan
+        return; 
     }
 
-    // Reset warna menu dan beri warna 'active' pada menu yang diklik
-    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-    
-    // Pengecekan event agar aman saat dipanggil manual lewat console
+    // Reset warna Sidebar
+    document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
+    // Reset warna Bottom Nav (Khusus HP)
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(el => {
+        el.classList.remove('active-bottom');
+        el.classList.add('text-secondary');
+    });
+
+    // Beri warna aktif pada menu yang diklik
     if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+        if(event.currentTarget.classList.contains('nav-link')) {
+            event.currentTarget.classList.add('active'); // Untuk Desktop
+        } else {
+            event.currentTarget.classList.add('active-bottom'); // Untuk HP
+            event.currentTarget.classList.remove('text-secondary');
+        }
     }
+
+    // TRIGGER OTOMATIS: Jika halaman Analisa dibuka, langsung ambil data terbaru
+    if(pageId === 'analisa') fetchSelisihData();
 }
 
 // Fitur Dark Mode
@@ -33,7 +46,10 @@ document.getElementById('themeToggle').addEventListener('click', () => {
     html.setAttribute('data-bs-theme', newTheme);
 });
 
-// Parser GL ATM
+
+// ==========================================
+// 2. PARSER DATA (GL & EJ)
+// ==========================================
 function processGL() {
     const file = document.getElementById('glFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file GL terlebih dahulu', 'error');
@@ -44,19 +60,16 @@ function processGL() {
         const lines = text.split('\n');
         const glData = [];
         
-        // Asumsi format: 22-05-2026 22-05-2026 TARIK TUNAI 7161KTM12901 2,000,000.00
         const regex = /^(\d{2}-\d{2}-\d{4})\s+.*?\s+(\w*(?:\d{4})KTM\d+)\s+([\d,]+(?:\.\d+)?)/;
         
         lines.forEach(line => {
             const match = line.match(regex);
             if (match) {
                 const rawResi = match[2];
-                // Ekstraksi resi (misal dari 7161KTM12901 ambil 7161)
                 const noResi = rawResi.split('KTM')[0]; 
                 const nominal = parseFloat(match[3].replace(/,/g, ''));
-                const atm = "KTM" + rawResi.split('KTM')[1]; // KTM12901
+                const atm = "KTM" + rawResi.split('KTM')[1]; 
                 
-                // [Tanggal, ATM, No Resi, Nominal, Jenis, Referensi]
                 glData.push([match[1], atm, noResi, nominal, 'TARIK TUNAI', rawResi]);
             }
         });
@@ -66,9 +79,6 @@ function processGL() {
     reader.readAsText(file);
 }
 
-// Parser EJ ATM (SUDAH DIPERBARUI SESUAI STRUKTUR JRN ATM)
-// Parser EJ ATM (UPDATE FINAL: Menangani Transaksi Beruntun / Multi-Transaction)
-// Parser EJ ATM (UPDATE TRANSFER & MEMORI ATM ID)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -81,8 +91,6 @@ function processEJ() {
         
         let currentTx = {}; 
         let isLookingForJumlah = false;
-        
-        // MEMORI ATM ID: Untuk mengatasi struk transfer yang mencetak "075"
         let lastValidAtmId = 'UNKNOWN_ATM'; 
 
         function saveCurrentTransaction() {
@@ -96,7 +104,6 @@ function processEJ() {
                 }
                 if (!currentTx.nominal) currentTx.nominal = 0;
                 
-                // Gunakan lastValidAtmId jika currentTx.atm hanya berisi angka (seperti 075)
                 let finalAtmId = currentTx.atm;
                 if (!finalAtmId || /^\d+$/.test(finalAtmId)) {
                     finalAtmId = lastValidAtmId;
@@ -123,15 +130,11 @@ function processEJ() {
                 if (currentTx.noResi) saveCurrentTransaction();
             }
 
-            // 2. EKSTRAKSI DATA (DI DALAM LOOP processEJ)
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
-                // dateMatch[1] = DD, dateMatch[2] = MM, dateMatch[3] = YY
-                // Konversi "22/05/26" menjadi "22-05-2026" agar identik dengan data GL
                 currentTx.tanggal = `${dateMatch[1]}-${dateMatch[2]}-20${dateMatch[3]}`; 
                 currentTx.atm = dateMatch[5];
                 
-                // Jika ID ATM mengandung huruf (contoh: KTM12901), simpan ke memori sebagai ID valid
                 if (/[A-Z]/.test(currentTx.atm)) {
                     lastValidAtmId = currentTx.atm;
                 }
@@ -143,14 +146,12 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = smartEmvMatch[1];
 
-            // Deteksi Jenis Transaksi
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI")) {
                 currentTx.jenis = "TARIK TUNAI";
             } else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("ATM BERSAMA")) {
                 currentTx.jenis = "TRANSFER";
             }
 
-            // Ekstraksi Nominal
             if (line.includes("JUMLAH")) {
                 isLookingForJumlah = true;
                 const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
@@ -166,12 +167,10 @@ function processEJ() {
                 }
             }
 
-            // Deteksi Transaksi Sukses Spesifik (Transfer)
             if (line.includes("TRANSAKSI SUKSES")) {
                 currentTx.status = "SUKSES";
             }
 
-            // Deteksi Error
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
                 "HIGH BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR",
@@ -194,20 +193,27 @@ function processEJ() {
     };
     reader.readAsText(file);
 }
-// Fungsi API Komunikasi
+
+
+// ==========================================
+// 3. KOMUNIKASI API & RENDER UI
+// ==========================================
+
+// Fungsi Upload ke Backend
 async function sendToBackend(action, data) {
-    Swal.fire({ title: 'Memproses...', text: 'Mengunggah dan menyesuaikan data', allowOutsideClick: false });
+    Swal.fire({ title: 'Menyinkronkan Data...', html: 'Sistem sedang menyeleksi <b>data baru</b> dan melewati duplikat.', allowOutsideClick: false });
     Swal.showLoading();
     
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: action, data: data }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain menghindari CORS preflight issues pada GAS
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
         });
         const result = await response.json();
         if(result.success) {
-            Swal.fire('Berhasil!', `Data berhasil di-merge. Total baris database: ${result.data.total}`, 'success');
+            // Menampilkan informasi cerdas berapa data yang berhasil masuk dan berapa yang di-skip
+            Swal.fire('Berhasil!', `Dimasukkan: <b>${result.data.added}</b> data baru.<br>Dilewati (Duplikat): <b>${data.length - result.data.added}</b> data.`, 'success');
         } else {
             Swal.fire('Error Backend', result.message, 'error');
         }
@@ -216,9 +222,9 @@ async function sendToBackend(action, data) {
     }
 }
 
-// Memicu Analisa
+// Fungsi Pemicu Analisa
 async function triggerAnalysis() {
-    Swal.fire({ title: 'Menganalisa...', text: 'Melakukan rekonsiliasi GL & EJ', allowOutsideClick: false });
+    Swal.fire({ title: 'Menganalisa Pintar...', text: 'Mencocokkan tanpa merusak status selisih lama Anda.', allowOutsideClick: false });
     Swal.showLoading();
     
     try {
@@ -227,8 +233,71 @@ async function triggerAnalysis() {
             body: JSON.stringify({ action: 'analyze' })
         });
         const result = await response.json();
-        Swal.fire('Analisa Selesai', `Selisih Lebih: ${result.data.selisihLebih} | Selisih Kurang: ${result.data.selisihKurang}`, 'info');
+        if(result.success) {
+            Swal.fire('Analisa Selesai', 'Tabel selisih berhasil diperbarui.', 'success');
+            renderSelisihTables(result.data); // result.data berisi array data selisih
+        } else {
+            Swal.fire('Gagal', result.message, 'error');
+        }
     } catch (err) {
         Swal.fire('Error', 'Gagal memproses analisa', 'error');
     }
+}
+
+// Mengambil Data Saat Tab Analisa Diklik
+async function fetchSelisihData() {
+    document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><span class="text-muted mt-2 d-block">Memuat Data Database...</span></td></tr>`;
+    document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><span class="text-muted mt-2 d-block">Memuat Data Database...</span></td></tr>`;
+    
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })});
+        const result = await response.json();
+        if(result.success) {
+            renderSelisihTables(result.data);
+        }
+    } catch (err) { 
+        console.error("Gagal mengambil data awal:", err); 
+    }
+}
+
+// ENGINE RENDER TABEL EYE-CATCHING
+function renderSelisihTables(dataArray) {
+    const lebihArr = dataArray.filter(row => row[4] === 'SELISIH LEBIH');
+    const kurangArr = dataArray.filter(row => row[4] === 'SELISIH KURANG');
+    
+    // Update Badge Angka pada Tab
+    document.getElementById('countLebih').innerText = lebihArr.length;
+    document.getElementById('countKurang').innerText = kurangArr.length;
+
+    // Fungsi Format Rupiah
+    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+    
+    // Fungsi Format Badge Status
+    const formatStatus = (status) => {
+        if(status.toLowerCase() === 'belum') {
+            return `<span class="badge rounded-pill bg-danger-subtle text-danger border border-danger">Belum Selesai</span>`;
+        }
+        return `<span class="badge rounded-pill bg-success-subtle text-success border border-success">${status}</span>`;
+    };
+
+    // Fungsi Builder Tabel HTML
+    const renderRows = (arr) => {
+        if(arr.length === 0) {
+            return `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-check-circle-fill fs-1 text-success d-block mb-2"></i> Hebat! Tidak ada data selisih di kategori ini.</td></tr>`;
+        }
+        return arr.map(row => `
+            <tr>
+                <td class="fw-medium text-secondary">${String(row[0]).substring(0,10)}</td>
+                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
+                <td class="fw-bold fs-6">${row[2]}</td>
+                <td class="text-primary fw-bold">${formatRp(row[3])}</td>
+                <td><small class="text-muted d-block" style="max-width:250px; white-space: normal;">${row[6]}</small></td>
+                <td>${formatStatus(row[5])}</td>
+            </tr>
+        `).join('');
+    };
+
+    // Inject ke HTML
+    document.getElementById('tableBodyLebih').innerHTML = renderRows(lebihArr);
+    document.getElementById('tableBodyKurang').innerHTML = renderRows(kurangArr);
 }
