@@ -68,6 +68,7 @@ function processGL() {
 
 // Parser EJ ATM (SUDAH DIPERBARUI SESUAI STRUKTUR JRN ATM)
 // Parser EJ ATM (UPDATE FINAL: Menangani Transaksi Beruntun / Multi-Transaction)
+// Parser EJ ATM (UPDATE TRANSFER & MEMORI ATM ID)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -80,11 +81,12 @@ function processEJ() {
         
         let currentTx = {}; 
         let isLookingForJumlah = false;
+        
+        // MEMORI ATM ID: Untuk mengatasi struk transfer yang mencetak "075"
+        let lastValidAtmId = 'UNKNOWN_ATM'; 
 
-        // Fungsi Helper untuk menyimpan transaksi agar memori bisa digunakan untuk resi berikutnya
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
-                // Evaluasi Status
                 if (!currentTx.status) {
                     if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) {
                         currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
@@ -94,15 +96,20 @@ function processEJ() {
                 }
                 if (!currentTx.nominal) currentTx.nominal = 0;
                 
+                // Gunakan lastValidAtmId jika currentTx.atm hanya berisi angka (seperti 075)
+                let finalAtmId = currentTx.atm;
+                if (!finalAtmId || /^\d+$/.test(finalAtmId)) {
+                    finalAtmId = lastValidAtmId;
+                }
+                
                 ejData.push([
                     currentTx.tanggal, 
-                    currentTx.atm || 'UNKNOWN_ATM', 
+                    finalAtmId, 
                     currentTx.noResi, 
                     currentTx.nominal, 
                     currentTx.status
                 ]);
             }
-            // Kosongkan state untuk transaksi selanjutnya
             currentTx = {};
             isLookingForJumlah = false;
         }
@@ -110,23 +117,21 @@ function processEJ() {
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
 
-            // 1. TRIGGER PENYIMPANAN
-            // Simpan jika: Transaksi berakhir, ATAU ada transaksi baru, ATAU loop EMV baru di sesi yg sama
             if (line.includes("<- TRANSACTION END") || 
                 line.includes("-> TRANSACTION START") || 
                 line.includes("EMV AID ")) {
-                
-                // Jika memori sudah memegang resi, simpan dulu sebelum tertimpa!
-                if (currentTx.noResi) {
-                    saveCurrentTransaction();
-                }
+                if (currentTx.noResi) saveCurrentTransaction();
             }
 
-            // 2. EKSTRAKSI DATA
             const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
                 currentTx.tanggal = dateMatch[1]; 
-                currentTx.atm = dateMatch[3];     
+                currentTx.atm = dateMatch[3];
+                
+                // Jika ID ATM mengandung huruf (contoh: KTM12901), simpan ke memori sebagai ID valid
+                if (/[A-Z]/.test(currentTx.atm)) {
+                    lastValidAtmId = currentTx.atm;
+                }
             }
 
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
@@ -135,10 +140,14 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = smartEmvMatch[1];
 
+            // Deteksi Jenis Transaksi
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI")) {
                 currentTx.jenis = "TARIK TUNAI";
+            } else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("ATM BERSAMA")) {
+                currentTx.jenis = "TRANSFER";
             }
 
+            // Ekstraksi Nominal
             if (line.includes("JUMLAH")) {
                 isLookingForJumlah = true;
                 const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
@@ -154,10 +163,16 @@ function processEJ() {
                 }
             }
 
+            // Deteksi Transaksi Sukses Spesifik (Transfer)
+            if (line.includes("TRANSAKSI SUKSES")) {
+                currentTx.status = "SUKSES";
+            }
+
+            // Deteksi Error
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
                 "HIGH BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR",
-                "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER"
+                "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT"
             ];
             
             errorKeywords.forEach(err => {
@@ -166,7 +181,6 @@ function processEJ() {
             if (line.match(/TRANSACTION \d+ FAILED/)) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
         
-        // Simpan sisa transaksi terakhir jika file terputus tanpa tag penutup
         if (currentTx.noResi) saveCurrentTransaction();
 
         if (ejData.length === 0) {
@@ -177,7 +191,6 @@ function processEJ() {
     };
     reader.readAsText(file);
 }
-
 // Fungsi API Komunikasi
 async function sendToBackend(action, data) {
     Swal.fire({ title: 'Memproses...', text: 'Mengunggah dan menyesuaikan data', allowOutsideClick: false });
