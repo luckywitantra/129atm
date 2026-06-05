@@ -123,10 +123,13 @@ function processEJ() {
                 if (currentTx.noResi) saveCurrentTransaction();
             }
 
-            const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
+            // 2. EKSTRAKSI DATA (DI DALAM LOOP processEJ)
+            const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
-                currentTx.tanggal = dateMatch[1]; 
-                currentTx.atm = dateMatch[3];
+                // dateMatch[1] = DD, dateMatch[2] = MM, dateMatch[3] = YY
+                // Konversi "22/05/26" menjadi "22-05-2026" agar identik dengan data GL
+                currentTx.tanggal = `${dateMatch[1]}-${dateMatch[2]}-20${dateMatch[3]}`; 
+                currentTx.atm = dateMatch[5];
                 
                 // Jika ID ATM mengandung huruf (contoh: KTM12901), simpan ke memori sebagai ID valid
                 if (/[A-Z]/.test(currentTx.atm)) {
