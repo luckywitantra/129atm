@@ -79,6 +79,8 @@ function processGL() {
     reader.readAsText(file);
 }
 
+// GANTI FUNGSI processEJ() DAN triggerAnalysis() DI APP.JS ANDA
+
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -91,10 +93,16 @@ function processEJ() {
         
         let currentTx = {}; 
         let isLookingForJumlah = false;
+        
+        // Memori ATM dan Tanggal (Mencegah data hilang jika mesin putus koneksi tiba-tiba)
         let lastValidAtmId = 'UNKNOWN_ATM'; 
+        let lastValidDate = '';
 
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
+                // Antisipasi Tanggal Hilang (Gunakan memori)
+                if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
+
                 if (!currentTx.status) {
                     if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) {
                         currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
@@ -105,17 +113,9 @@ function processEJ() {
                 if (!currentTx.nominal) currentTx.nominal = 0;
                 
                 let finalAtmId = currentTx.atm;
-                if (!finalAtmId || /^\d+$/.test(finalAtmId)) {
-                    finalAtmId = lastValidAtmId;
-                }
+                if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
                 
-                ejData.push([
-                    currentTx.tanggal, 
-                    finalAtmId, 
-                    currentTx.noResi, 
-                    currentTx.nominal, 
-                    currentTx.status
-                ]);
+                ejData.push([currentTx.tanggal, finalAtmId, currentTx.noResi, currentTx.nominal, currentTx.status]);
             }
             currentTx = {};
             isLookingForJumlah = false;
@@ -133,11 +133,9 @@ function processEJ() {
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
                 currentTx.tanggal = `${dateMatch[1]}-${dateMatch[2]}-20${dateMatch[3]}`; 
+                lastValidDate = currentTx.tanggal; // Simpan ke memori
                 currentTx.atm = dateMatch[5];
-                
-                if (/[A-Z]/.test(currentTx.atm)) {
-                    lastValidAtmId = currentTx.atm;
-                }
+                if (/[A-Z]/.test(currentTx.atm)) lastValidAtmId = currentTx.atm;
             }
 
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
@@ -168,7 +166,8 @@ function processEJ() {
             }
 
             if (line.includes("TRANSAKSI SUKSES")) {
-                currentTx.status = "SUKSES";
+                // Bedakan status SUKSES Transfer dengan SUKSES Tarik Tunai
+                currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
             }
 
             const errorKeywords = [
@@ -185,13 +184,30 @@ function processEJ() {
         
         if (currentTx.noResi) saveCurrentTransaction();
 
-        if (ejData.length === 0) {
-            return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
-        }
-
+        if (ejData.length === 0) return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
         sendToBackend('uploadEJ', ejData);
     };
     reader.readAsText(file);
+}
+
+// Fungsi Pemicu Analisa (Sudah diperbaiki untuk membaca Object yang benar)
+async function triggerAnalysis() {
+    Swal.fire({ title: 'Menganalisa Pintar...', text: 'Mencocokkan tanpa merusak status selisih lama Anda.', allowOutsideClick: false });
+    Swal.showLoading();
+    
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
+        const result = await response.json();
+        if(result.success) {
+            // Memanggil hitungan dan memanggil tabel!
+            Swal.fire('Analisa Selesai', `Selisih Lebih: ${result.data.selisihLebih} | Selisih Kurang: ${result.data.selisihKurang}`, 'success');
+            renderSelisihTables(result.data.tableData); 
+        } else {
+            Swal.fire('Gagal', result.message, 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Gagal memproses analisa', 'error');
+    }
 }
 
 
@@ -222,27 +238,6 @@ async function sendToBackend(action, data) {
     }
 }
 
-// Fungsi Pemicu Analisa
-async function triggerAnalysis() {
-    Swal.fire({ title: 'Menganalisa Pintar...', text: 'Mencocokkan tanpa merusak status selisih lama Anda.', allowOutsideClick: false });
-    Swal.showLoading();
-    
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'analyze' })
-        });
-        const result = await response.json();
-        if(result.success) {
-            Swal.fire('Analisa Selesai', 'Tabel selisih berhasil diperbarui.', 'success');
-            renderSelisihTables(result.data); // result.data berisi array data selisih
-        } else {
-            Swal.fire('Gagal', result.message, 'error');
-        }
-    } catch (err) {
-        Swal.fire('Error', 'Gagal memproses analisa', 'error');
-    }
-}
 
 // Mengambil Data Saat Tab Analisa Diklik
 async function fetchSelisihData() {
