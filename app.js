@@ -154,8 +154,11 @@ document.getElementById('btnConfirmUpload').addEventListener('click', () => {
 });
 
 // ==========================================
-// 4. API & ANALISA SELISIH
+// 4. API & ANALISA SELISIH (DILENGKAPI FILTER & PENYELESAIAN)
 // ==========================================
+let globalSelisihData = []; 
+let activeResolveRow = null;
+
 async function sendToBackend(action, data) {
     Swal.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); Swal.showLoading();
     try {
@@ -172,57 +175,221 @@ async function triggerAnalysis() {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
         const result = await response.json();
         if(result.success) {
-            Swal.fire('Analisa Selesai', `Lebih: ${result.data.selisihLebih} | Kurang: ${result.data.selisihKurang}`, 'success');
-            renderSelisihTables(result.data.tableData); 
+            Swal.fire('Analisa Selesai', `Perhitungan terbaru berhasil dimuat.`, 'success');
+            globalSelisihData = result.data.tableData;
+            renderSelisihTablesFiltered(); 
         } else Swal.fire('Gagal', result.message, 'error');
     } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
 }
 
 async function fetchSelisihData() {
     document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5">Memuat Data...</td></tr>`;
-    document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5">Memuat Data...</td></tr>`;
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })});
         const result = await response.json();
-        if(result.success) renderSelisihTables(result.data);
+        if(result.success) {
+            globalSelisihData = result.data;
+            renderSelisihTablesFiltered();
+        }
     } catch (err) { console.error(err); }
 }
 
 const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
 
-function renderSelisihTables(dataArray) {
-    if (!dataArray || !Array.isArray(dataArray)) return;
-    const lebihArr = dataArray.filter(row => row[4] === 'SELISIH LEBIH');
-    const kurangArr = dataArray.filter(row => row[4] === 'SELISIH KURANG');
+function renderSelisihTablesFiltered() {
+    if (!globalSelisihData) return;
     
+    // Ambil Nilai Filter
+    const fResi = document.getElementById('filterResiAn').value.toLowerCase();
+    const fAtm = document.getElementById('filterAtmAn').value.toLowerCase();
+    const fNom = document.getElementById('filterNominalAn').value;
+    const sortDate = document.getElementById('sortDateAn').value;
+
+    // Filter Data
+    let filteredData = globalSelisihData.filter(row => {
+        let match = true;
+        if(fResi) match = match && String(row[2]).toLowerCase().includes(fResi);
+        if(fAtm) match = match && String(row[1]).toLowerCase().includes(fAtm);
+        if(fNom) match = match && String(row[3]) === fNom;
+        return match;
+    });
+
+    // Sort Tanggal
+    filteredData.sort((a, b) => sortDate === 'desc' ? new Date(b[0]) - new Date(a[0]) : new Date(a[0]) - new Date(b[0]));
+
+    // Pisahkan Data (Belum Selesai Lebih, Belum Selesai Kurang, Sudah Selesai)
+    const lebihArr = filteredData.filter(row => row[4] === 'SELISIH LEBIH' && String(row[5]).toLowerCase() === 'belum');
+    const kurangArr = filteredData.filter(row => row[4] === 'SELISIH KURANG' && String(row[5]).toLowerCase() === 'belum');
+    const selesaiArr = filteredData.filter(row => String(row[5]).toLowerCase() !== 'belum');
+
+    // Hitung Akumulasi Total
+    const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    const totKurang = kurangArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    document.getElementById('totalLebihRp').innerText = formatRp(totLebih);
+    document.getElementById('totalKurangRp').innerText = formatRp(totKurang);
+
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
-    const renderRows = (arr) => {
-        if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted">Hebat! Data Bersih.</td></tr>`;
+    // Render Function
+    const renderTable = (arr, type) => {
+        if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted">Data bersih atau tidak ditemukan.</td></tr>`;
         return arr.map(row => {
-            // Encode data ke string untuk dikirim ke fungsi Pop-up
-            const rowDataStr = encodeURIComponent(JSON.stringify(row));
-            let statusBadge = row[5].toLowerCase() === 'belum' ? `<span class="badge bg-danger-subtle text-danger border border-danger">Belum Selesai</span>` : `<span class="badge bg-success-subtle text-success border border-success">${row[5]}</span>`;
+            const tgl = String(row[0] || '').substring(0,10);
+            const rawStr = encodeURIComponent(JSON.stringify(row));
             
-            // Tambahkan event onclick pada baris (Tr)
-            return `<tr onclick="showDetailPopup('${rowDataStr}')" title="Klik untuk lihat detail">
-                <td class="fw-medium text-secondary">${String(row[0] || '').substring(0,10)}</td>
-                <td><span class="badge bg-secondary shadow-sm">${row[1] || '-'}</span></td>
-                <td class="fw-bold fs-6">${row[2] || '-'}</td>
+            let actionBtn = "";
+            if (type === 'belum') {
+                actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold" onclick="openResolveModal('${rawStr}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
+            } else {
+                actionBtn = `<button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="revertSelisih('${rawStr}')"><i class="bi bi-arrow-counterclockwise"></i> Batalkan Selesai</button>
+                             <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="generateBA('${rawStr}')"><i class="bi bi-printer"></i> B/A</button>`;
+            }
+
+            return `<tr class="align-middle">
+                <td class="fw-medium text-secondary">${tgl}</td>
+                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
+                <td class="fw-bold fs-6">${row[2]}</td>
                 <td class="text-primary fw-bold">${formatRp(row[3])}</td>
-                <td><small class="text-muted d-block text-truncate" style="max-width:200px;">${row[6] || '-'}</small></td>
-                <td>${statusBadge}</td>
+                <td><small class="text-muted d-block text-truncate" style="max-width:200px;" title="${row[6]}">${row[6]}</small></td>
+                <td>${actionBtn}</td>
             </tr>`;
         }).join('');
     };
 
-    document.getElementById('tableBodyLebih').innerHTML = renderRows(lebihArr);
-    document.getElementById('tableBodyKurang').innerHTML = renderRows(kurangArr);
+    document.getElementById('tableBodyLebih').innerHTML = renderTable(lebihArr, 'belum');
+    document.getElementById('tableBodyKurang').innerHTML = renderTable(kurangArr, 'belum');
+    document.getElementById('tableBodySelesai').innerHTML = renderTable(selesaiArr, 'selesai');
+}
+
+// ==========================================
+// 5. ENGINE WORKFLOW PENYELESAIAN (SELESAI & B/A)
+// ==========================================
+function openResolveModal(rawStr) {
+    activeResolveRow = JSON.parse(decodeURIComponent(rawStr));
+    document.getElementById('resolveIdText').innerText = `Resi ${activeResolveRow[2]} (Rp ${activeResolveRow[3].toLocaleString()})`;
+    document.getElementById('resolveReason').value = activeResolveRow[6]; // Isi dgn keterangan lama jika ada
+    new bootstrap.Modal(document.getElementById('resolveModal')).show();
+}
+
+async function submitResolve() {
+    const reason = document.getElementById('resolveReason').value.trim();
+    if(!reason) return Swal.fire('Peringatan', 'Harap isi alasan / tindakan penyelesaian!', 'warning');
     
-    // Aktifkan class clickable table
-    document.getElementById('tableBodyLebih').parentElement.classList.add('table-clickable');
-    document.getElementById('tableBodyKurang').parentElement.classList.add('table-clickable');
+    // Tutup Modal
+    bootstrap.Modal.getInstance(document.getElementById('resolveModal')).hide();
+    
+    // Siapkan Payload ke Backend
+    const tgl = String(activeResolveRow[0]).substring(0,10);
+    const payload = { tanggal: tgl, atm: activeResolveRow[1], resi: activeResolveRow[2], status: 'Selesai', keterangan: reason };
+    
+    Swal.fire({ title: 'Memperbarui Status...', allowOutsideClick: false }); Swal.showLoading();
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
+        const result = await response.json();
+        if(result.success) {
+            Swal.close();
+            activeResolveRow[5] = 'Selesai'; activeResolveRow[6] = reason; // Update lokal memori
+            renderSelisihTablesFiltered(); // Render ulang UI
+            generateBA(encodeURIComponent(JSON.stringify(activeResolveRow))); // Langsung buka preview B/A
+        } else { Swal.fire('Gagal', 'Gagal update ke database', 'error'); }
+    } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
+}
+
+async function revertSelisih(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr));
+    const confirm = await Swal.fire({ title: 'Batalkan Selesai?', text: "Data akan dikembalikan ke status Belum Selesai.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Kembalikan!'});
+    if(!confirm.isConfirmed) return;
+
+    const tgl = String(row[0]).substring(0,10);
+    const payload = { tanggal: tgl, atm: row[1], resi: row[2], status: 'Belum', keterangan: row[6] };
+    
+    Swal.fire({ title: 'Mengembalikan...', allowOutsideClick: false }); Swal.showLoading();
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
+        const result = await response.json();
+        if(result.success) {
+            Swal.fire('Berhasil', 'Data dikembalikan ke tabel awal.', 'success');
+            fetchSelisihData(); // Muat ulang total
+        }
+    } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
+}
+
+function generateBA(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr));
+    const tgl = String(row[0]).substring(0,10);
+    document.getElementById('baTglCetak').innerText = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+    document.getElementById('baTanggal').innerText = tgl;
+    document.getElementById('baAtm').innerText = row[1];
+    document.getElementById('baResi').innerText = row[2];
+    document.getElementById('baNominal').innerText = formatRp(row[3]);
+    document.getElementById('baJenis').innerText = row[4];
+    document.getElementById('baKeterangan').innerText = row[6]; // Alasan penyelesaian
+    
+    new bootstrap.Modal(document.getElementById('beritaAcaraModal')).show();
+}
+
+// ==========================================
+// 6. ENGINE DATA MASTER (PREVIEW GL & EJ)
+// ==========================================
+let databaseData = { gl: [], ej: [], selisih: [] }; 
+
+async function fetchDatabaseData() {
+    document.getElementById('tableBodyDataMaster').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div><br><span class="text-muted">Mengunduh...</span></td></tr>`;
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase' })});
+        const result = await response.json();
+        if(result.success) { databaseData = result.data; renderDataMaster(); }
+    } catch (err) { console.error(err); }
+}
+
+function renderDataMaster() {
+    const fStart = document.getElementById('filterStart').value;
+    const fResi = document.getElementById('filterResiDm').value.toLowerCase();
+    const fAtm = document.getElementById('filterAtmDm').value.toLowerCase();
+    const fNom = document.getElementById('filterNominalDm').value;
+    const fStatus = document.getElementById('filterStatus').value;
+
+    const selisihKeys = new Set();
+    databaseData.selisih.forEach(row => { selisihKeys.add(`${String(row[0]).substring(0,10)}_${String(row[1]).trim()}_${String(row[2]).trim()}`); });
+
+    let combinedData = [];
+    databaseData.gl.forEach(row => {
+        const tgl = String(row[1]).substring(0,10);
+        combinedData.push({ sumber: 'GL', tanggal: tgl, atm: row[2], resi: row[3], nominal: row[4], ket: `${row[5]}`, isSelisih: selisihKeys.has(`${tgl}_${String(row[2]).trim()}_${String(row[3]).trim()}`) });
+    });
+    databaseData.ej.forEach(row => {
+        const tgl = String(row[1]).substring(0,10);
+        combinedData.push({ sumber: 'EJ', tanggal: tgl, atm: row[2], resi: row[3], nominal: row[4], ket: `Status: ${row[5]}`, isSelisih: selisihKeys.has(`${tgl}_${String(row[2]).trim()}_${String(row[3]).trim()}`) });
+    });
+
+    let filteredData = combinedData.filter(item => {
+        let match = true;
+        if (fStart) match = match && (item.tanggal === fStart);
+        if (fResi) match = match && String(item.resi).toLowerCase().includes(fResi);
+        if (fAtm) match = match && String(item.atm).toLowerCase().includes(fAtm);
+        if (fNom) match = match && String(item.nominal) === fNom;
+        if (fStatus === 'SELISIH') match = match && item.isSelisih;
+        if (fStatus === 'AMAN') match = match && !item.isSelisih;
+        return match;
+    });
+
+    filteredData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    const tbody = document.getElementById('tableBodyDataMaster');
+    if (filteredData.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Tidak ada data yang cocok dengan filter.</td></tr>`;
+
+    tbody.innerHTML = filteredData.slice(0, 500).map(item => {
+        const badgeSumber = item.sumber === 'GL' ? `<span class="badge bg-primary px-3">Data GL</span>` : `<span class="badge bg-success px-3">Data EJ</span>`;
+        const warnIcon = item.isSelisih ? `<i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>` : ``;
+        return `<tr class="${item.isSelisih ? 'row-selisih' : 'row-aman'}">
+            <td>${badgeSumber}</td>
+            <td class="fw-medium text-secondary">${item.tanggal}</td>
+            <td class="fw-bold">${item.atm}</td>
+            <td class="fw-bold">${warnIcon}${item.resi}</td>
+            <td class="text-primary fw-bold">${formatRp(item.nominal)}</td>
+            <td class="text-muted small">${item.ket}</td>
+        </tr>`;
+    }).join('');
 }
 
 // ==========================================
