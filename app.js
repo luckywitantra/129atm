@@ -48,6 +48,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 // ==========================================
 // 2. PARSER DATA (GL & EJ)
 // ==========================================
+// Parser GL ATM (UPDATE FIX TANGGAL 1-9 & SPASI)
 function processGL() {
     const file = document.getElementById('glFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file GL terlebih dahulu', 'error');
@@ -58,21 +59,33 @@ function processGL() {
         const lines = text.split('\n');
         const glData = [];
         
-        const regex = /^(\d{2}-\d{2}-\d{4})\s+.*?\s+(\w*(?:\d{4})KTM\d+)\s+([\d,]+(?:\.\d+)?)/;
+        // REGEX DIPERBARUI: 
+        // 1. ^\s* -> Mentoleransi jika ada spasi kosong di awal baris
+        // 2. \d{1,2} -> Mentoleransi angka hari dan bulan yang hanya 1 digit (contoh: 1, 2, ..., 9)
+        // 3. [-/] -> Mentoleransi pemisah tanggal baik menggunakan strip (-) maupun garis miring (/)
+        const regex = /^\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})\s+.*?\s+(\w*(?:\d{4})KTM\d+)\s+([\d,]+(?:\.\d+)?)/;
         
         lines.forEach(line => {
             const match = line.match(regex);
             if (match) {
                 const rawResi = match[2];
                 
-                // FIX LEADING ZEROS: Ubah "0683" menjadi "683"
+                // Menghilangkan angka 0 di depan nomor resi agar matching dengan EJ
                 const noResi = parseInt(rawResi.split('KTM')[0], 10).toString(); 
                 
                 const nominal = parseFloat(match[3].replace(/,/g, ''));
                 const atm = "KTM" + rawResi.split('KTM')[1]; 
                 
-                const tglSplit = match[1].split('-');
-                const formatTgl = `${tglSplit[2]}-${tglSplit[1]}-${tglSplit[0]}`;
+                // Memecah teks tanggal (berdasarkan - atau /)
+                const tglSplit = match[1].split(/[-/]/);
+                
+                // MEMAKSA PENAMBAHAN '0': Jika "1", otomatis jadi "01"
+                const dd = tglSplit[0].padStart(2, '0');
+                const mm = tglSplit[1].padStart(2, '0');
+                const yyyy = tglSplit[2];
+                
+                // Menyusun kembali menjadi format YYYY-MM-DD
+                const formatTgl = `${yyyy}-${mm}-${dd}`;
 
                 glData.push([formatTgl, atm, noResi, nominal, 'TARIK TUNAI', rawResi]);
             }
