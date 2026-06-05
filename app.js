@@ -332,7 +332,7 @@ function generateBA(rawStr) {
 // ==========================================
 // 6. ENGINE DATA MASTER (PREVIEW GL & EJ)
 // ==========================================
-let databaseData = { gl: [], ej: [], selisih: [] }; 
+
 
 async function fetchDatabaseData() {
     document.getElementById('tableBodyDataMaster').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div><br><span class="text-muted">Mengunduh...</span></td></tr>`;
