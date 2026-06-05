@@ -99,6 +99,7 @@ function processGL() {
 // Parser EJ ATM (UPDATE ALGORITMA PENARIKAN TUNAI & ATM BERSAMA)
 // Parser EJ ATM (UPDATE BILINGUAL & SPASI GANDA)
 // Parser EJ ATM (UPDATE: Penambahan Kamus Error Baru & Transaksi Prima/Tanpa Kartu)
+// Parser EJ ATM (UPDATE: Deteksi Transfer Jaringan Prima & Bersama Tanpa Kata "Transfer")
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -168,9 +169,13 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
 
+            // ==========================================
+            // PERBAIKAN: EKSTRAKSI JENIS TRANSAKSI
+            // ==========================================
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL")) {
                 currentTx.jenis = "TARIK TUNAI";
-            } else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN")) {
+            } else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("KE BANK") || line.includes("REK TUJUAN")) {
+                // Menambahkan "KE BANK" dan "REK TUJUAN" sebagai pemicu pasti transaksi transfer
                 currentTx.jenis = "TRANSFER";
             }
 
@@ -193,7 +198,6 @@ function processEJ() {
                 currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
             }
 
-            // KAMUS ERROR BARU DITAMBAHKAN DI SINI
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
                 "HIGH BILL MIX ERROR", "LOW BILL MIX ERROR", "DISPENSER ERROR", 
@@ -207,6 +211,7 @@ function processEJ() {
                     currentTx.status = "GAGAL - " + err;
                 }
             });
+            
             if (line.match(/TRANSACTION \d+ FAILED/) && !currentTx.cashTaken) {
                 currentTx.status = "GAGAL - TRANSACTION FAILED";
             }
