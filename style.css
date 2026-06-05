@@ -107,6 +107,41 @@ body {
     border-right: 4px solid var(--primary-color);
     border-radius: 0 8px 8px 0;
 }
+/* ========================================== */
+/* ESTETIKA BANKING THEME (PREVIEW MODAL)     */
+/* ========================================== */
+
+/* Navy Blue Gradient khas Bank */
+.bg-gradient-banking {
+    background: linear-gradient(135deg, #0a2540 0%, #1a4373 100%);
+}
+
+/* Tombol Aksen Emas/Gold */
+.banking-btn {
+    background-color: #f6c23e;
+    color: #0a2540;
+    border: none;
+    transition: all 0.3s ease;
+}
+.banking-btn:hover {
+    background-color: #e3b030;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(246, 194, 62, 0.4) !important;
+}
+
+/* Kustomisasi Header Tabel Preview */
+.preview-table th {
+    background-color: #f8f9fc !important;
+    color: #1a4373;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e3e6f0;
+}
+.preview-table td {
+    font-size: 0.85rem;
+}
 
 /* Dark Mode Adjustments */
 [data-bs-theme="dark"] body { background-color: #121212; }
