@@ -29,6 +29,17 @@
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4" id="mainContent">
                 
+                <div id="dashboard" class="page-section">
+                    <h2><i class="bi bi-speedometer2"></i> Dashboard Rekonsiliasi</h2>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Selamat datang di Aplikasi Rekonsiliasi ATM. Silakan pilih menu <strong>Upload Data</strong> di samping untuk memulai.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="upload" class="page-section d-none">
                     <h2><i class="bi bi-cloud-upload"></i> Upload File Transaksi</h2>
                     <div class="row mt-4">
@@ -60,6 +71,15 @@
                     <h2><i class="bi bi-search"></i> Analisa Selisih</h2>
                     <button class="btn btn-warning btn-lg mt-3" onclick="triggerAnalysis()"><i class="bi bi-cpu"></i> PROSES ANALISA SEKARANG</button>
                     <div id="analisaResult" class="mt-4"></div>
+                </div>
+
+                <div id="laporan" class="page-section d-none">
+                    <h2><i class="bi bi-file-earmark-spreadsheet"></i> Laporan Selisih</h2>
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-body">
+                            <p class="text-muted">Data laporan hasil analisa akan muncul di sini. Fitur export Excel/PDF sedang disiapkan.</p>
+                        </div>
+                    </div>
                 </div>
 
             </main>
