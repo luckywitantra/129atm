@@ -97,9 +97,7 @@ function processGL() {
 }
 
 // Parser EJ ATM (UPDATE ALGORITMA PENARIKAN TUNAI & ATM BERSAMA)
-// Parser EJ ATM (UPDATE BILINGUAL & SPASI GANDA)
-// Parser EJ ATM (UPDATE: Penambahan Kamus Error Baru & Transaksi Prima/Tanpa Kartu)
-// Parser EJ ATM (UPDATE: Deteksi Transfer Jaringan Prima & Bersama Tanpa Kata "Transfer")
+// Parser EJ ATM (UPDATE: Fix Bug Nominal "AMOUNT ENTERED" & Kamus Error Lengkap)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -169,17 +167,16 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
 
-            // ==========================================
-            // PERBAIKAN: EKSTRAKSI JENIS TRANSAKSI
-            // ==========================================
-            if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL")) {
+            if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL") || line.includes("PENARIKAN TUNAI TANPA KARTU")) {
                 currentTx.jenis = "TARIK TUNAI";
             } else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("KE BANK") || line.includes("REK TUJUAN")) {
-                // Menambahkan "KE BANK" dan "REK TUJUAN" sebagai pemicu pasti transaksi transfer
                 currentTx.jenis = "TRANSFER";
             }
 
-            if (line.includes("JUMLAH") || line.includes("AMOUNT")) {
+            // ==========================================
+            // FIX BUG: Mencegah teks log "AMOUNT ENTERED" dibaca sebagai struk
+            // ==========================================
+            if ((line.includes("JUMLAH") || line.includes("AMOUNT")) && !line.includes("ENTERED")) {
                 isLookingForJumlah = true;
                 const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
                 if (inlineJumlah) {
@@ -187,23 +184,31 @@ function processEJ() {
                     isLookingForJumlah = false;
                 }
             } else if (isLookingForJumlah) {
-                const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/);
-                if (nextLineJumlah) {
-                    currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, ''));
-                    isLookingForJumlah = false;
+                // Pastikan baris berikutnya bukan log waktu (contoh "16:46:15...")
+                if (!line.match(/^\d{2}:\d{2}:\d{2}/)) {
+                    const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/);
+                    if (nextLineJumlah) {
+                        currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, ''));
+                    }
                 }
+                isLookingForJumlah = false; 
             }
 
             if (line.includes("TRANSAKSI SUKSES") || line.includes("SUCCESSFUL")) {
                 currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
             }
 
+            // ==========================================
+            // KAMUS ERROR BARU (DITAMBAHKAN SESUAI LOG TERBARU)
+            // ==========================================
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
                 "HIGH BILL MIX ERROR", "LOW BILL MIX ERROR", "DISPENSER ERROR", 
                 "COMMUNICATION ERROR", "CDM ERROR", "KD.ARE/NO.TELP TDK TERDAFTA", 
                 "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT", "INACTIVE ACCOUNT",
-                "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION"
+                "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION",
+                "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", 
+                "PROCESSOR TEMP DOWN", "KARTU ANDA TERDAFTAR SBG"
             ];
             
             errorKeywords.forEach(err => {
