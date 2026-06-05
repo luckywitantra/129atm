@@ -67,6 +67,7 @@ function processGL() {
 }
 
 // Parser EJ ATM (SUDAH DIPERBARUI SESUAI STRUKTUR JRN ATM)
+// Parser EJ ATM (DIUPDATE UNTUK MENANGKAP SMART EMV & COMMUNICATION ERROR)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -86,14 +87,20 @@ function processEJ() {
             // 1. Ekstrak Tanggal dan ATM
             const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
-                currentTx.tanggal = dateMatch[1]; // e.g., 22/05/26
-                currentTx.atm = dateMatch[3];     // e.g., KTM12901
+                currentTx.tanggal = dateMatch[1]; 
+                currentTx.atm = dateMatch[3];     
             }
 
-            // 2. Ekstrak Nomor Resi / Ref
+            // 2. Ekstrak Nomor Resi / Ref dari Struk
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
             if (resiMatch) {
                 currentTx.noResi = resiMatch[1];
+            }
+            
+            // TAMBAHAN: Tangkap Resi dari log SMART EMV jika mesin putus koneksi sebelum cetak struk
+            const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
+            if (smartEmvMatch) {
+                currentTx.noResi = smartEmvMatch[1];
             }
 
             // 3. Ekstrak Nominal (Jumlah)
@@ -105,7 +112,6 @@ function processEJ() {
                     isLookingForJumlah = false;
                 }
             } else if (isLookingForJumlah) {
-                // Tangkap angka di baris berikutnya (contoh: 300,000.00)
                 const nextLineJumlah = line.match(/^([\d,]+\.\d{2})/);
                 if (nextLineJumlah) {
                     currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, ''));
@@ -113,8 +119,16 @@ function processEJ() {
                 }
             }
 
-            // 4. Deteksi Error / Status Gagal
-            const errorKeywords = ["SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", "DISPENSER ERROR"];
+            // 4. Deteksi Error / Status Gagal (Termasuk COMMUNICATION ERROR)
+            const errorKeywords = [
+                "SALDO KURANG", 
+                "SALAH MASUKKAN PIN", 
+                "KARTU ANDA SUDAH KADALUARSA", 
+                "HIGH BILL MIX ERROR", 
+                "DISPENSER ERROR", 
+                "COMMUNICATION ERROR"
+            ];
+            
             errorKeywords.forEach(err => {
                 if (line.includes(err)) {
                     currentTx.status = "GAGAL - " + err;
@@ -123,16 +137,13 @@ function processEJ() {
 
             // 5. Menyimpan Data saat Blok Transaksi Selesai
             if (line.includes("<- TRANSACTION END")) {
-                // Pastikan yang disimpan hanya transaksi yang menghasilkan resi
                 if (currentTx.noResi) {
                     
                     if (!currentTx.status) {
                         currentTx.status = currentTx.nominal ? "SUKSES" : "NON-FINANSIAL";
                     }
-                    
                     if (!currentTx.nominal) currentTx.nominal = 0;
                     
-                    // Format untuk database: [Tanggal, ATM, No Resi, Nominal, Status]
                     ejData.push([
                         currentTx.tanggal, 
                         currentTx.atm || 'UNKNOWN_ATM', 
@@ -141,16 +152,13 @@ function processEJ() {
                         currentTx.status
                     ]);
                 }
-                
-                // Reset object untuk menampung transaksi berikutnya
                 currentTx = {};
                 isLookingForJumlah = false;
             }
         }
         
-        // Peringatan jika parser gagal menemukan data
         if (ejData.length === 0) {
-            return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi finansial dengan nomor resi pada file EJ ini.', 'warning');
+            return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi dengan nomor resi pada file EJ ini.', 'warning');
         }
 
         sendToBackend('uploadEJ', ejData);
