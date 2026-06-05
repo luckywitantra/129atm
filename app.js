@@ -16,9 +16,8 @@ function showPage(pageId) {
         return; 
     }
 
-    // Reset warna Sidebar
+    // Reset warna Sidebar dan Bottom Nav
     document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
-    // Reset warna Bottom Nav (Khusus HP)
     document.querySelectorAll('.bottom-nav .nav-item').forEach(el => {
         el.classList.remove('active-bottom');
         el.classList.add('text-secondary');
@@ -27,18 +26,17 @@ function showPage(pageId) {
     // Beri warna aktif pada menu yang diklik
     if (event && event.currentTarget) {
         if(event.currentTarget.classList.contains('nav-link')) {
-            event.currentTarget.classList.add('active'); // Untuk Desktop
+            event.currentTarget.classList.add('active'); // Desktop
         } else {
-            event.currentTarget.classList.add('active-bottom'); // Untuk HP
+            event.currentTarget.classList.add('active-bottom'); // HP
             event.currentTarget.classList.remove('text-secondary');
         }
     }
 
-    // TRIGGER OTOMATIS: Jika halaman Analisa dibuka, langsung ambil data terbaru
+    // Ambil data jika buka halaman analisa
     if(pageId === 'analisa') fetchSelisihData();
 }
 
-// Fitur Dark Mode
 document.getElementById('themeToggle').addEventListener('click', () => {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-bs-theme');
@@ -70,7 +68,11 @@ function processGL() {
                 const nominal = parseFloat(match[3].replace(/,/g, ''));
                 const atm = "KTM" + rawResi.split('KTM')[1]; 
                 
-                glData.push([match[1], atm, noResi, nominal, 'TARIK TUNAI', rawResi]);
+                // Ubah format DD-MM-YYYY menjadi YYYY-MM-DD
+                const tglSplit = match[1].split('-');
+                const formatTgl = `${tglSplit[2]}-${tglSplit[1]}-${tglSplit[0]}`;
+
+                glData.push([formatTgl, atm, noResi, nominal, 'TARIK TUNAI', rawResi]);
             }
         });
         
@@ -78,8 +80,6 @@ function processGL() {
     };
     reader.readAsText(file);
 }
-
-// GANTI FUNGSI processEJ() DAN triggerAnalysis() DI APP.JS ANDA
 
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
@@ -93,14 +93,11 @@ function processEJ() {
         
         let currentTx = {}; 
         let isLookingForJumlah = false;
-        
-        // Memori ATM dan Tanggal (Mencegah data hilang jika mesin putus koneksi tiba-tiba)
         let lastValidAtmId = 'UNKNOWN_ATM'; 
         let lastValidDate = '';
 
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
-                // Antisipasi Tanggal Hilang (Gunakan memori)
                 if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
 
                 if (!currentTx.status) {
@@ -130,12 +127,15 @@ function processEJ() {
                 if (currentTx.noResi) saveCurrentTransaction();
             }
 
+            // Ubah format DD/MM/YY menjadi YYYY-MM-DD
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
-                currentTx.tanggal = `${dateMatch[1]}-${dateMatch[2]}-20${dateMatch[3]}`; 
-                lastValidDate = currentTx.tanggal; // Simpan ke memori
+                currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; 
+                lastValidDate = currentTx.tanggal; 
                 currentTx.atm = dateMatch[5];
-                if (/[A-Z]/.test(currentTx.atm)) lastValidAtmId = currentTx.atm;
+                if (/[A-Z]/.test(currentTx.atm)) {
+                    lastValidAtmId = currentTx.atm;
+                }
             }
 
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
@@ -166,7 +166,6 @@ function processEJ() {
             }
 
             if (line.includes("TRANSAKSI SUKSES")) {
-                // Bedakan status SUKSES Transfer dengan SUKSES Tarik Tunai
                 currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
             }
 
@@ -190,32 +189,10 @@ function processEJ() {
     reader.readAsText(file);
 }
 
-// Fungsi Pemicu Analisa (Sudah diperbaiki untuk membaca Object yang benar)
-async function triggerAnalysis() {
-    Swal.fire({ title: 'Menganalisa Pintar...', text: 'Mencocokkan tanpa merusak status selisih lama Anda.', allowOutsideClick: false });
-    Swal.showLoading();
-    
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
-        const result = await response.json();
-        if(result.success) {
-            // Memanggil hitungan dan memanggil tabel!
-            Swal.fire('Analisa Selesai', `Selisih Lebih: ${result.data.selisihLebih} | Selisih Kurang: ${result.data.selisihKurang}`, 'success');
-            renderSelisihTables(result.data.tableData); 
-        } else {
-            Swal.fire('Gagal', result.message, 'error');
-        }
-    } catch (err) {
-        Swal.fire('Error', 'Gagal memproses analisa', 'error');
-    }
-}
-
 
 // ==========================================
 // 3. KOMUNIKASI API & RENDER UI
 // ==========================================
-
-// Fungsi Upload ke Backend
 async function sendToBackend(action, data) {
     Swal.fire({ title: 'Menyinkronkan Data...', html: 'Sistem sedang menyeleksi <b>data baru</b> dan melewati duplikat.', allowOutsideClick: false });
     Swal.showLoading();
@@ -228,7 +205,6 @@ async function sendToBackend(action, data) {
         });
         const result = await response.json();
         if(result.success) {
-            // Menampilkan informasi cerdas berapa data yang berhasil masuk dan berapa yang di-skip
             Swal.fire('Berhasil!', `Dimasukkan: <b>${result.data.added}</b> data baru.<br>Dilewati (Duplikat): <b>${data.length - result.data.added}</b> data.`, 'success');
         } else {
             Swal.fire('Error Backend', result.message, 'error');
@@ -238,8 +214,24 @@ async function sendToBackend(action, data) {
     }
 }
 
+async function triggerAnalysis() {
+    Swal.fire({ title: 'Menganalisa Pintar...', text: 'Mencocokkan tanpa merusak status selisih lama Anda.', allowOutsideClick: false });
+    Swal.showLoading();
+    
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
+        const result = await response.json();
+        if(result.success) {
+            Swal.fire('Analisa Selesai', `Selisih Lebih: ${result.data.selisihLebih} | Selisih Kurang: ${result.data.selisihKurang}`, 'success');
+            renderSelisihTables(result.data.tableData); 
+        } else {
+            Swal.fire('Gagal', result.message, 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Gagal memproses analisa', 'error');
+    }
+}
 
-// Mengambil Data Saat Tab Analisa Diklik
 async function fetchSelisihData() {
     document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><span class="text-muted mt-2 d-block">Memuat Data Database...</span></td></tr>`;
     document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><br><span class="text-muted mt-2 d-block">Memuat Data Database...</span></td></tr>`;
@@ -255,44 +247,45 @@ async function fetchSelisihData() {
     }
 }
 
-// ENGINE RENDER TABEL EYE-CATCHING
+// PERBAIKAN: Penanganan undefined dan render format tabel modern
 function renderSelisihTables(dataArray) {
+    if (!dataArray || !Array.isArray(dataArray)) {
+        console.error("Data tidak valid:", dataArray);
+        return;
+    }
+
     const lebihArr = dataArray.filter(row => row[4] === 'SELISIH LEBIH');
     const kurangArr = dataArray.filter(row => row[4] === 'SELISIH KURANG');
     
-    // Update Badge Angka pada Tab
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
-    // Fungsi Format Rupiah
-    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+    const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
     
-    // Fungsi Format Badge Status
     const formatStatus = (status) => {
+        if(!status) return '-';
         if(status.toLowerCase() === 'belum') {
             return `<span class="badge rounded-pill bg-danger-subtle text-danger border border-danger">Belum Selesai</span>`;
         }
         return `<span class="badge rounded-pill bg-success-subtle text-success border border-success">${status}</span>`;
     };
 
-    // Fungsi Builder Tabel HTML
     const renderRows = (arr) => {
         if(arr.length === 0) {
             return `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-check-circle-fill fs-1 text-success d-block mb-2"></i> Hebat! Tidak ada data selisih di kategori ini.</td></tr>`;
         }
         return arr.map(row => `
             <tr>
-                <td class="fw-medium text-secondary">${String(row[0]).substring(0,10)}</td>
-                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
-                <td class="fw-bold fs-6">${row[2]}</td>
+                <td class="fw-medium text-secondary">${String(row[0] || '').substring(0,10)}</td>
+                <td><span class="badge bg-secondary shadow-sm">${row[1] || '-'}</span></td>
+                <td class="fw-bold fs-6">${row[2] || '-'}</td>
                 <td class="text-primary fw-bold">${formatRp(row[3])}</td>
-                <td><small class="text-muted d-block" style="max-width:250px; white-space: normal;">${row[6]}</small></td>
+                <td><small class="text-muted d-block" style="max-width:250px; white-space: normal;">${row[6] || '-'}</small></td>
                 <td>${formatStatus(row[5])}</td>
             </tr>
         `).join('');
     };
 
-    // Inject ke HTML
     document.getElementById('tableBodyLebih').innerHTML = renderRows(lebihArr);
     document.getElementById('tableBodyKurang').innerHTML = renderRows(kurangArr);
 }
