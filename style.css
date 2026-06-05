@@ -1,0 +1,19 @@
+body {
+    transition: background-color 0.3s, color 0.3s;
+}
+.sidebar {
+    border-right: 1px solid rgba(0,0,0,0.1);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+.nav-link {
+    color: var(--bs-body-color);
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+}
+.nav-link:hover, .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+[data-bs-theme="dark"] .sidebar {
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
