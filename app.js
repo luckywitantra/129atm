@@ -67,8 +67,7 @@ function processGL() {
 }
 
 // Parser EJ ATM (SUDAH DIPERBARUI SESUAI STRUKTUR JRN ATM)
-// Parser EJ ATM (DIUPDATE UNTUK MENANGKAP SMART EMV & COMMUNICATION ERROR)
-// Parser EJ ATM (FINAL UPDATE: MENANGANI SEMUA VARIASI GAGAL TARIK TUNAI)
+// Parser EJ ATM (UPDATE FINAL: Menangani Transaksi Beruntun / Multi-Transaction)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -82,99 +81,96 @@ function processEJ() {
         let currentTx = {}; 
         let isLookingForJumlah = false;
 
+        // Fungsi Helper untuk menyimpan transaksi agar memori bisa digunakan untuk resi berikutnya
+        function saveCurrentTransaction() {
+            if (currentTx.noResi) {
+                // Evaluasi Status
+                if (!currentTx.status) {
+                    if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) {
+                        currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
+                    } else {
+                        currentTx.status = currentTx.nominal ? "SUKSES" : "NON-FINANSIAL";
+                    }
+                }
+                if (!currentTx.nominal) currentTx.nominal = 0;
+                
+                ejData.push([
+                    currentTx.tanggal, 
+                    currentTx.atm || 'UNKNOWN_ATM', 
+                    currentTx.noResi, 
+                    currentTx.nominal, 
+                    currentTx.status
+                ]);
+            }
+            // Kosongkan state untuk transaksi selanjutnya
+            currentTx = {};
+            isLookingForJumlah = false;
+        }
+
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
 
-            // 1. Ekstrak Tanggal dan ATM
+            // 1. TRIGGER PENYIMPANAN
+            // Simpan jika: Transaksi berakhir, ATAU ada transaksi baru, ATAU loop EMV baru di sesi yg sama
+            if (line.includes("<- TRANSACTION END") || 
+                line.includes("-> TRANSACTION START") || 
+                line.includes("EMV AID ")) {
+                
+                // Jika memori sudah memegang resi, simpan dulu sebelum tertimpa!
+                if (currentTx.noResi) {
+                    saveCurrentTransaction();
+                }
+            }
+
+            // 2. EKSTRAKSI DATA
             const dateMatch = line.match(/^(\d{2}\/\d{2}\/\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) {
                 currentTx.tanggal = dateMatch[1]; 
                 currentTx.atm = dateMatch[3];     
             }
 
-            // 2. Ekstrak Nomor Resi / Ref
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
-            if (resiMatch) {
-                currentTx.noResi = resiMatch[1];
-            }
+            if (resiMatch) currentTx.noResi = resiMatch[1];
             
-            // Tangkap Resi dari log SMART EMV (Kasus Communication Error)
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
-            if (smartEmvMatch) {
-                currentTx.noResi = smartEmvMatch[1];
-            }
+            if (smartEmvMatch) currentTx.noResi = smartEmvMatch[1];
 
-            // 3. Deteksi Jenis Transaksi (Penting untuk Kasus 1)
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI")) {
                 currentTx.jenis = "TARIK TUNAI";
             }
 
-            // 4. Ekstrak Nominal (Jumlah)
             if (line.includes("JUMLAH")) {
                 isLookingForJumlah = true;
-                const inlineJumlah = line.match(/RP\.\s*([\d,]+\.\d{2})/i);
+                const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
                 if (inlineJumlah) {
                     currentTx.nominal = parseFloat(inlineJumlah[1].replace(/,/g, ''));
                     isLookingForJumlah = false;
                 }
             } else if (isLookingForJumlah) {
-                const nextLineJumlah = line.match(/^([\d,]+\.\d{2})/);
+                const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/);
                 if (nextLineJumlah) {
                     currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, ''));
                     isLookingForJumlah = false;
                 }
             }
 
-            // 5. Deteksi Error Fisik & Jaringan (Kasus 2, 3, dan 4)
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
-                "HIGH BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR"
+                "HIGH BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR",
+                "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER"
             ];
             
             errorKeywords.forEach(err => {
-                if (line.includes(err)) {
-                    currentTx.status = "GAGAL - " + err;
-                }
+                if (line.includes(err)) currentTx.status = "GAGAL - " + err;
             });
-            // Tangkap pola "TRANSACTION 7125 FAILED"
-            if (line.match(/TRANSACTION \d+ FAILED/)) {
-                currentTx.status = "GAGAL - TRANSACTION FAILED";
-            }
-
-            // 6. Menyimpan Data saat Blok Transaksi Selesai
-            if (line.includes("<- TRANSACTION END")) {
-                if (currentTx.noResi) {
-                    
-                    // Evaluasi Final Status
-                    if (!currentTx.status) {
-                        // KASUS 1: Jika jenisnya Tarik Tunai tapi tidak ada Nominal yang keluar
-                        if (currentTx.jenis === "TARIK TUNAI" && !currentTx.nominal) {
-                            currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
-                        } else {
-                            currentTx.status = currentTx.nominal ? "SUKSES" : "NON-FINANSIAL";
-                        }
-                    }
-                    
-                    if (!currentTx.nominal) currentTx.nominal = 0;
-                    
-                    // Masukkan ke Array
-                    ejData.push([
-                        currentTx.tanggal, 
-                        currentTx.atm || 'UNKNOWN_ATM', 
-                        currentTx.noResi, 
-                        currentTx.nominal, 
-                        currentTx.status
-                    ]);
-                }
-                
-                // Reset State
-                currentTx = {};
-                isLookingForJumlah = false;
-            }
+            if (line.match(/TRANSACTION \d+ FAILED/)) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
         
+        // Simpan sisa transaksi terakhir jika file terputus tanpa tag penutup
+        if (currentTx.noResi) saveCurrentTransaction();
+
         if (ejData.length === 0) {
-            return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi dengan nomor resi pada file EJ ini.', 'warning');
+            return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
         }
 
         sendToBackend('uploadEJ', ejData);
