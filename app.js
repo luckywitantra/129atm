@@ -68,6 +68,7 @@ function processGL() {
 
 // Parser EJ ATM (SUDAH DIPERBARUI SESUAI STRUKTUR JRN ATM)
 // Parser EJ ATM (DIUPDATE UNTUK MENANGKAP SMART EMV & COMMUNICATION ERROR)
+// Parser EJ ATM (FINAL UPDATE: MENANGANI SEMUA VARIASI GAGAL TARIK TUNAI)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -91,19 +92,24 @@ function processEJ() {
                 currentTx.atm = dateMatch[3];     
             }
 
-            // 2. Ekstrak Nomor Resi / Ref dari Struk
+            // 2. Ekstrak Nomor Resi / Ref
             const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
             if (resiMatch) {
                 currentTx.noResi = resiMatch[1];
             }
             
-            // TAMBAHAN: Tangkap Resi dari log SMART EMV jika mesin putus koneksi sebelum cetak struk
+            // Tangkap Resi dari log SMART EMV (Kasus Communication Error)
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) {
                 currentTx.noResi = smartEmvMatch[1];
             }
 
-            // 3. Ekstrak Nominal (Jumlah)
+            // 3. Deteksi Jenis Transaksi (Penting untuk Kasus 1)
+            if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI")) {
+                currentTx.jenis = "TARIK TUNAI";
+            }
+
+            // 4. Ekstrak Nominal (Jumlah)
             if (line.includes("JUMLAH")) {
                 isLookingForJumlah = true;
                 const inlineJumlah = line.match(/RP\.\s*([\d,]+\.\d{2})/i);
@@ -119,14 +125,10 @@ function processEJ() {
                 }
             }
 
-            // 4. Deteksi Error / Status Gagal (Termasuk COMMUNICATION ERROR)
+            // 5. Deteksi Error Fisik & Jaringan (Kasus 2, 3, dan 4)
             const errorKeywords = [
-                "SALDO KURANG", 
-                "SALAH MASUKKAN PIN", 
-                "KARTU ANDA SUDAH KADALUARSA", 
-                "HIGH BILL MIX ERROR", 
-                "DISPENSER ERROR", 
-                "COMMUNICATION ERROR"
+                "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
+                "HIGH BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR"
             ];
             
             errorKeywords.forEach(err => {
@@ -134,16 +136,28 @@ function processEJ() {
                     currentTx.status = "GAGAL - " + err;
                 }
             });
+            // Tangkap pola "TRANSACTION 7125 FAILED"
+            if (line.match(/TRANSACTION \d+ FAILED/)) {
+                currentTx.status = "GAGAL - TRANSACTION FAILED";
+            }
 
-            // 5. Menyimpan Data saat Blok Transaksi Selesai
+            // 6. Menyimpan Data saat Blok Transaksi Selesai
             if (line.includes("<- TRANSACTION END")) {
                 if (currentTx.noResi) {
                     
+                    // Evaluasi Final Status
                     if (!currentTx.status) {
-                        currentTx.status = currentTx.nominal ? "SUKSES" : "NON-FINANSIAL";
+                        // KASUS 1: Jika jenisnya Tarik Tunai tapi tidak ada Nominal yang keluar
+                        if (currentTx.jenis === "TARIK TUNAI" && !currentTx.nominal) {
+                            currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
+                        } else {
+                            currentTx.status = currentTx.nominal ? "SUKSES" : "NON-FINANSIAL";
+                        }
                     }
+                    
                     if (!currentTx.nominal) currentTx.nominal = 0;
                     
+                    // Masukkan ke Array
                     ejData.push([
                         currentTx.tanggal, 
                         currentTx.atm || 'UNKNOWN_ATM', 
@@ -152,6 +166,8 @@ function processEJ() {
                         currentTx.status
                     ]);
                 }
+                
+                // Reset State
                 currentTx = {};
                 isLookingForJumlah = false;
             }
