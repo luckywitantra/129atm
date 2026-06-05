@@ -3,11 +3,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwnLjfPZrOM21ln6-crxdnG
 // ==========================================
 // 1. UI ROUTER & NAVIGASI SUPER APP
 // ==========================================
+// Variabel penyimpan data sementara sebelum dikonfirmasi
+let pendingUploadData = [];
+let pendingUploadType = '';
+
 function showPage(pageId) {
-    // Sembunyikan semua halaman
     document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
     
-    // Cari halaman target
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.classList.remove('d-none');
@@ -16,24 +18,21 @@ function showPage(pageId) {
         return; 
     }
 
-    // Reset warna Sidebar dan Bottom Nav
     document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.bottom-nav .nav-item').forEach(el => {
         el.classList.remove('active-bottom');
         el.classList.add('text-secondary');
     });
 
-    // Beri warna aktif pada menu yang diklik
     if (event && event.currentTarget) {
         if(event.currentTarget.classList.contains('nav-link')) {
-            event.currentTarget.classList.add('active'); // Desktop
+            event.currentTarget.classList.add('active'); 
         } else {
-            event.currentTarget.classList.add('active-bottom'); // HP
+            event.currentTarget.classList.add('active-bottom'); 
             event.currentTarget.classList.remove('text-secondary');
         }
     }
 
-    // Ambil data jika buka halaman analisa
     if(pageId === 'analisa') fetchSelisihData();
 }
 
@@ -48,7 +47,6 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 // ==========================================
 // 2. PARSER DATA (GL & EJ)
 // ==========================================
-// Parser GL ATM (UPDATE FIX TANGGAL 1-9 & SPASI)
 function processGL() {
     const file = document.getElementById('glFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file GL terlebih dahulu', 'error');
@@ -59,45 +57,33 @@ function processGL() {
         const lines = text.split('\n');
         const glData = [];
         
-        // REGEX DIPERBARUI: 
-        // 1. ^\s* -> Mentoleransi jika ada spasi kosong di awal baris
-        // 2. \d{1,2} -> Mentoleransi angka hari dan bulan yang hanya 1 digit (contoh: 1, 2, ..., 9)
-        // 3. [-/] -> Mentoleransi pemisah tanggal baik menggunakan strip (-) maupun garis miring (/)
         const regex = /^\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})\s+.*?\s+(\w*(?:\d{4})KTM\d+)\s+([\d,]+(?:\.\d+)?)/;
         
         lines.forEach(line => {
             const match = line.match(regex);
             if (match) {
                 const rawResi = match[2];
-                
-                // Menghilangkan angka 0 di depan nomor resi agar matching dengan EJ
                 const noResi = parseInt(rawResi.split('KTM')[0], 10).toString(); 
-                
                 const nominal = parseFloat(match[3].replace(/,/g, ''));
                 const atm = "KTM" + rawResi.split('KTM')[1]; 
                 
-                // Memecah teks tanggal (berdasarkan - atau /)
                 const tglSplit = match[1].split(/[-/]/);
-                
-                // MEMAKSA PENAMBAHAN '0': Jika "1", otomatis jadi "01"
                 const dd = tglSplit[0].padStart(2, '0');
                 const mm = tglSplit[1].padStart(2, '0');
                 const yyyy = tglSplit[2];
                 
-                // Menyusun kembali menjadi format YYYY-MM-DD
                 const formatTgl = `${yyyy}-${mm}-${dd}`;
 
                 glData.push([formatTgl, atm, noResi, nominal, 'TARIK TUNAI', rawResi]);
             }
         });
         
-        sendToBackend('uploadGL', glData);
+        // Menampilkan Preview GL, BUKAN langsung kirim
+        showPreviewModal(glData, 'GL');
     };
     reader.readAsText(file);
 }
 
-// Parser EJ ATM (UPDATE ALGORITMA PENARIKAN TUNAI & ATM BERSAMA)
-// Parser EJ ATM (UPDATE: Fix Bug Nominal "AMOUNT ENTERED" & Kamus Error Lengkap)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -173,9 +159,6 @@ function processEJ() {
                 currentTx.jenis = "TRANSFER";
             }
 
-            // ==========================================
-            // FIX BUG: Mencegah teks log "AMOUNT ENTERED" dibaca sebagai struk
-            // ==========================================
             if ((line.includes("JUMLAH") || line.includes("AMOUNT")) && !line.includes("ENTERED")) {
                 isLookingForJumlah = true;
                 const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
@@ -184,7 +167,6 @@ function processEJ() {
                     isLookingForJumlah = false;
                 }
             } else if (isLookingForJumlah) {
-                // Pastikan baris berikutnya bukan log waktu (contoh "16:46:15...")
                 if (!line.match(/^\d{2}:\d{2}:\d{2}/)) {
                     const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/);
                     if (nextLineJumlah) {
@@ -198,9 +180,6 @@ function processEJ() {
                 currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
             }
 
-            // ==========================================
-            // KAMUS ERROR BARU (DITAMBAHKAN SESUAI LOG TERBARU)
-            // ==========================================
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", 
                 "HIGH BILL MIX ERROR", "LOW BILL MIX ERROR", "DISPENSER ERROR", 
@@ -225,13 +204,85 @@ function processEJ() {
         if (currentTx.noResi) saveCurrentTransaction();
 
         if (ejData.length === 0) return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
-        sendToBackend('uploadEJ', ejData);
+        
+        // Menampilkan Preview EJ, BUKAN langsung kirim
+        showPreviewModal(ejData, 'EJ');
     };
     reader.readAsText(file);
 }
 
 // ==========================================
-// 3. KOMUNIKASI API & RENDER UI
+// 3. ENGINE PREVIEW DATA (POPUP)
+// ==========================================
+function showPreviewModal(data, type) {
+    pendingUploadData = data;
+    pendingUploadType = type === 'GL' ? 'uploadGL' : 'uploadEJ';
+    
+    document.getElementById('previewType').innerText = type;
+    document.getElementById('previewCount').innerText = data.length.toLocaleString('id-ID');
+
+    const thead = document.getElementById('previewTableHeader');
+    const tbody = document.getElementById('previewTableBody');
+    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+
+    if (type === 'GL') {
+        thead.innerHTML = `<tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Jenis</th><th>Referensi</th></tr>`;
+    } else {
+        thead.innerHTML = `<tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Status Transaksi</th></tr>`;
+    }
+
+    const renderLimit = 100;
+    const rowsHtml = data.slice(0, renderLimit).map(row => {
+        if (type === 'GL') {
+            return `<tr>
+                <td class="text-secondary fw-medium">${row[0]}</td>
+                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
+                <td class="fw-bold">${row[2]}</td>
+                <td class="text-primary fw-bold">${formatRp(row[3])}</td>
+                <td><span class="badge bg-info text-dark border">${row[4]}</span></td>
+                <td class="text-muted"><small>${row[5]}</small></td>
+            </tr>`;
+        } else {
+            let statusBadge = '';
+            if (row[4].includes('SUKSES')) {
+                statusBadge = `<span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i> ${row[4]}</span>`;
+            } else if (row[4].includes('GAGAL')) {
+                statusBadge = `<span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1"><i class="bi bi-x-circle-fill me-1"></i> ${row[4]}</span>`;
+            } else {
+                statusBadge = `<span class="badge bg-light text-secondary border px-2 py-1">${row[4]}</span>`;
+            }
+
+            return `<tr>
+                <td class="text-secondary fw-medium">${row[0]}</td>
+                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
+                <td class="fw-bold">${row[2]}</td>
+                <td class="text-primary fw-bold">${formatRp(row[3])}</td>
+                <td>${statusBadge}</td>
+            </tr>`;
+        }
+    }).join('');
+    
+    let extraMsg = data.length > renderLimit 
+        ? `<tr><td colspan="6" class="text-center text-muted fst-italic py-3 bg-light"><i class="bi bi-three-dots"></i> Menampilkan ${renderLimit} baris pertama dari total ${data.length.toLocaleString('id-ID')} baris...</td></tr>` 
+        : '';
+        
+    tbody.innerHTML = rowsHtml + extraMsg;
+
+    const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+    previewModal.show();
+}
+
+// Konfirmasi Upload dari Modal
+document.getElementById('btnConfirmUpload').addEventListener('click', () => {
+    const modalEl = document.getElementById('previewModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) modalInstance.hide();
+    
+    sendToBackend(pendingUploadType, pendingUploadData);
+});
+
+// ==========================================
+// 4. KOMUNIKASI API & RENDER UI
 // ==========================================
 async function sendToBackend(action, data) {
     Swal.fire({ title: 'Menyinkronkan Data...', html: 'Sistem sedang menyeleksi <b>data baru</b> dan melewati duplikat.', allowOutsideClick: false });
@@ -287,7 +338,6 @@ async function fetchSelisihData() {
     }
 }
 
-// PERBAIKAN: Penanganan undefined dan render format tabel modern
 function renderSelisihTables(dataArray) {
     if (!dataArray || !Array.isArray(dataArray)) {
         console.error("Data tidak valid:", dataArray);
