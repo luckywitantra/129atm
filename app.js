@@ -444,75 +444,56 @@ async function fetchDatabaseData() {
 }
 
 function renderDataMaster() {
-    const filterStart = document.getElementById('filterStart').value;
-    const filterEnd = document.getElementById('filterEnd').value;
-    const filterSumber = document.getElementById('filterSumber').value;
-    const filterStatus = document.getElementById('filterStatus').value;
+    // VARIABEL FILTER SUDAH DIPERBARUI SESUAI HTML TERBARU
+    const fStart = document.getElementById('filterStart').value;
+    const fResi = document.getElementById('filterResiDm').value.toLowerCase();
+    const fAtm = document.getElementById('filterAtmDm').value.toLowerCase();
+    const fNom = document.getElementById('filterNominalDm').value;
+    const fStatus = document.getElementById('filterStatus').value;
 
-    // Buat Set Kunci Selisih untuk penandaan cepat
     const selisihKeys = new Set();
-    databaseData.selisih.forEach(row => {
-        selisihKeys.add(`${String(row[0]).substring(0,10)}_${String(row[1]).trim()}_${String(row[2]).trim()}`);
+    databaseData.selisih.forEach(row => { 
+        selisihKeys.add(`${String(row[0]).substring(0,10)}_${String(row[1]).trim()}_${String(row[2]).trim()}`); 
     });
 
     let combinedData = [];
-
-    // Gabungkan GL
-    if (filterSumber === 'SEMUA' || filterSumber === 'GL') {
-        databaseData.gl.forEach(row => {
-            const tgl = String(row[1]).substring(0,10);
-            const isSelisih = selisihKeys.has(`${tgl}_${String(row[2]).trim()}_${String(row[3]).trim()}`);
-            combinedData.push({
-                sumber: 'GL', tanggal: tgl, atm: row[2], resi: row[3], nominal: row[4], ket: `${row[5]} / Ref: ${row[6]}`, isSelisih: isSelisih
-            });
-        });
-    }
-    // Gabungkan EJ
-    if (filterSumber === 'SEMUA' || filterSumber === 'EJ') {
-        databaseData.ej.forEach(row => {
-            const tgl = String(row[1]).substring(0,10);
-            const isSelisih = selisihKeys.has(`${tgl}_${String(row[2]).trim()}_${String(row[3]).trim()}`);
-            combinedData.push({
-                sumber: 'EJ', tanggal: tgl, atm: row[2], resi: row[3], nominal: row[4], ket: `Status: ${row[5]}`, isSelisih: isSelisih
-            });
-        });
-    }
-
-    // Terapkan Filter Tanggal & Status
-    let filteredData = combinedData.filter(item => {
-        let passDate = true; let passStatus = true;
-        if (filterStart) passDate = passDate && (item.tanggal >= filterStart);
-        if (filterEnd) passDate = passDate && (item.tanggal <= filterEnd);
-        if (filterStatus === 'SELISIH') passStatus = item.isSelisih === true;
-        if (filterStatus === 'AMAN') passStatus = item.isSelisih === false;
-        return passDate && passStatus;
+    databaseData.gl.forEach(row => {
+        const tgl = String(row[1]).substring(0,10);
+        combinedData.push({ sumber: 'GL', tanggal: tgl, atm: row[2], resi: row[3], nominal: row[4], ket: `${row[5]}`, isSelisih: selisihKeys.has(`${tgl}_${String(row[2]).trim()}_${String(row[3]).trim()}`) });
+    });
+    databaseData.ej.forEach(row => {
+        const tgl = String(row[1]).substring(0,10);
+        combinedData.push({ sumber: 'EJ', tanggal: tgl, atm: row[2], resi: row[3], nominal: row[4], ket: `Status: ${row[5]}`, isSelisih: selisihKeys.has(`${tgl}_${String(row[2]).trim()}_${String(row[3]).trim()}`) });
     });
 
-    // Urutkan (Paling baru di atas)
+    // LOGIKA FILTERING YANG BARU
+    let filteredData = combinedData.filter(item => {
+        let match = true;
+        if (fStart) match = match && (item.tanggal === fStart);
+        if (fResi) match = match && String(item.resi).toLowerCase().includes(fResi);
+        if (fAtm) match = match && String(item.atm).toLowerCase().includes(fAtm);
+        if (fNom) match = match && String(item.nominal) === fNom;
+        if (fStatus === 'SELISIH') match = match && item.isSelisih;
+        if (fStatus === 'AMAN') match = match && !item.isSelisih;
+        return match;
+    });
+
     filteredData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-    // Render HTML
     const tbody = document.getElementById('tableBodyDataMaster');
-    if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Tidak ada data yang cocok dengan filter.</td></tr>`;
-        return;
-    }
+    if (filteredData.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Tidak ada data yang cocok dengan filter.</td></tr>`;
 
-    // Limit tampilan agar tidak lag (Max 500 baris)
-    const limitData = filteredData.slice(0, 500);
-    
-    tbody.innerHTML = limitData.map(item => {
+    tbody.innerHTML = filteredData.slice(0, 500).map(item => {
         const badgeSumber = item.sumber === 'GL' ? `<span class="badge bg-primary px-3 rounded-pill">Data GL</span>` : `<span class="badge bg-success px-3 rounded-pill">Data EJ</span>`;
-        const rowClass = item.isSelisih ? 'row-selisih' : 'row-aman';
         const warnIcon = item.isSelisih ? `<i class="bi bi-exclamation-triangle-fill text-danger me-2" title="Data ini mengalami selisih!"></i>` : ``;
+        const rowClass = item.isSelisih ? 'row-selisih' : 'row-aman';
 
         return `<tr class="${rowClass}">
             <td>${badgeSumber}</td>
             <td class="fw-medium text-secondary">${item.tanggal}</td>
-            <td class="fw-bold text-dark">${item.atm}</td>
+            <td class="fw-bold">${item.atm}</td>
             <td class="fw-bold">${warnIcon}${item.resi}</td>
             <td class="text-primary fw-bold">${formatRp(item.nominal)}</td>
-            <td class="text-muted small text-truncate" style="max-width:200px;">${item.ket}</td>
+            <td class="text-muted small">${item.ket}</td>
         </tr>`;
     }).join('');
 }
