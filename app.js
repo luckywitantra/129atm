@@ -1,11 +1,29 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbyDAzjzdg6QvXPrTK-hvEptq2i8SlRC_4WQcBBd4WXYTabFYoeQYd4hSc6t1bD-B6uH/exec'; // Masukkan Web App URL dari Langkah 2
 
 // UI Router Sederhana
+// UI Router Sederhana dengan Null-Check
 function showPage(pageId) {
+    // Sembunyikan semua halaman
     document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
-    document.getElementById(pageId).classList.remove('d-none');
+    
+    // Cari halaman target
+    const targetPage = document.getElementById(pageId);
+    
+    // Pengecekan: Jika halaman ditemukan, tampilkan. Jika tidak, log error ke console.
+    if (targetPage) {
+        targetPage.classList.remove('d-none');
+    } else {
+        console.error(`Halaman dengan ID '${pageId}' belum dibuat di HTML.`);
+        return; // Hentikan fungsi agar tidak terjadi error lanjutan
+    }
+
+    // Reset warna menu dan beri warna 'active' pada menu yang diklik
     document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    
+    // Pengecekan event agar aman saat dipanggil manual lewat console
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
 }
 
 // Fitur Dark Mode
