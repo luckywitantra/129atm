@@ -265,6 +265,74 @@ function renderSelisihTablesFiltered() {
 // ==========================================
 // 5. ENGINE WORKFLOW PENYELESAIAN (SELESAI & B/A)
 // ==========================================
+const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
+
+function renderSelisihTablesFiltered() {
+    if (!globalSelisihData) return;
+    
+    // Ambil Nilai Filter
+    const fResi = document.getElementById('filterResiAn').value.toLowerCase();
+    const fAtm = document.getElementById('filterAtmAn').value.toLowerCase();
+    const fNom = document.getElementById('filterNominalAn').value;
+    const sortDate = document.getElementById('sortDateAn').value;
+
+    // Filter Data
+    let filteredData = globalSelisihData.filter(row => {
+        let match = true;
+        if(fResi) match = match && String(row[2]).toLowerCase().includes(fResi);
+        if(fAtm) match = match && String(row[1]).toLowerCase().includes(fAtm);
+        if(fNom) match = match && String(row[3]) === fNom;
+        return match;
+    });
+
+    // Sort Tanggal
+    filteredData.sort((a, b) => sortDate === 'desc' ? new Date(b[0]) - new Date(a[0]) : new Date(a[0]) - new Date(b[0]));
+
+    // Pisahkan Data (Belum Selesai Lebih, Belum Selesai Kurang, Sudah Selesai)
+    const lebihArr = filteredData.filter(row => row[4] === 'SELISIH LEBIH' && String(row[5]).toLowerCase() === 'belum');
+    const kurangArr = filteredData.filter(row => row[4] === 'SELISIH KURANG' && String(row[5]).toLowerCase() === 'belum');
+    const selesaiArr = filteredData.filter(row => String(row[5]).toLowerCase() !== 'belum');
+
+    // Hitung Akumulasi Total
+    const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    const totKurang = kurangArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    document.getElementById('totalLebihRp').innerText = formatRp(totLebih);
+    document.getElementById('totalKurangRp').innerText = formatRp(totKurang);
+
+    document.getElementById('countLebih').innerText = lebihArr.length;
+    document.getElementById('countKurang').innerText = kurangArr.length;
+
+    // Render Function
+    const renderTable = (arr, type) => {
+        if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted">Data bersih atau tidak ditemukan.</td></tr>`;
+        return arr.map(row => {
+            const tgl = String(row[0] || '').substring(0,10);
+            const rawStr = encodeURIComponent(JSON.stringify(row));
+            
+            let actionBtn = "";
+            if (type === 'belum') {
+                actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold" onclick="event.stopPropagation(); openResolveModal('${rawStr}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
+            } else {
+                actionBtn = `<button class="btn btn-sm btn-outline-danger rounded-pill fw-bold me-1" onclick="event.stopPropagation(); revertSelisih('${rawStr}')"><i class="bi bi-arrow-counterclockwise"></i> Batalkan Selesai</button>
+                             <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="event.stopPropagation(); generateBA('${rawStr}')"><i class="bi bi-printer"></i> B/A</button>`;
+            }
+
+            return `<tr class="align-middle" style="cursor:pointer;" onclick="showDetailPopup('${rawStr}')" title="Klik baris untuk lihat detail lengkap">
+                <td class="fw-medium text-secondary">${tgl}</td>
+                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
+                <td class="fw-bold fs-6">${row[2]}</td>
+                <td class="text-primary fw-bold">${formatRp(row[3])}</td>
+                <td><small class="text-muted d-block text-truncate" style="max-width:200px;">${row[6]}</small></td>
+                <td>${actionBtn}</td>
+            </tr>`;
+        }).join('');
+    };
+
+    document.getElementById('tableBodyLebih').innerHTML = renderTable(lebihArr, 'belum');
+    document.getElementById('tableBodyKurang').innerHTML = renderTable(kurangArr, 'belum');
+    document.getElementById('tableBodySelesai').innerHTML = renderTable(selesaiArr, 'selesai');
+}
+
 function openResolveModal(rawStr) {
     activeResolveRow = JSON.parse(decodeURIComponent(rawStr));
     document.getElementById('resolveIdText').innerText = `Resi ${activeResolveRow[2]} (Rp ${activeResolveRow[3].toLocaleString()})`;
