@@ -136,5 +136,45 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="app.js"></script>
+
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden glass-card">
+                
+                <div class="modal-header bg-gradient-banking text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="previewModalLabel">
+                        <i class="bi bi-file-earmark-text me-2 text-warning"></i> Pratinjau Data <span id="previewType" class="text-warning"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-0 bg-light">
+                    <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center shadow-sm">
+                        <span class="fw-medium text-secondary">Total Transaksi Terbaca: <strong id="previewCount" class="text-dark fs-5">0</strong> Baris</span>
+                        <span class="badge bg-warning-subtle text-dark border border-warning rounded-pill px-3 py-2">
+                            <i class="bi bi-shield-check text-success"></i> Validasi data sebelum upload
+                        </span>
+                    </div>
+                    
+                    <div class="table-responsive" style="max-height: 55vh;">
+                        <table class="table table-hover align-middle mb-0 text-nowrap preview-table">
+                            <thead class="sticky-top shadow-sm" id="previewTableHeader">
+                                </thead>
+                            <tbody id="previewTableBody" class="bg-white">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-white border-top-0 py-3">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-medium border" data-bs-dismiss="modal">Batalkan</button>
+                    <button type="button" class="btn rounded-pill px-4 fw-bold banking-btn shadow-sm" id="btnConfirmUpload">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Konfirmasi & Upload
+                    </button>
+                </div>
+                
+            </div>
+        </div>
+    </div>
 </body>
 </html>
