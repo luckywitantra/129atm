@@ -84,6 +84,7 @@ function processGL() {
 }
 
 // Parser EJ ATM (UPDATE ALGORITMA PENARIKAN TUNAI & ATM BERSAMA)
+// Parser EJ ATM (UPDATE BILINGUAL & SPASI GANDA)
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
     if (!file) return Swal.fire('Error', 'Pilih file EJ terlebih dahulu', 'error');
@@ -96,8 +97,6 @@ function processEJ() {
         
         let currentTx = {}; 
         let isLookingForJumlah = false;
-        
-        // Memori ATM dan Tanggal 
         let lastValidAtmId = 'UNKNOWN_ATM'; 
         let lastValidDate = '';
 
@@ -105,7 +104,7 @@ function processEJ() {
             if (currentTx.noResi) {
                 if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
 
-                // PRIORITAS UTAMA: Jika uang fisik sudah diambil, transaksi MUTLAK SUKSES
+                // Prioritas: Jika ada CASH TAKEN, pasti SUKSES
                 if (currentTx.cashTaken) {
                     currentTx.status = "SUKSES";
                 } else if (!currentTx.status) {
@@ -136,7 +135,6 @@ function processEJ() {
                 if (currentTx.noResi) saveCurrentTransaction();
             }
 
-            // DETEKTOR KUNCI: Menandai bahwa uang fisik telah keluar dari mesin
             if (line.includes("CASH TAKEN")) {
                 currentTx.cashTaken = true;
             }
@@ -151,20 +149,22 @@ function processEJ() {
                 }
             }
 
-            const resiMatch = line.match(/(?:NO RESI|NO REF\.?|REFF NO)\s*:?\s*(\d+)/);
+            // FIX 1: Tangani spasi ganda seperti "NO  REF" dan ubah ke string untuk hilangkan leading zeros
+            const resiMatch = line.match(/(?:NO\s+RESI|NO\s+REF\.?|REFF\s+NO)\s*:?\s*(\d+)/i);
             if (resiMatch) currentTx.noResi = parseInt(resiMatch[1], 10).toString();
             
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
 
-            // PERBAIKAN LOGIKA JENIS: "ATM BERSAMA" dihapus dari deteksi Transfer agar Tarik Tunai Off-Us tidak error
-            if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI")) {
+            // FIX 2: Tangani bahasa Inggris "WITHDRAWAL"
+            if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL")) {
                 currentTx.jenis = "TARIK TUNAI";
             } else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN")) {
                 currentTx.jenis = "TRANSFER";
             }
 
-            if (line.includes("JUMLAH")) {
+            // FIX 3: Tangani bahasa Inggris "AMOUNT"
+            if (line.includes("JUMLAH") || line.includes("AMOUNT")) {
                 isLookingForJumlah = true;
                 const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
                 if (inlineJumlah) {
@@ -179,7 +179,7 @@ function processEJ() {
                 }
             }
 
-            if (line.includes("TRANSAKSI SUKSES")) {
+            if (line.includes("TRANSAKSI SUKSES") || line.includes("SUCCESSFUL")) {
                 currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
             }
 
@@ -190,7 +190,6 @@ function processEJ() {
             ];
             
             errorKeywords.forEach(err => {
-                // Jangan timpa status menjadi gagal jika statusnya sudah dijamin sukses oleh indikator "CASH TAKEN"
                 if (line.includes(err) && !currentTx.cashTaken) {
                     currentTx.status = "GAGAL - " + err;
                 }
@@ -207,7 +206,6 @@ function processEJ() {
     };
     reader.readAsText(file);
 }
-
 // ==========================================
 // 3. KOMUNIKASI API & RENDER UI
 // ==========================================
