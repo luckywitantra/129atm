@@ -22,24 +22,62 @@ const PlayfulAlert = Swal.mixin({
     buttonsStyling: false
 });
 
+// ==========================================
+// KONFIGURASI SURAT B/A & TELLER DINAMIS
+// ==========================================
 window.superApp = window.superApp || {};
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Load Konfigurasi BA
     document.getElementById('cfgCabang').value = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
     document.getElementById('cfgAlamat').value = localStorage.getItem('cfgAlamat') || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
     document.getElementById('cfgPimpinan').value = localStorage.getItem('cfgPimpinan') || 'ENDY PRATAMA';
-    document.getElementById('cfgTeller').value = localStorage.getItem('cfgTeller') || 'FISTRI ARIANDINI';
     document.getElementById('cfgAdmin').value = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
+    
+    // Bind event saat modal setting dibuka
+    const settingModal = document.getElementById('modal-system-settings');
+    if(settingModal) {
+        settingModal.addEventListener('show.bs.modal', renderTellerConfig);
+    }
 });
+
+function renderTellerConfig() {
+    const container = document.getElementById('tellerConfigContainer');
+    if(!container) return;
+    
+    // Kumpulkan ATM unik dari Database GL/EJ
+    let atms = new Set();
+    (databaseData.ej || []).forEach(r => { if(r[2]) atms.add(String(r[2]).trim().toUpperCase()); });
+    (databaseData.gl || []).forEach(r => { if(r[2]) atms.add(String(r[2]).trim().toUpperCase()); });
+    
+    let atmArray = Array.from(atms).filter(a => a !== 'ATM' && a !== 'ID MESIN' && a !== '');
+    if(atmArray.length === 0) atmArray = ['KTM12901']; // Default jika kosong
+    
+    let html = '<label class="small fw-bold text-muted mb-2"><i class="bi bi-people-fill text-primary"></i> Penanggung Jawab (Teller) per Mesin ATM</label><div class="row g-2">';
+    atmArray.forEach(atm => {
+        let savedTeller = localStorage.getItem('cfgTeller_' + atm) || '';
+        html += `<div class="col-md-6">
+                    <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden">
+                        <span class="input-group-text bg-primary text-white fw-bold border-0" style="width: 90px; justify-content: center;">${atm}</span>
+                        <input type="text" class="form-control cfg-teller-input border-0 bg-light fw-bold" data-atm="${atm}" value="${savedTeller}" placeholder="Nama Teller">
+                    </div>
+                 </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
 
 superApp.saveBAConfig = function() {
     localStorage.setItem('cfgCabang', document.getElementById('cfgCabang').value);
     localStorage.setItem('cfgAlamat', document.getElementById('cfgAlamat').value);
     localStorage.setItem('cfgPimpinan', document.getElementById('cfgPimpinan').value);
-    localStorage.setItem('cfgTeller', document.getElementById('cfgTeller').value);
     localStorage.setItem('cfgAdmin', document.getElementById('cfgAdmin').value);
-    PlayfulAlert.fire('Berhasil!', 'Konfigurasi Surat & Pejabat berhasil disimpan.', 'success');
+    
+    // Simpan semua teller spesifik
+    document.querySelectorAll('.cfg-teller-input').forEach(input => {
+        localStorage.setItem('cfgTeller_' + input.getAttribute('data-atm'), input.value.toUpperCase());
+    });
+    
+    PlayfulAlert.fire('Berhasil!', 'Konfigurasi Surat & Pejabat berhasil diperbarui.', 'success');
 };
 
 function showPage(pageId) {
@@ -262,13 +300,24 @@ function renderSelisihTablesFiltered() {
     const kurangArr = filteredData.filter(row => row[4] === 'SELISIH KURANG' && String(row[5]).toLowerCase() === 'belum');
     const selesaiArr = filteredData.filter(row => String(row[5]).toLowerCase() !== 'belum');
 
-    const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+  const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
     const totKurang = kurangArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    const totSelesai = selesaiArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    const totBelumSelesai = totLebih + totKurang;
+    const totSemua = totSelesai + totBelumSelesai;
+    
     document.getElementById('totalLebihRp').innerText = formatRp(totLebih);
     document.getElementById('totalKurangRp').innerText = formatRp(totKurang);
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
+    // UPDATE PAPAN HIERARKI ANALISA
+    document.getElementById('hierarki-tot-selisih').innerText = formatRp(totSemua);
+    document.getElementById('hierarki-tot-selesai').innerText = formatRp(totSelesai);
+    document.getElementById('hierarki-tot-belum').innerText = formatRp(totBelumSelesai);
+    let persenAnalisa = totSemua === 0 ? 0 : (totSelesai / totSemua) * 100;
+    document.getElementById('hierarki-progress').style.width = `${persenAnalisa}%`;
+    
     // --- MENGHITUNG KUOTA BA YANG SUDAH TERPAKAI ---
     let baUsageMap = new Map();
     selesaiArr.forEach(r => {
@@ -467,7 +516,7 @@ function generateBA(rawStr) {
     document.getElementById('cetak_cabang').innerText = namaCabang;
     document.getElementById('cetak_alamat').innerText = localStorage.getItem('cfgAlamat') || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
     document.getElementById('cetak_pimpinan').innerText = localStorage.getItem('cfgPimpinan') || 'ENDY PRATAMA';
-    document.getElementById('cetak_teller').innerText = localStorage.getItem('cfgTeller') || 'FISTRI ARIANDINI';
+    document.getElementById('cetak_teller').innerText = localStorage.getItem('cfgTeller_' + atmId.toUpperCase()) || 'TELLER AKTIF';
     document.getElementById('cetak_admin').innerText = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
     
     document.getElementById('cetak_kota').innerText = kota;
@@ -672,6 +721,99 @@ function previewBAOpname() {
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
 
+// FUNGSI UNTUK MENCETAK ULANG RIWAYAT BA DARI TABEL
+function printRiwayatBAOpname(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr));
+    let waktuInput = row[1]; // Ex: 2026-08-20 14:30
+    let atmId = row[2];
+    let sSblm = parseFloat(row[3]) || 0;
+    let sTmbh = parseFloat(row[4]) || 0;
+    let fisik = parseFloat(row[6]) || 0;
+    let selisih = parseFloat(row[7]) || 0;
+
+    let dateObj = new Date(waktuInput.replace(' ', 'T'));
+    let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+    let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+    
+    let sysTotal = sSblm + sTmbh;
+    let kurang = selisih < 0 ? Math.abs(selisih) : 0;
+    let lebih = selisih > 0 ? selisih : 0;
+
+    let namaCabang = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
+    let admin = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
+    
+    // AMBIL NAMA TELLER SPESIFIK UNTUK ATM INI DARI LOKAL STORAGE
+    let teller = localStorage.getItem('cfgTeller_' + atmId.toUpperCase());
+    if(!teller) teller = "TELLER AKTIF"; // Fallback jika belum disetting
+
+    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase();
+    document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
+    document.getElementById('cetakOp_petugas1').innerText = `( ${teller} )`;
+    document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
+
+    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()];
+    document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5);
+    document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
+    
+    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm);
+    document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh);
+    document.getElementById('cetakSysTotal').innerText = formatNum(sysTotal);
+    document.getElementById('cetakFisik').innerText = formatNum(fisik);
+    document.getElementById('cetakKurang').innerText = formatNum(kurang);
+    document.getElementById('cetakLebih').innerText = formatNum(lebih);
+    
+    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
+}
+
+// PERBAIKI JUGA `previewBAOpname()` (Cetak Langsung dari Form Input)
+function previewBAOpname() {
+    let atmId = document.getElementById('opAtmId').value || ".......";
+    let waktuInput = document.getElementById('opWaktu').value;
+    
+    if (!waktuInput) return PlayfulAlert.fire('Oops!', 'Isi waktu pelaksanaan dulu ya.', 'warning');
+    
+    let dateObj = new Date(waktuInput);
+    let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+    let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+    
+    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0;
+    let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0;
+    let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
+    let sysTotal = sSblm + sTmbh;
+    let selisih = fisik - sSblm; 
+    
+    let kurang = selisih < 0 ? Math.abs(selisih) : 0;
+    let lebih = selisih > 0 ? selisih : 0;
+
+    let namaCabang = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
+    let admin = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
+    
+    // Tarik Teller Dinamis
+    let teller = localStorage.getItem('cfgTeller_' + atmId.toUpperCase());
+    if(!teller) teller = "TELLER AKTIF"; 
+
+    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase();
+    document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
+    document.getElementById('cetakOp_petugas1').innerText = `( ${teller} )`;
+    document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
+
+    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()];
+    document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5);
+    document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
+    
+    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm);
+    document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh);
+    document.getElementById('cetakSysTotal').innerText = formatNum(sysTotal);
+    document.getElementById('cetakFisik').innerText = formatNum(fisik);
+    document.getElementById('cetakKurang').innerText = formatNum(kurang);
+    document.getElementById('cetakLebih').innerText = formatNum(lebih);
+    
+    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
+}
+
+
 async function fetchOpnameHistory() {
     document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
     try {
@@ -692,6 +834,9 @@ function renderOpnameTable() {
     }
     
     let baUsageMap = new Map();
+    let totalFisikSemuaBA = 0;
+    let totalDigunakan = 0;
+
     if (globalSelisihData) {
         let selesaiData = globalSelisihData.filter(r => String(r[5]).toLowerCase() !== 'belum');
         selesaiData.forEach(r => {
@@ -702,6 +847,7 @@ function renderOpnameTable() {
             if (match) {
                 let key = `${match[1]}_${atmTerpakai}`;
                 baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai);
+                totalDigunakan += nominalTerpakai; // Akumulasi total dipakai
             }
         });
     }
@@ -712,6 +858,8 @@ function renderOpnameTable() {
         let tglBA_str = String(row[1]).substring(0,10);
         let atmBA = String(row[2]).trim();
         let selisihAsli = parseFloat(row[7]);
+        
+        totalFisikSemuaBA += Math.abs(selisihAsli); // Akumulasi total fisik
         
         let keyBA = `${tglBA_str}_${atmBA}`;
         let terpakai = baUsageMap.get(keyBA) || 0;
@@ -730,7 +878,7 @@ function renderOpnameTable() {
                         <span>${statusTeks}</span>
                     </div>
                     <div class="progress" style="height: 4px;">
-                        <div class="progress-bar ${sisa === 0 ? 'bg-success' : 'bg-warning'}" role="progressbar" style="width: ${persenPakai}%"></div>
+                        <div class="progress-bar ${sisa === 0 ? 'bg-success' : 'bg-info'}" role="progressbar" style="width: ${persenPakai}%"></div>
                     </div>
                 </div>`;
         } else {
@@ -745,11 +893,19 @@ function renderOpnameTable() {
             <td><span class="badge ${badgeClass} rounded-pill shadow-sm" style="font-size:0.65rem">${badgeText} ${formatRp(Math.abs(selisihAsli))}</span></td>
             <td>${progressHtml}</td>
             <td>
+                <button class="btn btn-sm btn-light text-success rounded-circle border shadow-sm bouncy-hover me-1" onclick="printRiwayatBAOpname('${rowDataStr}')" title="Cetak Ulang B/A"><i class="bi bi-printer-fill"></i></button>
                 <button class="btn btn-sm btn-light text-primary rounded-circle border shadow-sm bouncy-hover me-1" onclick="editOpname('${rowDataStr}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
                 <button class="btn btn-sm btn-light text-danger rounded-circle border shadow-sm bouncy-hover" onclick="deleteOpname('${row[0]}')" title="Hapus"><i class="bi bi-trash-fill"></i></button>
             </td>
         </tr>`;
     }).join('');
+
+    // UPDATE PAPAN HIERARKI OPNAME
+    document.getElementById('op-hierarki-tot').innerText = formatRp(totalFisikSemuaBA);
+    document.getElementById('op-hierarki-pakai').innerText = formatRp(totalDigunakan);
+    document.getElementById('op-hierarki-sisa').innerText = formatRp(totalFisikSemuaBA - totalDigunakan);
+    let persenOpname = totalFisikSemuaBA === 0 ? 0 : (totalDigunakan / totalFisikSemuaBA) * 100;
+    document.getElementById('op-hierarki-progress').style.width = `${persenOpname}%`;
 }
 
 function editOpname(rawStr) {
