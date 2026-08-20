@@ -446,3 +446,105 @@ function renderDataMaster() {
         </tr>`;
     }).join('');
 }
+
+// ==========================================
+// 7. ENGINE OPNAME FISIK ATM & A4 PDF
+// ==========================================
+
+// Format angka lokal (tanpa Rp) untuk PDF
+const formatNum = (angka) => (angka ? new Intl.NumberFormat('id-ID').format(angka) : "0");
+
+function calcOpname() {
+    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0;
+    let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0;
+    let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
+    
+    let sysTotal = sSblm + sTmbh;
+    let selisih = fisik - sysTotal;
+    
+    document.getElementById('opSysTotal').innerText = formatRp(sysTotal);
+    
+    let textSelisih = document.getElementById('opSelisihText');
+    let badgeSelisih = document.getElementById('opSelisihBadge');
+    
+    textSelisih.innerText = formatRp(Math.abs(selisih));
+    
+    if (selisih > 0) {
+        textSelisih.className = "fw-black mb-0 text-success";
+        badgeSelisih.className = "badge bg-success rounded-pill mt-2 px-3";
+        badgeSelisih.innerText = "Selisih LEBIH (Uang Sisa)";
+    } else if (selisih < 0) {
+        textSelisih.className = "fw-black mb-0 text-danger";
+        badgeSelisih.className = "badge bg-danger rounded-pill mt-2 px-3";
+        badgeSelisih.innerText = "Selisih KURANG (Uang Hilang)";
+    } else {
+        textSelisih.className = "fw-black mb-0 text-secondary";
+        badgeSelisih.className = "badge bg-secondary rounded-pill mt-2 px-3";
+        badgeSelisih.innerText = "Balance / Seimbang";
+    }
+}
+
+function previewBAOpname() {
+    let atmId = document.getElementById('opAtmId').value || ".......";
+    let waktuInput = document.getElementById('opWaktu').value;
+    
+    if (!waktuInput) return PlayfulAlert.fire('Oops!', 'Isi waktu pelaksanaan dulu ya.', 'warning');
+    
+    let dateObj = new Date(waktuInput);
+    let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+    let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+    
+    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0;
+    let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0;
+    let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
+    let sysTotal = sSblm + sTmbh;
+    let selisih = fisik - sysTotal;
+    
+    let kurang = selisih < 0 ? Math.abs(selisih) : 0;
+    let lebih = selisih > 0 ? selisih : 0;
+
+    // Inject ke Template Kertas A4
+    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()];
+    document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5);
+    document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
+    
+    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm);
+    document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh);
+    document.getElementById('cetakSysTotal').innerText = formatNum(sysTotal);
+    document.getElementById('cetakFisik').innerText = formatNum(fisik);
+    document.getElementById('cetakKurang').innerText = formatNum(kurang);
+    document.getElementById('cetakLebih').innerText = formatNum(lebih);
+    
+    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
+}
+
+async function saveOpnameData() {
+    let payload = {
+        atm: document.getElementById('opAtmId').value,
+        waktu: document.getElementById('opWaktu').value,
+        sysSebelum: document.getElementById('opSysSebelum').value,
+        sysTambah: document.getElementById('opSysTambah').value,
+        fisik: document.getElementById('opFisik').value
+    };
+    
+    if(!payload.atm || !payload.waktu || !payload.fisik) {
+        return PlayfulAlert.fire('Isian Kurang', 'Pastikan ID ATM, Waktu, dan Saldo Fisik terisi.', 'warning');
+    }
+    
+    PlayfulAlert.fire({ title: 'Menyimpan Opname...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', data: payload }) });
+        const result = await response.json();
+        if(result.success) {
+            PlayfulAlert.fire('Berhasil!', 'Data Opname Fisik sukses masuk ke Database.', 'success');
+            // Reset Form Opsional
+            document.getElementById('opSysSebelum').value = '';
+            document.getElementById('opSysTambah').value = '';
+            document.getElementById('opFisik').value = '';
+            calcOpname();
+        } else {
+            PlayfulAlert.fire('Gagal', result.message, 'error');
+        }
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+}
