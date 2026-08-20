@@ -214,7 +214,7 @@ async function fetchSelisihData() {
     document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
     document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
     try {
-        // Ambil data Selisih DAN data Opname secara bersamaan
+        // AMBIL DATA SELISIH & OPNAME SEKALIGUS (PARALEL)
         const [resSelisih, resOpname] = await Promise.all([
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })}),
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname' })})
@@ -232,13 +232,11 @@ async function fetchSelisihData() {
 function renderSelisihTablesFiltered() {
     if (!globalSelisihData) return;
     
-    // Ambil Nilai Filter
     const fResi = document.getElementById('filterResiAn').value.toLowerCase();
     const fAtm = document.getElementById('filterAtmAn').value.toLowerCase();
     const fNom = document.getElementById('filterNominalAn').value;
     const sortDate = document.getElementById('sortDateAn').value;
 
-    // Filter Data
     let filteredData = globalSelisihData.filter(row => {
         let match = true;
         if(fResi) match = match && String(row[2]).toLowerCase().includes(fResi);
@@ -247,84 +245,82 @@ function renderSelisihTablesFiltered() {
         return match;
     });
 
-    // Sort Tanggal
     filteredData.sort((a, b) => sortDate === 'desc' ? new Date(b[0]) - new Date(a[0]) : new Date(a[0]) - new Date(b[0]));
 
-    // Pisahkan Data
     const lebihArr = filteredData.filter(row => row[4] === 'SELISIH LEBIH' && String(row[5]).toLowerCase() === 'belum');
     const kurangArr = filteredData.filter(row => row[4] === 'SELISIH KURANG' && String(row[5]).toLowerCase() === 'belum');
     const selesaiArr = filteredData.filter(row => String(row[5]).toLowerCase() !== 'belum');
 
-    // Hitung Akumulasi Total
     const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
     const totKurang = kurangArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
     document.getElementById('totalLebihRp').innerText = formatRp(totLebih);
     document.getElementById('totalKurangRp').innerText = formatRp(totKurang);
-
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
-    // Render Function dengan Estetika Playful & Compact + AI MATCHER
     const renderTable = (arr, type) => {
         if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-smile fs-4 d-block mb-1"></i> Data bersih atau tidak ditemukan.</td></tr>`;
         return arr.map(row => {
-            const tglTrx = new Date(row[0]);
-            const tglStr = String(row[0] || '').substring(0,10);
+            const tglTrxStr = String(row[0] || '').substring(0,10);
             const nominalSelisih = parseFloat(row[3]);
             const atmTrx = String(row[1]).trim();
             const rawStr = encodeURIComponent(JSON.stringify(row));
             
-            // ========================================================
-            // 🤖 SMART AI MATCHER: MENCARI BA OPNAME SEBAGAI JAWABAN
-            // ========================================================
             let aiBadgeHtml = '';
+            let aiSaranTeks = ''; 
             
-            // Hanya jalankan fitur rekomendasi AI pada tab "Belum Selesai"
+            // 🤖 LOGIKA AI MATCHER (Anti Gagal)
             if (type === 'belum' && typeof globalOpnameData !== 'undefined' && globalOpnameData.length > 0) {
                 
-                // Urutkan Riwayat BA dari yang paling lama ke paling baru
-                let sortedOpname = [...globalOpnameData].sort((a,b) => new Date(a[1]) - new Date(b[1]));
+                let sortedOpname = [...globalOpnameData].sort((a,b) => {
+                    let dA = new Date(String(a[1]).replace(' ', 'T')).getTime();
+                    let dB = new Date(String(b[1]).replace(' ', 'T')).getTime();
+                    return dA - dB;
+                });
                 
-                // Cari BA Opname yang logis untuk menebus selisih transaksi ini
+                // Paksa waktu transaksi jam 00:00:00
+                let trxTime = new Date(tglTrxStr + "T00:00:00").getTime();
+                
                 let matchedBA = sortedOpname.find(ba => {
-                    let tglBA = new Date(ba[1]);
+                    let tglBA_str = String(ba[1]).replace(' ', 'T');
+                    let baTime = new Date(tglBA_str).getTime();
+                    
                     let atmBA = String(ba[2]).trim();
-                    let selisihFisik = parseFloat(ba[7]); 
+                    let selisihFisik = parseFloat(ba[7]) || 0; 
                     
-                    // ATURAN 1: ID Mesin ATM harus sama persis
+                    // ATM Harus Sama
                     if (atmBA !== atmTrx) return false;
-                    
-                    // ATURAN 2: Tanggal BA Opname harus >= Tanggal Transaksi (Karena BA dilakukan SETELAH transaksi terjadi)
-                    if (tglBA < tglTrx) return false;
-                    
-                    // ATURAN 3: Nominal fisik pada BA harus bisa meng-cover (atau sama dengan) nominal selisih sistem
+                    // BA harus dilakukan SETELAH atau PADA HARI transaksi (masa depan dari transaksi)
+                    if (baTime < trxTime) return false;
+                    // Fisik laci harus sanggup mengkompensasi selisih
                     if (Math.abs(selisihFisik) < nominalSelisih) return false;
                     
-                    // ATURAN 4: Kelogisan Sifat. 
-                    // Jika Sistem GL "SELISIH LEBIH" (Uang nganggur di laci), maka BA Fisik juga harus bernilai positif (LEBIH)
-                    // Jika Sistem GL "SELISIH KURANG" (Uang dicolong/keluar), maka BA Fisik juga harus bernilai negatif (KURANG)
-                    let isValidLogically = (row[4] === 'SELISIH LEBIH' && selisihFisik > 0) || (row[4] === 'SELISIH KURANG' && selisihFisik < 0);
+                    // Sifat harus sejalan:
+                    // Lebih GL = Uang Nyangkut di Mesin (Fisik Lebih / Positif)
+                    // Kurang GL = Uang Keluar (Fisik Hilang / Negatif)
+                    let isValid = (row[4] === 'SELISIH LEBIH' && selisihFisik > 0) || (row[4] === 'SELISIH KURANG' && selisihFisik < 0);
                     
-                    return isValidLogically;
+                    return isValid;
                 });
 
                 if (matchedBA) {
-                    let tglMatched = matchedBA[1].substring(0,10);
-                    aiBadgeHtml = `<div class="mt-1"><span class="badge bg-warning text-dark border border-warning shadow-sm rounded-pill bouncy-hover" style="font-size:0.65rem" title="AI merekomendasikan: Selisih tgl ${tglStr} ini bisa ditutup menggunakan hasil Berita Acara tgl ${tglMatched}."><i class="bi bi-robot text-primary"></i> <b>Saran AI:</b> Pakai BA ${tglMatched}</span></div>`;
+                    let tglMatched = String(matchedBA[1]).substring(0,10);
+                    aiSaranTeks = `Selesai: Kompensasi selisih tercakup dalam Berita Acara Opname fisik ATM tanggal ${tglMatched}.`;
+                    aiBadgeHtml = `<div class="mt-1"><span class="badge bg-warning text-dark border border-warning shadow-sm rounded-pill bouncy-hover" style="font-size:0.65rem" title="Klik Selesaikan, alasan akan terisi otomatis berdasarkan BA tgl ${tglMatched}"><i class="bi bi-robot text-primary"></i> <b>Saran AI:</b> Pakai BA ${tglMatched}</span></div>`;
                 }
             }
-            // ========================================================
 
             let actionBtn = "";
             if (type === 'belum') {
-                actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); openResolveModal('${rawStr}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
+                let encodedSaran = encodeURIComponent(aiSaranTeks);
+                actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); openResolveModal('${rawStr}', '${encodedSaran}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
             } else {
                 actionBtn = `<button class="btn btn-sm btn-outline-danger rounded-pill fw-bold me-1 shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); revertSelisih('${rawStr}')"><i class="bi bi-arrow-counterclockwise"></i> Batal</button>
                              <button class="btn btn-sm btn-dark rounded-pill shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); generateBA('${rawStr}')"><i class="bi bi-printer"></i> B/A</button>`;
             }
 
             return `<tr class="align-middle" style="cursor:pointer;" onclick="showDetailPopup('${rawStr}')" title="Klik baris untuk lihat detail lengkap">
-                <td class="fw-medium text-secondary">${tglStr}</td>
+                <td class="fw-medium text-secondary">${tglTrxStr}</td>
                 <td><span class="badge bg-secondary shadow-sm rounded-pill">${row[1]}</span></td>
                 <td class="fw-bold">${row[2]}</td>
                 <td class="text-primary fw-bold">${formatRp(nominalSelisih)}</td>
@@ -342,13 +338,22 @@ function renderSelisihTablesFiltered() {
 // ==========================================
 // 5. ENGINE WORKFLOW PENYELESAIAN (SELESAI & B/A)
 // ==========================================
-function openResolveModal(rawStr) {
+function openResolveModal(rawStr, encodedSaran = '') {
     activeResolveRow = JSON.parse(decodeURIComponent(rawStr));
+    let saranText = encodedSaran ? decodeURIComponent(encodedSaran) : '';
+    
     document.getElementById('resolveIdText').innerText = `Resi ${activeResolveRow[2]} (${formatRp(activeResolveRow[3])})`;
-    document.getElementById('resolveReason').value = activeResolveRow[6]; 
+    
+    // Auto-fill Teks Saran AI jika keterangan sebelumnya masih kosong/belum
+    let existingReason = activeResolveRow[6] || '';
+    if (existingReason.toLowerCase() === 'belum' || existingReason === '') {
+        document.getElementById('resolveReason').value = saranText; 
+    } else {
+        document.getElementById('resolveReason').value = existingReason; 
+    }
+    
     new bootstrap.Modal(document.getElementById('resolveModal')).show();
 }
-
 async function submitResolve() {
     const reason = document.getElementById('resolveReason').value.trim();
     if(!reason) return PlayfulAlert.fire('Tunggu dulu!', 'Harap isi alasan penyelesaiannya ya.', 'warning');
