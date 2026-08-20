@@ -109,6 +109,7 @@
                         <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill me-2 text-info"></i> Upload</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('analisa')"><i class="bi bi-search me-2 text-warning"></i> Analisa</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('datamaster')"><i class="bi bi-database-fill me-2 text-success"></i> Data Master</a></li>
+                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('opname')"><i class="bi bi-safe me-2 text-danger"></i> Opname ATM</a></li>
                     </ul>
                 </div>
             </nav>
@@ -215,6 +216,64 @@
                     </div>
                 </div>
 
+                <!-- OPNAME FISIK ATM -->
+                <div id="opname" class="page-section d-none fade-in">
+                    <h4 class="fw-bold mb-3 mt-2 text-dark">Opname & Pengisian ATM</h4>
+                    
+                    <div class="row g-3">
+                        <div class="col-lg-8">
+                            <div class="card glass-card shadow-sm border-0 rounded-4">
+                                <div class="card-body p-4">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold text-muted mb-1">ID Mesin ATM</label>
+                                            <input type="text" id="opAtmId" class="form-control rounded-pill bg-light fw-bold" placeholder="Contoh: 12901">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="small fw-bold text-muted mb-1">Waktu Pelaksanaan</label>
+                                            <input type="datetime-local" id="opWaktu" class="form-control rounded-pill bg-light text-secondary">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-primary-subtle rounded-4 border border-primary-subtle">
+                                                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-pc-display"></i> Data Sistem (Core)</h6>
+                                                <label class="small fw-bold text-muted mb-1">1. Saldo Sebelum Pengisian</label>
+                                                <input type="number" id="opSysSebelum" class="form-control form-control-sm rounded-pill mb-2 fw-bold" placeholder="Rp 0" oninput="calcOpname()">
+                                                
+                                                <label class="small fw-bold text-muted mb-1">2. Kas Ditambahkan</label>
+                                                <input type="number" id="opSysTambah" class="form-control form-control-sm rounded-pill mb-2 fw-bold" placeholder="Rp 0" oninput="calcOpname()">
+                                                
+                                                <label class="small fw-bold text-primary mb-1 mt-2">Total Saldo Sistem Target:</label>
+                                                <h4 class="fw-black text-primary mb-0" id="opSysTotal">Rp 0</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3 bg-warning-subtle rounded-4 border border-warning-subtle h-100 d-flex flex-column">
+                                                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-cash-stack"></i> Data Fisik Laci</h6>
+                                                <label class="small fw-bold text-muted mb-1">Hitungan Fisik Aktual</label>
+                                                <input type="number" id="opFisik" class="form-control form-control-sm rounded-pill mb-4 fw-bold border-warning" placeholder="Rp 0" oninput="calcOpname()">
+                                                
+                                                <div class="mt-auto bg-white p-3 rounded-4 shadow-sm text-center">
+                                                    <span class="small fw-bold text-muted d-block mb-1">HASIL SELISIH</span>
+                                                    <h3 class="fw-black mb-0" id="opSelisihText">Rp 0</h3>
+                                                    <span id="opSelisihBadge" class="badge bg-secondary rounded-pill mt-2 px-3">Seimbang</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 pt-3 border-top d-flex gap-2">
+                                        <button class="btn btn-primary rounded-pill fw-bold px-4 flex-fill shadow-sm bouncy-hover" onclick="saveOpnameData()"><i class="bi bi-cloud-check-fill"></i> Simpan Laporan</button>
+                                        <button class="btn btn-dark rounded-pill fw-bold px-4 flex-fill shadow-sm bouncy-hover" onclick="previewBAOpname()"><i class="bi bi-file-pdf-fill"></i> Cetak A4 PDF</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- DATA MASTER -->
                 <div id="datamaster" class="page-section d-none fade-in">
                     <h4 class="fw-bold mb-3 mt-2 text-dark">Database GL & EJ</h4>
@@ -255,6 +314,9 @@
         <div class="d-flex justify-content-around p-1">
             <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')">
                 <i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Home</span>
+            </a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')">
+                <i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Opname</span>
             </a>
             <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')">
                 <i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Upload</span>
@@ -359,6 +421,52 @@
                     </div>
                 </div>
                 <div class="modal-footer rounded-0 py-2"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button><button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Dokumen</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CETAK BA OPNAME (A4 FORMAT) -->
+    <div class="modal fade" id="baOpnameModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content rounded-0 border-0 shadow">
+                <div class="modal-header bg-dark text-white rounded-0 py-2">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau Berita Acara Opname</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-light d-flex justify-content-center">
+                    
+                    <!-- KERTAS A4 (Ukuran dan proporsi standar cetak) -->
+                    <div id="printBAOpnameArea" class="bg-white text-dark shadow-sm my-4" style="width: 210mm; min-height: 297mm; padding: 25mm 20mm; font-family: 'Times New Roman', serif;">
+                        
+                        <div class="text-center mb-5">
+                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5>
+                            <p class="fw-bold mb-0">PT BANK PEMBANGUNAN DAERAH KALIMANTAN TIMUR DAN KALIMANTAN UTARA</p>
+                            <p class="fw-bold">KANTOR CABANG PEMBANTU BABULU</p>
+                        </div>
+                        
+                        <p style="text-align: justify; line-height: 1.8; font-size: 14px;" class="mb-4">
+                            Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara Kantor Cabang Pembantu Babulu dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:
+                        </p>
+                        
+                        <table class="table table-borderless table-sm w-100 ms-3" style="line-height: 1.8; font-size: 14px;">
+                            <tr><td width="55%">1. Saldo Kas Sebelum Pengisian (System Core)</td><td width="5%">: Rp</td><td id="cetakSysSebelum" class="text-end pe-5">0</td></tr>
+                            <tr><td>2. Saldo Kas Yang Ditambahkan (System Core)</td><td>: Rp</td><td id="cetakSysTambah" class="text-end pe-5">0</td></tr>
+                            <tr><td>3. Saldo Kas Setelah Penambahan (System Core)</td><td>: Rp</td><td id="cetakSysTotal" class="text-end pe-5 fw-bold">0</td></tr>
+                            <tr><td>4. Saldo Kas Menurut Jumlah Fisik</td><td>: Rp</td><td id="cetakFisik" class="text-end pe-5 fw-bold">0</td></tr>
+                            <tr><td>5. Selisih Kurang Saldo Kas</td><td>: Rp</td><td id="cetakKurang" class="text-end pe-5">0</td></tr>
+                            <tr><td>6. Selisih Lebih</td><td>: Rp</td><td id="cetakLebih" class="text-end pe-5">0</td></tr>
+                        </table>
+                        
+                        <div class="row text-center mt-5 pt-5" style="font-size: 14px;">
+                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0">( ................................... )</p></div>
+                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0">( ................................... )</p></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer rounded-0 py-2">
+                    <button class="btn btn-success fw-bold shadow-sm" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button>
+                </div>
             </div>
         </div>
     </div>
