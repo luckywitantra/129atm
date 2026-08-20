@@ -152,8 +152,13 @@
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pb-5 mb-5 main-content">
+           <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pb-5 mb-5 main-content">
                 
+                <!-- DATALISTS UNTUK FILTER CERDAS (Otomatis terisi dari JS) -->
+                <datalist id="dl-atm"></datalist>
+                <datalist id="dl-resi"></datalist>
+                <datalist id="dl-nominal"></datalist>
+
                 <!-- DASHBOARD -->
                 <div id="dashboard" class="page-section fade-in">
                     <h4 class="fw-bold mb-3 mt-2 text-dark">Selamat Datang 👋</h4>
@@ -167,10 +172,10 @@
                     </div>
                 </div>
 
-                <!-- UPLOAD -->
+                <!-- UPLOAD & RIWAYAT -->
                 <div id="upload" class="page-section d-none fade-in">
                     <h4 class="fw-bold mb-3 mt-2 text-dark">Upload File</h4>
-                    <div class="row g-2">
+                    <div class="row g-2 mb-4">
                         <div class="col-md-6">
                             <div class="card glass-card shadow-sm h-100 bouncy-hover">
                                 <div class="card-body p-3">
@@ -196,6 +201,21 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- TABEL RIWAYAT UPLOAD -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-info"></i> Riwayat Upload File</h6>
+                            <input type="text" id="filterUploadHist" class="form-control form-control-sm rounded-pill bg-light border-0 w-auto px-3" placeholder="Cari (GL/EJ)..." oninput="changePage('uploadHist', 1)">
+                        </div>
+                        <div class="table-responsive rounded-4 border">
+                            <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
+                                <thead class="table-light"><tr><th>Jenis File</th><th>Waktu Upload Sistem</th><th>Total Baris Terbaca</th></tr></thead>
+                                <tbody id="tableBodyUploadHist"></tbody>
+                            </table>
+                        </div>
+                        <div id="paginationUploadHist"></div>
+                    </div>
                 </div>
 
                 <!-- ANALISA & REKONSILIASI -->
@@ -205,134 +225,84 @@
                         <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover" onclick="triggerAnalysis()"><i class="bi bi-lightning-charge-fill text-dark"></i> Proses Sekarang</button>
                     </div>
 
-                    <!-- Compact Summary Cards -->
+                    <!-- Summary & Hierarki -->
                     <div class="row g-2 mb-3">
                         <div class="col-6">
-                            <div class="card bg-danger-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div><p class="text-danger mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH KURANG</p><h5 id="totalKurangRp" class="text-danger fw-black mb-0">Rp 0</h5></div>
-                                    <i class="bi bi-arrow-down-circle-fill text-danger opacity-50 fs-2"></i>
-                                </div>
-                            </div>
+                            <div class="card bg-danger-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-danger mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH KURANG</p><h5 id="totalKurangRp" class="text-danger fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-down-circle-fill text-danger opacity-50 fs-2"></i></div></div>
                         </div>
                         <div class="col-6">
-                            <div class="card bg-success-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div><p class="text-success mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH LEBIH</p><h5 id="totalLebihRp" class="text-success fw-black mb-0">Rp 0</h5></div>
-                                    <i class="bi bi-arrow-up-circle-fill text-success opacity-50 fs-2"></i>
-                                </div>
-                            </div>
+                            <div class="card bg-success-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-success mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH LEBIH</p><h5 id="totalLebihRp" class="text-success fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-up-circle-fill text-success opacity-50 fs-2"></i></div></div>
                         </div>
                     </div>
 
-                    <!-- PAPAN HIERARKI PENYELESAIAN (BARU) -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
                         <h6 class="fw-bold text-dark mb-3" style="font-size: 0.85rem;"><i class="bi bi-bar-chart-fill text-primary"></i> Hierarki Penyelesaian Selisih</h6>
                         <div class="row text-center mb-2">
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Temuan Selisih</span><h6 class="fw-black text-dark mb-0" id="hierarki-tot-selisih">Rp 0</h6></div>
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Terselesaikan (Selesai)</span><h6 class="fw-black text-success mb-0" id="hierarki-tot-selesai">Rp 0</h6></div>
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Sisa Gantung (Belum)</span><h6 class="fw-black text-danger mb-0" id="hierarki-tot-belum">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Temuan</span><h6 class="fw-black text-dark mb-0" id="hierarki-tot-selisih">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Selesai</span><h6 class="fw-black text-success mb-0" id="hierarki-tot-selesai">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Gantung</span><h6 class="fw-black text-danger mb-0" id="hierarki-tot-belum">Rp 0</h6></div>
                         </div>
-                        <div class="progress rounded-pill shadow-inner" style="height: 6px;">
-                            <div id="hierarki-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                        </div>
+                        <div class="progress rounded-pill shadow-inner" style="height: 6px;"><div id="hierarki-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
                     </div>
 
-                    <!-- Compact Filter -->
+                    <!-- Smart Filter with Datalists -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
                         <div class="row g-1 align-items-end">
-                            <div class="col-4 col-md-3"><input type="text" id="filterResiAn" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..."></div>
-                            <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..."></div>
-                            <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Rp..."></div>
-                            <div class="col-6 col-md-2">
-                                <select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 text-secondary fw-bold">
-                                    <option value="desc">Terbaru</option><option value="asc">Terlama</option>
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm bouncy-hover" onclick="renderSelisihTablesFiltered()"><i class="bi bi-funnel-fill"></i></button></div>
+                            <div class="col-4 col-md-3"><input type="text" id="filterResiAn" list="dl-resi" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..."></div>
+                            <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..."></div>
+                            <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" list="dl-nominal" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Rp..."></div>
+                            <div class="col-6 col-md-2"><select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 text-secondary fw-bold"><option value="desc">Terbaru</option><option value="asc">Terlama</option></select></div>
+                            <div class="col-6 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm bouncy-hover" onclick="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"><i class="bi bi-funnel-fill"></i></button></div>
                         </div>
                     </div>
                     
-                    <!-- AI Information Banner -->
-                    <div class="alert bg-primary-subtle border-0 text-primary py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" role="alert" style="font-size: 0.75rem;">
-                        <div>
-                            <i class="bi bi-robot me-1 fs-6"></i> <strong>Smart AI Scanner aktif.</strong> Sistem otomatis mencocokkan selisih dengan Riwayat BA Opname fisik Anda.
-                        </div>
-                    </div>
+                    <div class="alert bg-primary-subtle border-0 text-primary py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" style="font-size: 0.75rem;"><div><i class="bi bi-robot me-1 fs-6"></i> <strong>Smart AI Scanner aktif.</strong> Sistem otomatis mencocokkan selisih dengan Riwayat BA Opname.</div></div>
 
                     <!-- Playful Nav Pills -->
                     <ul class="nav nav-pills gap-1 p-1 bg-white border rounded-pill shadow-sm mb-3 text-center d-flex flex-nowrap overflow-auto hide-scrollbar" id="pills-tab" role="tablist">
-                        <li class="nav-item flex-fill" role="presentation"><button class="nav-link active rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button" style="font-size: 0.8rem;">Kurang <span class="badge bg-white text-danger ms-1 rounded-pill" id="countKurang">0</span></button></li>
-                        <li class="nav-item flex-fill" role="presentation"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button" style="font-size: 0.8rem;">Lebih <span class="badge bg-danger text-white ms-1 rounded-pill" id="countLebih">0</span></button></li>
-                        <li class="nav-item flex-fill" role="presentation"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap text-success" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button" style="font-size: 0.8rem;"><i class="bi bi-check2-all"></i> Selesai</button></li>
+                        <li class="nav-item flex-fill"><button class="nav-link active rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button" style="font-size: 0.8rem;">Kurang <span class="badge bg-white text-danger ms-1 rounded-pill" id="countKurang">0</span></button></li>
+                        <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button" style="font-size: 0.8rem;">Lebih <span class="badge bg-danger text-white ms-1 rounded-pill" id="countLebih">0</span></button></li>
+                        <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap text-success" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button" style="font-size: 0.8rem;"><i class="bi bi-check2-all"></i> Selesai</button></li>
                     </ul>
 
+                    <!-- TABEL & PAGINATION -->
                     <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade show active" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Rekomendasi AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div></div>
-                        <div class="tab-pane fade" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Rekomendasi AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div></div>
-                        <div class="tab-pane fade" id="selesai" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div></div>
+                        <div class="tab-pane fade show active" id="kurang" role="tabpanel">
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div>
+                            <div id="paginationAnalisaKurang"></div>
+                        </div>
+                        <div class="tab-pane fade" id="lebih" role="tabpanel">
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div>
+                            <div id="paginationAnalisaLebih"></div>
+                        </div>
+                        <div class="tab-pane fade" id="selesai" role="tabpanel">
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div>
+                            <div id="paginationAnalisaSelesai"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- OPNAME FISIK ATM (DENGAN TABS) -->
+                <!-- OPNAME FISIK ATM -->
                 <div id="opname" class="page-section d-none fade-in">
                     <h4 class="fw-bold mb-3 mt-2 text-dark">Opname & BA Fisik</h4>
-                    
                     <ul class="nav nav-pills gap-1 p-1 bg-white border rounded-pill shadow-sm mb-3 text-center d-flex flex-nowrap" role="tablist">
                         <li class="nav-item flex-fill"><button class="nav-link active rounded-pill fw-bold w-100 py-1" data-bs-toggle="pill" data-bs-target="#op-form-tab" type="button" style="font-size: 0.8rem;"><i class="bi bi-pencil-square"></i> Input BA</button></li>
                         <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-secondary" data-bs-toggle="pill" data-bs-target="#op-riwayat-tab" type="button" style="font-size: 0.8rem;" onclick="fetchOpnameHistory()"><i class="bi bi-clock-history"></i> Riwayat</button></li>
                     </ul>
-
-                    <!-- PAPAN HIERARKI KOMPENSASI BA OPNAME (BARU) -->
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
-                        <h6 class="fw-bold text-dark mb-3" style="font-size: 0.85rem;"><i class="bi bi-pie-chart-fill text-purple" style="color:#6f42c1;"></i> Status Penyerapan Kuota BA Fisik</h6>
-                        <div class="row text-center mb-2">
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Fisik Selisih BA</span><h6 class="fw-black text-dark mb-0" id="op-hierarki-tot">Rp 0</h6></div>
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Digunakan (Menambal GL)</span><h6 class="fw-black text-info mb-0" id="op-hierarki-pakai">Rp 0</h6></div>
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Sisa Kuota Menganggur</span><h6 class="fw-black text-warning mb-0" id="op-hierarki-sisa">Rp 0</h6></div>
-                        </div>
-                        <div class="progress rounded-pill shadow-inner" style="height: 6px;">
-                            <div id="op-hierarki-progress" class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                        </div>
-                    </div>
 
                     <div class="tab-content">
                         <!-- TAB INPUT FORM -->
                         <div class="tab-pane fade show active" id="op-form-tab" role="tabpanel">
                             <div class="card glass-card shadow-sm border-0 rounded-4 bouncy-hover">
                                 <div class="card-body p-3">
-                                    <input type="hidden" id="opEditId"> <!-- Hidden ID for Edit Mode -->
+                                    <input type="hidden" id="opEditId">
                                     <div class="row g-2 mb-3">
-                                        <div class="col-md-6">
-                                            <label class="small fw-bold text-muted mb-1" style="font-size:0.7rem">ID MESIN ATM</label>
-                                            <input type="text" id="opAtmId" class="form-control form-control-sm rounded-pill bg-light fw-bold" placeholder="Contoh: 12901">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="small fw-bold text-muted mb-1" style="font-size:0.7rem">WAKTU PELAKSANAAN</label>
-                                            <input type="datetime-local" id="opWaktu" class="form-control form-control-sm rounded-pill bg-light text-secondary">
-                                        </div>
+                                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1" style="font-size:0.7rem">ID MESIN ATM</label><input type="text" id="opAtmId" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light fw-bold" placeholder="Contoh: 12901"></div>
+                                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1" style="font-size:0.7rem">WAKTU PELAKSANAAN</label><input type="datetime-local" id="opWaktu" class="form-control form-control-sm rounded-pill bg-light text-secondary"></div>
                                     </div>
                                     <div class="row g-2">
-                                        <div class="col-md-6">
-                                            <div class="p-3 bg-primary-subtle rounded-4 border border-primary-subtle h-100">
-                                                <h6 class="fw-bold text-primary mb-2 small"><i class="bi bi-pc-display"></i> Sistem (Core)</h6>
-                                                <input type="number" id="opSysSebelum" class="form-control form-control-sm rounded-pill mb-2 fw-bold" placeholder="1. Saldo Sebelum (Rp)" oninput="calcOpname()">
-                                                <input type="number" id="opSysTambah" class="form-control form-control-sm rounded-pill mb-2 fw-bold" placeholder="2. Kas Ditambah (Rp)" oninput="calcOpname()">
-                                                <label class="small fw-bold text-primary mb-0 mt-2" style="font-size:0.7rem">TOTAL TARGET SISTEM:</label>
-                                                <h5 class="fw-black text-primary mb-0" id="opSysTotal">Rp 0</h5>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="p-3 bg-warning-subtle rounded-4 border border-warning-subtle h-100 d-flex flex-column">
-                                                <h6 class="fw-bold text-dark mb-2 small"><i class="bi bi-cash-stack"></i> Fisik Laci</h6>
-                                                <input type="number" id="opFisik" class="form-control form-control-sm rounded-pill mb-3 fw-bold border-warning" placeholder="Hitungan Aktual (Rp)" oninput="calcOpname()">
-                                                <div class="mt-auto bg-white p-2 rounded-4 shadow-sm text-center border">
-                                                    <span class="small fw-bold text-muted d-block mb-1" style="font-size:0.65rem">HASIL SELISIH FISIK</span>
-                                                    <h5 class="fw-black mb-0" id="opSelisihText">Rp 0</h5>
-                                                    <span id="opSelisihBadge" class="badge bg-secondary rounded-pill mt-1" style="font-size:0.65rem">Balance</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <div class="col-md-6"><div class="p-3 bg-primary-subtle rounded-4 border border-primary-subtle h-100"><h6 class="fw-bold text-primary mb-2 small"><i class="bi bi-pc-display"></i> Sistem (Core)</h6><input type="number" id="opSysSebelum" class="form-control form-control-sm rounded-pill mb-2 fw-bold" placeholder="1. Saldo Sebelum (Rp)" oninput="calcOpname()"><input type="number" id="opSysTambah" class="form-control form-control-sm rounded-pill mb-2 fw-bold" placeholder="2. Kas Ditambah (Rp)" oninput="calcOpname()"><label class="small fw-bold text-primary mb-0 mt-2" style="font-size:0.7rem">TOTAL TARGET SISTEM:</label><h5 class="fw-black text-primary mb-0" id="opSysTotal">Rp 0</h5></div></div>
+                                        <div class="col-md-6"><div class="p-3 bg-warning-subtle rounded-4 border border-warning-subtle h-100 d-flex flex-column"><h6 class="fw-bold text-dark mb-2 small"><i class="bi bi-cash-stack"></i> Fisik Laci</h6><input type="number" id="opFisik" class="form-control form-control-sm rounded-pill mb-3 fw-bold border-warning" placeholder="Hitungan Aktual (Rp)" oninput="calcOpname()"><div class="mt-auto bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small fw-bold text-muted d-block mb-1" style="font-size:0.65rem">HASIL SELISIH FISIK</span><h5 class="fw-black mb-0" id="opSelisihText">Rp 0</h5><span id="opSelisihBadge" class="badge bg-secondary rounded-pill mt-1" style="font-size:0.65rem">Balance</span></div></div></div>
                                     </div>
                                     <div class="mt-3 pt-3 border-top d-flex gap-2">
                                         <button class="btn btn-dark btn-sm rounded-pill fw-bold px-3 shadow-sm bouncy-hover" onclick="previewBAOpname()"><i class="bi bi-file-pdf"></i> Cetak A4</button>
@@ -344,16 +314,23 @@
 
                         <!-- TAB RIWAYAT OPNAME -->
                         <div class="tab-pane fade" id="op-riwayat-tab" role="tabpanel">
-                            <div class="table-responsive rounded-4 shadow-sm bg-white border" style="max-height: 55vh;">
+                            <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
+                                <h6 class="fw-bold text-dark mb-3" style="font-size: 0.85rem;"><i class="bi bi-pie-chart-fill text-purple" style="color:#6f42c1;"></i> Status Penyerapan Kuota BA Fisik</h6>
+                                <div class="row text-center mb-2">
+                                    <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Fisik</span><h6 class="fw-black text-dark mb-0" id="op-hierarki-tot">Rp 0</h6></div>
+                                    <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Digunakan</span><h6 class="fw-black text-info mb-0" id="op-hierarki-pakai">Rp 0</h6></div>
+                                    <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Sisa Kuota</span><h6 class="fw-black text-warning mb-0" id="op-hierarki-sisa">Rp 0</h6></div>
+                                </div>
+                                <div class="progress rounded-pill shadow-inner" style="height: 6px;"><div id="op-hierarki-progress" class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
+                            </div>
+
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border">
                                 <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
-                                    <thead class="table-light sticky-top">
-                                        <tr><th>Waktu</th><th>ATM</th><th>Hasil Selisih</th><th>Status Penambalan (AI)</th><th>Aksi</th></tr>
-                                    </thead>
-                                    <tbody id="tableBodyOpname">
-                                        <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>
-                                    </tbody>
+                                    <thead class="table-light sticky-top"><tr><th>Waktu</th><th>ATM</th><th>Hasil Selisih</th><th>Status Penambalan (AI)</th><th>Aksi</th></tr></thead>
+                                    <tbody id="tableBodyOpname"></tbody>
                                 </table>
                             </div>
+                            <div id="paginationOpname"></div>
                         </div>
                     </div>
                 </div>
@@ -364,29 +341,22 @@
                     
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
                         <div class="row g-1 align-items-end">
-                            <div class="col-6 col-md-2"><input type="date" id="filterStart" class="form-control form-control-sm rounded-pill bg-light text-secondary"></div>
-                            <div class="col-6 col-md-2"><input type="text" id="filterResiDm" class="form-control form-control-sm rounded-pill bg-light" placeholder="Cari Resi..."></div>
-                            <div class="col-4 col-md-2"><input type="text" id="filterAtmDm" class="form-control form-control-sm rounded-pill bg-light" placeholder="ID ATM..."></div>
-                            <div class="col-4 col-md-3"><input type="number" id="filterNominalDm" class="form-control form-control-sm rounded-pill bg-light" placeholder="Nominal Rp..."></div>
-                            <div class="col-4 col-md-2">
-                                <select id="filterStatus" class="form-select form-select-sm rounded-pill bg-light text-secondary">
-                                    <option value="SEMUA">Semua</option><option value="SELISIH">Selisih</option><option value="AMAN">Aman</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm" onclick="renderDataMaster()"><i class="bi bi-funnel-fill"></i></button></div>
+                            <div class="col-6 col-md-2"><input type="date" id="filterStart" class="form-control form-control-sm rounded-pill bg-light text-secondary border-0 px-3"></div>
+                            <div class="col-6 col-md-2"><input type="text" id="filterResiDm" list="dl-resi" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..."></div>
+                            <div class="col-4 col-md-2"><input type="text" id="filterAtmDm" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..."></div>
+                            <div class="col-4 col-md-3"><input type="number" id="filterNominalDm" list="dl-nominal" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Nominal Rp..."></div>
+                            <div class="col-4 col-md-2"><select id="filterStatus" class="form-select form-select-sm rounded-pill bg-light text-secondary border-0 px-3"><option value="SEMUA">Semua</option><option value="SELISIH">Selisih</option><option value="AMAN">Aman</option></select></div>
+                            <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm bouncy-hover" onclick="changePage('master', 1); renderDataMaster()"><i class="bi bi-funnel-fill"></i></button></div>
                         </div>
                     </div>
 
-                    <div class="table-responsive rounded-4 shadow-sm bg-white border" style="max-height: 60vh;">
+                    <div class="table-responsive rounded-4 shadow-sm bg-white border">
                         <table class="table align-middle mb-0 text-nowrap table-hover table-sm table-custom-compact">
-                            <thead class="table-light sticky-top shadow-sm">
-                                <tr><th>Sumber</th><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Info</th></tr>
-                            </thead>
-                            <tbody id="tableBodyDataMaster">
-                                <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border text-primary spinner-border-sm mb-1"></div><br><small>Memuat...</small></td></tr>
-                            </tbody>
+                            <thead class="table-light sticky-top shadow-sm"><tr><th>Sumber</th><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Info</th></tr></thead>
+                            <tbody id="tableBodyDataMaster"></tbody>
                         </table>
                     </div>
+                    <div id="paginationMaster"></div>
                 </div>
 
             </main>
