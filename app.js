@@ -1,5 +1,21 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbwnLjfPZrOM21ln6-crxdnGebqHUQSXInpk6sa5kzxatf9vhUFsZakMFDyr-UxTCUM_/exec';
 
+let globalHistMap = new Map(); // Untuk menyimpan grup data Upload per tanggal
+let currentDetailData = []; // Data untuk pop-up interaktif rincian upload
+let detailType = ''; 
+
+// Pastikan pageState Anda mencakup histDetail
+let pageState = { analisaKurang: 1, analisaLebih: 1, analisaSelesai: 1, master: 1, opname: 1, uploadHist: 1, histDetail: 1 };
+
+function changePage(section, newPage) {
+    pageState[section] = newPage;
+    if(section.includes('analisa')) renderSelisihTablesFiltered();
+    else if(section === 'master') renderDataMaster();
+    else if(section === 'opname') renderOpnameTable();
+    else if(section === 'uploadHist') renderUploadHistory();
+    else if(section === 'histDetail') renderHistoryDetailTable();
+}
+
 // ==========================================
 // 1. STATE MANAGEMENT, THEME & PAGINATION
 // ==========================================
@@ -218,27 +234,97 @@ async function sendToBackend(action, data) {
 
 function renderUploadHistory() {
     if(!databaseData.gl && !databaseData.ej) return;
-    let histMap = new Map();
+    globalHistMap.clear();
+    
+    // Kelompokkan GL berdasarkan Tanggal Transaksi
     (databaseData.gl || []).forEach(r => {
-        let ts = String(r[7] || '').substring(0,16).replace('T',' ');
-        if(ts.length > 5 && ts !== 'undefined') { if(!histMap.has(ts)) histMap.set(ts, {time: ts, type: 'GL', count: 0}); histMap.get(ts).count++; }
+        let tgl = String(r[1]).substring(0,10);
+        if(!tgl || tgl === 'undefined') return;
+        let key = `GL_${tgl}`;
+        if(!globalHistMap.has(key)) globalHistMap.set(key, {date: tgl, type: 'GL', data: []});
+        globalHistMap.get(key).data.push(r);
     });
+    
+    // Kelompokkan EJ berdasarkan Tanggal Transaksi
     (databaseData.ej || []).forEach(r => {
-        let ts = String(r[6] || '').substring(0,16).replace('T',' ');
-        if(ts.length > 5 && ts !== 'undefined') { if(!histMap.has(ts)) histMap.set(ts, {time: ts, type: 'EJ', count: 0}); histMap.get(ts).count++; }
+        let tgl = String(r[1]).substring(0,10);
+        if(!tgl || tgl === 'undefined') return;
+        let key = `EJ_${tgl}`;
+        if(!globalHistMap.has(key)) globalHistMap.set(key, {date: tgl, type: 'EJ', data: []});
+        globalHistMap.get(key).data.push(r);
     });
 
-    let histArr = Array.from(histMap.values()).sort((a,b) => new Date(b.time) - new Date(a.time));
+    let histArr = Array.from(globalHistMap.values()).sort((a,b) => new Date(b.date) - new Date(a.date));
     const fTerm = document.getElementById('filterUploadHist').value.toLowerCase();
-    if(fTerm) histArr = histArr.filter(h => h.time.toLowerCase().includes(fTerm) || h.type.toLowerCase().includes(fTerm));
+    if(fTerm) histArr = histArr.filter(h => h.date.toLowerCase().includes(fTerm) || h.type.toLowerCase().includes(fTerm));
 
     const pageData = histArr.slice((pageState.uploadHist - 1) * PAGE_SIZE, pageState.uploadHist * PAGE_SIZE);
     let tbody = document.getElementById('tableBodyUploadHist');
     
-    if(pageData.length === 0) tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-4 d-block mb-1"></i>Belum ada history.</td></tr>`;
-    else tbody.innerHTML = pageData.map(h => `<tr><td><span class="badge ${h.type==='GL'?'bg-primary':'bg-success'} rounded-pill shadow-sm"><i class="bi ${h.type==='GL'?'bi-file-earmark-text':'bi-receipt'}"></i> Data ${h.type}</span></td><td class="fw-bold text-secondary" style="font-size:0.75rem">${h.time}</td><td><span class="badge bg-light text-dark border rounded-pill">${h.count.toLocaleString('id-ID')} baris</span></td></tr>`).join('');
-    
+    if(pageData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-4 d-block mb-1"></i>Belum ada data transaksi tersimpan.</td></tr>`;
+    } else {
+        tbody.innerHTML = pageData.map(h => `<tr>
+            <td><span class="badge ${h.type==='GL'?'bg-primary':'bg-success'} rounded-pill shadow-sm px-3"><i class="bi ${h.type==='GL'?'bi-file-earmark-text':'bi-receipt'}"></i> Data ${h.type}</span></td>
+            <td class="fw-bold text-secondary">${h.date}</td>
+            <td><span class="badge bg-light text-dark border rounded-pill">${h.data.length.toLocaleString('id-ID')} Transaksi</span></td>
+            <td><button class="btn btn-sm btn-outline-primary rounded-pill fw-bold shadow-sm bouncy-hover" style="font-size:0.7rem" onclick="openHistoryDetail('${h.type}_${h.date}')"><i class="bi bi-eye"></i> Lihat Rincian</button></td>
+        </tr>`).join('');
+    }
     document.getElementById('paginationUploadHist').innerHTML = renderPagination(histArr.length, pageState.uploadHist, PAGE_SIZE, 'uploadHist');
+}
+
+// LOGIKA POP-UP INTERAKTIF UPLOAD
+function openHistoryDetail(key) {
+    let type = key.split('_')[0];
+    let tgl = key.split('_')[1];
+    
+    detailType = type;
+    currentDetailData = globalHistMap.get(key).data; 
+    
+    document.getElementById('histDetailTitle').innerText = `${type} - ${tgl}`;
+    document.getElementById('histDetailSearch').value = '';
+    pageState.histDetail = 1;
+    
+    renderHistoryDetailTable();
+    new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+}
+
+function renderHistoryDetailTable() {
+    let term = document.getElementById('histDetailSearch').value.toLowerCase();
+    let filtered = currentDetailData.filter(r => {
+        let resi = String(r[3]).toLowerCase();
+        let atm = String(r[2]).toLowerCase();
+        return resi.includes(term) || atm.includes(term);
+    });
+    
+    document.getElementById('histDetailCount').innerText = filtered.length;
+    
+    const thead = document.getElementById('histDetailThead');
+    const tbody = document.getElementById('histDetailTbody');
+    
+    if (detailType === 'GL') {
+        thead.innerHTML = `<tr><th>ATM</th><th>Resi</th><th>Nominal</th><th>Jenis Transaksi</th><th>Referensi</th></tr>`;
+    } else {
+        thead.innerHTML = `<tr><th>ATM</th><th>Resi</th><th>Nominal</th><th>Status Mesin</th></tr>`;
+    }
+    
+    let pageData = filtered.slice((pageState.histDetail - 1) * PAGE_SIZE, pageState.histDetail * PAGE_SIZE);
+    
+    if (pageData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted small"><i class="bi bi-emoji-smile fs-4 d-block mb-1"></i> Tidak ada transaksi yang cocok.</td></tr>`;
+    } else {
+        tbody.innerHTML = pageData.map(r => {
+            if (detailType === 'GL') {
+                return `<tr><td><span class="badge bg-secondary rounded-pill">${r[2]}</span></td><td class="fw-bold">${r[3]}</td><td class="text-primary fw-bold">${formatRp(r[4])}</td><td><span class="badge bg-light text-secondary border rounded-pill">${r[5]}</span></td><td><small class="text-muted">${r[6] || '-'}</small></td></tr>`;
+            } else {
+                let badge = String(r[5]).includes('SUKSES') ? `bg-success-subtle text-success` : String(r[5]).includes('GAGAL') ? `bg-danger-subtle text-danger` : `bg-light text-secondary`;
+                return `<tr><td><span class="badge bg-secondary rounded-pill">${r[2]}</span></td><td class="fw-bold">${r[3]}</td><td class="text-primary fw-bold">${formatRp(r[4])}</td><td><span class="badge rounded-pill px-3 py-1 ${badge}">${r[5]}</span></td></tr>`;
+            }
+        }).join('');
+    }
+    
+    document.getElementById('histDetailPagination').innerHTML = renderPagination(filtered.length, pageState.histDetail, PAGE_SIZE, 'histDetail');
 }
 
 // ==========================================
@@ -395,38 +481,64 @@ async function submitResolve() {
     const reason = document.getElementById('resolveReason').value.trim();
     const rekening = document.getElementById('resRekening').value.trim() || "-";
     const nama = document.getElementById('resNama').value.trim().toUpperCase() || "-";
-    const trx = document.getElementById('resTrx').value; const problem = document.getElementById('resProblem').value;
+    const trx = document.getElementById('resTrx').value;
+    const problem = document.getElementById('resProblem').value;
     
-    if(!reason) return PlayfulAlert.fire('Tunggu dulu!', 'Harap isi keterangan penyelesaian.', 'warning');
-    let finalKeterangan = `${reason} ||| ${JSON.stringify({rek: rekening, nama: nama, trx: trx, problem: problem})}`;
+    if(!reason) return PlayfulAlert.fire('Tunggu dulu!', 'Harap isi keterangan/jurnal penyelesaian.', 'warning');
+    let detailNasabah = JSON.stringify({rek: rekening, nama: nama, trx: trx, problem: problem});
+    let finalKeterangan = `${reason} ||| ${detailNasabah}`;
     
     bootstrap.Modal.getInstance(document.getElementById('resolveModal')).hide();
+    const tgl = String(activeResolveRow[0]).substring(0,10);
+    const payload = { tanggal: tgl, atm: activeResolveRow[1], resi: activeResolveRow[2], status: 'Selesai', keterangan: finalKeterangan };
     
-    const payload = { tanggal: String(activeResolveRow[0]).substring(0,10), atm: activeResolveRow[1], resi: activeResolveRow[2], status: 'Selesai', keterangan: finalKeterangan };
     PlayfulAlert.fire({ title: 'Menyimpan & Membuat B/A...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
         const result = await response.json();
         if(result.success) {
             PlayfulAlert.close();
-            activeResolveRow[5] = 'Selesai'; activeResolveRow[6] = finalKeterangan; 
+            
+            // SINKRONISASI MEMORI LANGSUNG KE FRONTEND
+            let targetRow = globalSelisihData.find(r => r[0] === activeResolveRow[0] && r[1] === activeResolveRow[1] && r[2] === activeResolveRow[2]);
+            if (targetRow) {
+                targetRow[5] = 'Selesai'; 
+                targetRow[6] = finalKeterangan;
+            }
+            activeResolveRow[5] = 'Selesai'; 
+            activeResolveRow[6] = finalKeterangan; 
+            
+            // Segarkan kedua tabel secara bersamaan
             renderSelisihTablesFiltered(); 
+            renderOpnameTable(); 
             generateBA(encodeURIComponent(JSON.stringify(activeResolveRow))); 
-        } else PlayfulAlert.fire('Gagal', 'Gagal update ke database', 'error');
+        } else { PlayfulAlert.fire('Gagal', 'Gagal update ke database', 'error'); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 async function revertSelisih(rawStr) {
     const row = JSON.parse(decodeURIComponent(rawStr));
-    const confirm = await PlayfulAlert.fire({ title: 'Batalkan Selesai?', text: "Data dikembalikan ke tab Belum Selesai.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Kembalikan!', cancelButtonText: 'Batal'});
+    const confirm = await PlayfulAlert.fire({ title: 'Batalkan Selesai?', text: "Data akan dikembalikan ke tab Belum Selesai.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Kembalikan!', cancelButtonText: 'Batal'});
     if(!confirm.isConfirmed) return;
 
-    const payload = { tanggal: String(row[0]).substring(0,10), atm: row[1], resi: row[2], status: 'Belum', keterangan: row[6] };
+    const tgl = String(row[0]).substring(0,10);
+    const payload = { tanggal: tgl, atm: row[1], resi: row[2], status: 'Belum', keterangan: row[6] };
+    
     PlayfulAlert.fire({ title: 'Mengembalikan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
         const result = await response.json();
-        if(result.success) { PlayfulAlert.fire('Berhasil', 'Data dikembalikan.', 'success'); fetchSelisihData(); }
+        if(result.success) {
+            PlayfulAlert.fire('Berhasil', 'Data dikembalikan ke tabel awal.', 'success');
+            
+            // SINKRONISASI MEMORI LANGSUNG
+            let targetRow = globalSelisihData.find(r => r[0] === row[0] && r[1] === row[1] && r[2] === row[2]);
+            if (targetRow) {
+                targetRow[5] = 'Belum';
+            }
+            renderSelisihTablesFiltered(); 
+            renderOpnameTable(); 
+        }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
