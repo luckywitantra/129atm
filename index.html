@@ -202,15 +202,15 @@
                         </div>
                     </div>
 
-                    <!-- TABEL RIWAYAT UPLOAD -->
+                  <!-- TABEL RIWAYAT UPLOAD -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-info"></i> Riwayat Upload File</h6>
-                            <input type="text" id="filterUploadHist" class="form-control form-control-sm rounded-pill bg-light border-0 w-auto px-3" placeholder="Cari (GL/EJ)..." oninput="changePage('uploadHist', 1)">
+                            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-calendar3 text-info"></i> Ringkasan Data Berdasarkan Tanggal</h6>
+                            <input type="text" id="filterUploadHist" class="form-control form-control-sm rounded-pill bg-light border-0 w-auto px-3" placeholder="Cari Tanggal..." oninput="changePage('uploadHist', 1); renderUploadHistory();">
                         </div>
                         <div class="table-responsive rounded-4 border">
                             <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
-                                <thead class="table-light"><tr><th>Jenis File</th><th>Waktu Upload Sistem</th><th>Total Baris Terbaca</th></tr></thead>
+                                <thead class="table-light"><tr><th>Sumber File</th><th>Tanggal Transaksi</th><th>Total Terdata</th><th>Rincian</th></tr></thead>
                                 <tbody id="tableBodyUploadHist"></tbody>
                             </table>
                         </div>
@@ -626,6 +626,37 @@
                 </div>
                 <div class="modal-footer rounded-0 py-2">
                     <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Berita Acara</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL RIWAYAT TRANSAKSI PER TANGGAL (INTERAKTIF) -->
+    <div class="modal fade" id="historyDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-5 border-0 shadow-lg">
+                <div class="modal-header bg-gradient-playful text-white border-0 py-3">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-list-check me-2"></i> Rincian Transaksi: <span id="histDetailTitle"></span></h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-light">
+                    <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
+                        <div class="position-relative w-50">
+                            <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" id="histDetailSearch" class="form-control form-control-sm rounded-pill bg-light border-0 px-5" placeholder="Cari Resi atau ATM..." oninput="changePage('histDetail', 1); renderHistoryDetailTable();">
+                        </div>
+                        <span class="small text-muted fw-bold">Total: <span id="histDetailCount" class="text-dark">0</span> Transaksi</span>
+                    </div>
+                    <div class="table-responsive" style="max-height: 50vh;">
+                        <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
+                            <thead class="table-light sticky-top shadow-sm" id="histDetailThead"></thead>
+                            <tbody id="histDetailTbody" class="bg-white"></tbody>
+                        </table>
+                    </div>
+                    <div id="histDetailPagination"></div>
+                </div>
+                <div class="modal-footer bg-white border-0 py-2">
+                    <button type="button" class="btn btn-light btn-sm rounded-pill px-4 fw-bold shadow-sm bouncy-hover" data-bs-dismiss="modal">Tutup Rincian</button>
                 </div>
             </div>
         </div>
