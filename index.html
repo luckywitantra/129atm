@@ -86,6 +86,39 @@
             border-radius: 14px;
             font-size: 1.2rem;
         }
+
+        /* ATURAN CETAK (PRINT) KERTAS A4 UNTUK BERITA ACARA */
+        @media print {
+            body * { visibility: hidden; }
+            
+            /* Targetkan kedua area cetak */
+            #printBAPenyelesaianArea, #printBAPenyelesaianArea *,
+            #printBAOpnameArea, #printBAOpnameArea * { 
+                visibility: visible; 
+            }
+            
+            #printBAPenyelesaianArea, #printBAOpnameArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 210mm !important;
+                margin: 0 !important;
+                padding: 15mm !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            
+            /* Hilangkan background modal hitam saat dicetak */
+            .modal { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                margin: 0; 
+                padding: 0; 
+                overflow: visible!important; 
+                background: transparent !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -94,9 +127,14 @@
             <a class="navbar-brand text-white fw-bold d-flex items-center gap-2" href="#">
                 <i class="bi bi-robot fs-4 bouncy-hover"></i> <span class="pt-1">ReconApp</span>
             </a>
-            <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" id="themeToggle" style="width: 32px; height: 32px;">
-                <i class="bi bi-moon-stars-fill text-primary"></i>
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" onclick="new bootstrap.Modal(document.getElementById('modal-system-settings')).show()" style="width: 32px; height: 32px;" title="Pengaturan">
+                    <i class="bi bi-gear-fill text-primary"></i>
+                </button>
+                <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" id="themeToggle" style="width: 32px; height: 32px;">
+                    <i class="bi bi-moon-stars-fill text-primary"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -283,10 +321,10 @@
                             <div class="table-responsive rounded-4 shadow-sm bg-white border" style="max-height: 55vh;">
                                 <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
                                     <thead class="table-light sticky-top">
-                                        <tr><th>Waktu</th><th>ATM</th><th>Target System</th><th>Fisik Aktual</th><th>Hasil Selisih</th><th>Aksi</th></tr>
+                                        <tr><th>Waktu</th><th>ATM</th><th>Hasil Selisih</th><th>Status Penambalan (AI)</th><th>Aksi</th></tr>
                                     </thead>
                                     <tbody id="tableBodyOpname">
-                                        <tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>
+                                        <tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -401,6 +439,7 @@
         </div>
     </div>
 
+    <!-- MODAL DETAIL TRANSAKSI SELISIH -->
     <div class="modal fade" id="detailSelisihModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
@@ -431,6 +470,7 @@
         </div>
     </div>
 
+    <!-- MODAL PREVIEW UPLOAD -->
     <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
