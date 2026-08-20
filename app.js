@@ -511,10 +511,12 @@ function calcOpname() {
     let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0;
     let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
     
+    // Total Saldo Sistem HANYA untuk pencatatan/tampilan target setelah isi
     let sysTotal = sSblm + sTmbh;
-    let selisih = fisik - sysTotal;
-    
     document.getElementById('opSysTotal').innerText = formatRp(sysTotal);
+    
+    // RUMUS BARU: Selisih HANYA Fisik Aktual dikurangi Saldo Sistem Sebelum
+    let selisih = fisik - sSblm;
     
     let textSelisih = document.getElementById('opSelisihText');
     let badgeSelisih = document.getElementById('opSelisihBadge');
@@ -546,15 +548,17 @@ function previewBAOpname() {
     let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
     let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
     
+    // (Di dalam previewBAOpname)
     let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0;
     let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0;
     let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
     let sysTotal = sSblm + sTmbh;
-    let selisih = fisik - sysTotal;
+    
+    // UBAH RUMUS INI:
+    let selisih = fisik - sSblm; 
     
     let kurang = selisih < 0 ? Math.abs(selisih) : 0;
     let lebih = selisih > 0 ? selisih : 0;
-
     // Inject ke Template Kertas A4
     document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()];
     document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
