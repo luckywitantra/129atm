@@ -188,12 +188,24 @@ async function triggerAnalysis() {
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
         const result = await response.json();
+        
         if(result.success) {
-            PlayfulAlert.fire('Analisa Selesai', `Perhitungan terbaru berhasil dimuat.`, 'success');
+            // Ambil pesan cerdas dari backend, gunakan pesan standar jika kosong
+            const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan terbaru berhasil dimuat.";
+            
+            // Beri sentuhan ikon khusus jika ada kata 'ditangguhkan'
+            const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
+            
+            PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
+            
             globalSelisihData = result.data.tableData;
             renderSelisihTablesFiltered(); 
-        } else PlayfulAlert.fire('Gagal', result.message, 'error');
-    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+        } else {
+            PlayfulAlert.fire('Gagal', result.message, 'error');
+        }
+    } catch (err) { 
+        PlayfulAlert.fire('Error', err.toString(), 'error'); 
+    }
 }
 
 async function fetchSelisihData() {
