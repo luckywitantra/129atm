@@ -258,6 +258,20 @@ function renderSelisihTablesFiltered() {
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
+    // --- MENGHITUNG KUOTA BA YANG SUDAH TERPAKAI ---
+    let baUsageMap = new Map();
+    selesaiArr.forEach(r => {
+        let reason = String(r[6] || '');
+        let nominalTerpakai = parseFloat(r[3]) || 0;
+        let atmTerpakai = String(r[1]).trim();
+        // Cari tanggal BA dari teks alasan yang digenerate AI
+        let match = reason.match(/tanggal (\d{4}-\d{2}-\d{2})/);
+        if (match) {
+            let key = `${match[1]}_${atmTerpakai}`;
+            baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai);
+        }
+    });
+
     const renderTable = (arr, type) => {
         if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-smile fs-4 d-block mb-1"></i> Data bersih atau tidak ditemukan.</td></tr>`;
         return arr.map(row => {
@@ -269,36 +283,34 @@ function renderSelisihTablesFiltered() {
             let aiBadgeHtml = '';
             let aiSaranTeks = ''; 
             
-            // 🤖 LOGIKA AI MATCHER (Anti Gagal)
+            // 🤖 SMART AI MATCHER (DENGAN SISTEM KUOTA)
             if (type === 'belum' && typeof globalOpnameData !== 'undefined' && globalOpnameData.length > 0) {
                 
-                let sortedOpname = [...globalOpnameData].sort((a,b) => {
-                    let dA = new Date(String(a[1]).replace(' ', 'T')).getTime();
-                    let dB = new Date(String(b[1]).replace(' ', 'T')).getTime();
-                    return dA - dB;
-                });
-                
-                // Paksa waktu transaksi jam 00:00:00
+                let sortedOpname = [...globalOpnameData].sort((a,b) => new Date(String(a[1]).replace(' ', 'T')) - new Date(String(b[1]).replace(' ', 'T')));
                 let trxTime = new Date(tglTrxStr + "T00:00:00").getTime();
                 
                 let matchedBA = sortedOpname.find(ba => {
-                    let tglBA_str = String(ba[1]).replace(' ', 'T');
-                    let baTime = new Date(tglBA_str).getTime();
-                    
+                    let tglBA_str = String(ba[1]).substring(0,10);
+                    let baTime = new Date(tglBA_str + "T00:00:00").getTime();
                     let atmBA = String(ba[2]).trim();
-                    let selisihFisik = parseFloat(ba[7]) || 0; 
+                    let totalFisik = parseFloat(ba[7]) || 0; 
                     
-                    // ATM Harus Sama
+                    // Hitung Sisa Kuota BA ini
+                    let keyBA = `${tglBA_str}_${atmBA}`;
+                    let terpakai = baUsageMap.get(keyBA) || 0;
+                    let sisaKuota = Math.abs(totalFisik) - terpakai;
+                    
+                    // ATURAN 1: ID Mesin ATM harus sama persis (KTM12902 == KTM12902)
                     if (atmBA !== atmTrx) return false;
-                    // BA harus dilakukan SETELAH atau PADA HARI transaksi (masa depan dari transaksi)
-                    if (baTime < trxTime) return false;
-                    // Fisik laci harus sanggup mengkompensasi selisih
-                    if (Math.abs(selisihFisik) < nominalSelisih) return false;
                     
-                    // Sifat harus sejalan:
-                    // Lebih GL = Uang Nyangkut di Mesin (Fisik Lebih / Positif)
-                    // Kurang GL = Uang Keluar (Fisik Hilang / Negatif)
-                    let isValid = (row[4] === 'SELISIH LEBIH' && selisihFisik > 0) || (row[4] === 'SELISIH KURANG' && selisihFisik < 0);
+                    // ATURAN 2: BA tidak boleh lebih tua dari transaksi
+                    if (baTime < trxTime) return false;
+                    
+                    // ATURAN 3: Sisa Kuota harus masih mencukupi nominal transaksi ini
+                    if (sisaKuota < nominalSelisih) return false;
+                    
+                    // ATURAN 4: Kelogisan (Lebih vs Lebih, Kurang vs Kurang)
+                    let isValid = (row[4] === 'SELISIH LEBIH' && totalFisik > 0) || (row[4] === 'SELISIH KURANG' && totalFisik < 0);
                     
                     return isValid;
                 });
@@ -306,7 +318,7 @@ function renderSelisihTablesFiltered() {
                 if (matchedBA) {
                     let tglMatched = String(matchedBA[1]).substring(0,10);
                     aiSaranTeks = `Selesai: Kompensasi selisih tercakup dalam Berita Acara Opname fisik ATM tanggal ${tglMatched}.`;
-                    aiBadgeHtml = `<div class="mt-1"><span class="badge bg-warning text-dark border border-warning shadow-sm rounded-pill bouncy-hover" style="font-size:0.65rem" title="Klik Selesaikan, alasan akan terisi otomatis berdasarkan BA tgl ${tglMatched}"><i class="bi bi-robot text-primary"></i> <b>Saran AI:</b> Pakai BA ${tglMatched}</span></div>`;
+                    aiBadgeHtml = `<div class="mt-1"><span class="badge bg-warning text-dark border border-warning shadow-sm rounded-pill bouncy-hover" style="font-size:0.65rem" title="Klik Selesaikan, alasan otomatis pakai BA tgl ${tglMatched}"><i class="bi bi-robot text-primary"></i> <b>Saran AI:</b> Pakai BA ${tglMatched}</span></div>`;
                 }
             }
 
@@ -319,7 +331,7 @@ function renderSelisihTablesFiltered() {
                              <button class="btn btn-sm btn-dark rounded-pill shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); generateBA('${rawStr}')"><i class="bi bi-printer"></i> B/A</button>`;
             }
 
-            return `<tr class="align-middle" style="cursor:pointer;" onclick="showDetailPopup('${rawStr}')" title="Klik baris untuk lihat detail lengkap">
+            return `<tr class="align-middle" style="cursor:pointer;" onclick="showDetailPopup('${rawStr}')">
                 <td class="fw-medium text-secondary">${tglTrxStr}</td>
                 <td><span class="badge bg-secondary shadow-sm rounded-pill">${row[1]}</span></td>
                 <td class="fw-bold">${row[2]}</td>
@@ -599,22 +611,61 @@ function renderOpnameTable() {
         return;
     }
     
-    // Sort desc (Terbaru diatas)
-    let sortedData = [...globalOpnameData].sort((a,b) => new Date(b[1]) - new Date(a[1]));
+    // Hitung Kuota Terpakai
+    let baUsageMap = new Map();
+    if (globalSelisihData) {
+        let selesaiData = globalSelisihData.filter(r => String(r[5]).toLowerCase() !== 'belum');
+        selesaiData.forEach(r => {
+            let reason = String(r[6] || '');
+            let nominalTerpakai = parseFloat(r[3]) || 0;
+            let atmTerpakai = String(r[1]).trim();
+            let match = reason.match(/tanggal (\d{4}-\d{2}-\d{2})/);
+            if (match) {
+                let key = `${match[1]}_${atmTerpakai}`;
+                baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai);
+            }
+        });
+    }
+    
+    let sortedData = [...globalOpnameData].sort((a,b) => new Date(String(b[1]).replace(' ', 'T')) - new Date(String(a[1]).replace(' ', 'T')));
     
     tbody.innerHTML = sortedData.map(row => {
-        let selisih = parseFloat(row[7]);
-        let badgeClass = selisih > 0 ? "bg-success" : (selisih < 0 ? "bg-danger" : "bg-secondary");
-        let badgeText = selisih > 0 ? "LEBIH" : (selisih < 0 ? "KURANG" : "BALANCE");
+        let tglBA_str = String(row[1]).substring(0,10);
+        let atmBA = String(row[2]).trim();
+        let selisihAsli = parseFloat(row[7]);
+        
+        let keyBA = `${tglBA_str}_${atmBA}`;
+        let terpakai = baUsageMap.get(keyBA) || 0;
+        let sisa = Math.abs(selisihAsli) - terpakai;
+        let persenPakai = Math.abs(selisihAsli) === 0 ? 0 : (terpakai / Math.abs(selisihAsli)) * 100;
+        
+        let badgeClass = selisihAsli > 0 ? "bg-success" : (selisihAsli < 0 ? "bg-danger" : "bg-secondary");
+        let badgeText = selisihAsli > 0 ? "LEBIH" : (selisihAsli < 0 ? "KURANG" : "BALANCE");
+        
+        // Progress Bar Visualisasi Penambalan Selisih
+        let progressHtml = '';
+        if (Math.abs(selisihAsli) > 0) {
+            let statusTeks = sisa === 0 ? '<span class="text-success"><i class="bi bi-check-all"></i> Selesai (Tuntas)</span>' : `<span class="text-warning">Tersisa: ${formatRp(sisa)}</span>`;
+            progressHtml = `
+                <div class="mt-1" style="width: 130px;">
+                    <div class="d-flex justify-content-between text-[0.6rem] mb-1 fw-bold text-muted" style="font-size:0.6rem">
+                        <span>${statusTeks}</span>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar ${sisa === 0 ? 'bg-success' : 'bg-warning'}" role="progressbar" style="width: ${persenPakai}%"></div>
+                    </div>
+                </div>`;
+        } else {
+            progressHtml = `<span class="text-muted" style="font-size:0.65rem">- Tidak ada selisih -</span>`;
+        }
         
         let rowDataStr = encodeURIComponent(JSON.stringify(row));
         
         return `<tr>
             <td class="fw-medium text-secondary" style="font-size:0.75rem">${row[1].substring(0,16).replace('T', ' ')}</td>
-            <td><span class="badge border border-secondary text-secondary rounded-pill">${row[2]}</span></td>
-            <td class="fw-bold">${formatRp(row[5])}</td>
-            <td class="fw-bold text-dark">${formatRp(row[6])}</td>
-            <td><span class="badge ${badgeClass} rounded-pill shadow-sm" style="font-size:0.65rem">${badgeText} ${formatRp(Math.abs(selisih))}</span></td>
+            <td><span class="badge border border-secondary text-secondary rounded-pill">${atmBA}</span></td>
+            <td><span class="badge ${badgeClass} rounded-pill shadow-sm" style="font-size:0.65rem">${badgeText} ${formatRp(Math.abs(selisihAsli))}</span></td>
+            <td>${progressHtml}</td>
             <td>
                 <button class="btn btn-sm btn-light text-primary rounded-circle border shadow-sm bouncy-hover me-1" onclick="editOpname('${rowDataStr}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
                 <button class="btn btn-sm btn-light text-danger rounded-circle border shadow-sm bouncy-hover" onclick="deleteOpname('${row[0]}')" title="Hapus"><i class="bi bi-trash-fill"></i></button>
@@ -685,3 +736,15 @@ async function saveOpnameData() {
         } else { PlayfulAlert.fire('Gagal', result.message, 'error'); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
+
+// AUTO-FORMAT INPUT ID ATM (Wajib KTM)
+document.getElementById('opAtmId').addEventListener('input', function() {
+    let val = this.value.toUpperCase().replace(/\s/g, '');
+    // Jika karakter pertama adalah angka, otomatis tambahkan KTM
+    if (/^\d/.test(val) && val.length > 0) {
+        this.value = 'KTM' + val;
+    } else {
+        this.value = val;
+    }
+});
+
