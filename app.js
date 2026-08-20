@@ -22,12 +22,10 @@ const PlayfulAlert = Swal.mixin({
     buttonsStyling: false
 });
 
-// ==========================================
-// KONFIGURASI SURAT B/A & TELLER DINAMIS
-// ==========================================
 window.superApp = window.superApp || {};
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Load Konfigurasi BA
     document.getElementById('cfgCabang').value = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
     document.getElementById('cfgAlamat').value = localStorage.getItem('cfgAlamat') || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
     document.getElementById('cfgPimpinan').value = localStorage.getItem('cfgPimpinan') || 'ENDY PRATAMA';
@@ -227,7 +225,7 @@ document.getElementById('btnConfirmUpload').addEventListener('click', () => {
 });
 
 // ==========================================
-// 4. API & ANALISA SELISIH (DENGAN AI MATCHER)
+// 4. API & ANALISA SELISIH (DENGAN AI MATCHER & HIERARKI)
 // ==========================================
 async function sendToBackend(action, data) {
     PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); 
@@ -300,12 +298,12 @@ function renderSelisihTablesFiltered() {
     const kurangArr = filteredData.filter(row => row[4] === 'SELISIH KURANG' && String(row[5]).toLowerCase() === 'belum');
     const selesaiArr = filteredData.filter(row => String(row[5]).toLowerCase() !== 'belum');
 
-  const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
+    const totLebih = lebihArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
     const totKurang = kurangArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
     const totSelesai = selesaiArr.reduce((sum, row) => sum + parseFloat(row[3]), 0);
     const totBelumSelesai = totLebih + totKurang;
     const totSemua = totSelesai + totBelumSelesai;
-    
+
     document.getElementById('totalLebihRp').innerText = formatRp(totLebih);
     document.getElementById('totalKurangRp').innerText = formatRp(totKurang);
     document.getElementById('countLebih').innerText = lebihArr.length;
@@ -317,7 +315,7 @@ function renderSelisihTablesFiltered() {
     document.getElementById('hierarki-tot-belum').innerText = formatRp(totBelumSelesai);
     let persenAnalisa = totSemua === 0 ? 0 : (totSelesai / totSemua) * 100;
     document.getElementById('hierarki-progress').style.width = `${persenAnalisa}%`;
-    
+
     // --- MENGHITUNG KUOTA BA YANG SUDAH TERPAKAI ---
     let baUsageMap = new Map();
     selesaiArr.forEach(r => {
@@ -344,23 +342,18 @@ function renderSelisihTablesFiltered() {
             
             // 🤖 SMART AI MATCHER (DENGAN SISTEM KUOTA)
             if (type === 'belum' && typeof globalOpnameData !== 'undefined' && globalOpnameData.length > 0) {
-                
                 let sortedOpname = [...globalOpnameData].sort((a,b) => new Date(String(a[1]).replace(' ', 'T')) - new Date(String(b[1]).replace(' ', 'T')));
                 let trxTime = new Date(tglTrxStr + "T00:00:00").getTime();
                 
-                // Helper extract numbers untuk mengabaikan KTM dll
                 const extractNumbers = (str) => String(str).replace(/\D/g, '');
                 
                 let matchedBA = sortedOpname.find(ba => {
                     let tglBA_str = String(ba[1]).substring(0,10);
                     let baTime = new Date(tglBA_str + "T00:00:00").getTime();
-                    
                     let atmBA_Clean = extractNumbers(ba[2]);
                     let atmTrx_Clean = extractNumbers(atmTrx);
-                    
                     let totalFisik = parseFloat(ba[7]) || 0; 
                     
-                    // Hitung Sisa Kuota
                     let keyBA = `${tglBA_str}_${String(ba[2]).trim()}`;
                     let terpakai = baUsageMap.get(keyBA) || 0;
                     let sisaKuota = Math.abs(totalFisik) - terpakai;
@@ -406,7 +399,7 @@ function renderSelisihTablesFiltered() {
 }
 
 // ==========================================
-// 5. ENGINE WORKFLOW PENYELESAIAN (SELESAI & B/A)
+// 5. ENGINE WORKFLOW PENYELESAIAN (SELESAI & B/A PDF)
 // ==========================================
 function openResolveModal(rawStr, encodedSaran = '') {
     activeResolveRow = JSON.parse(decodeURIComponent(rawStr));
@@ -512,12 +505,16 @@ function generateBA(rawStr) {
     
     let namaCabang = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
     let kota = namaCabang.replace('Kantor Cabang Pembantu', '').trim();
+    let admin = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
     
+    let teller = localStorage.getItem('cfgTeller_' + atmId.toUpperCase());
+    if(!teller) teller = localStorage.getItem('cfgTeller') || 'TELLER AKTIF';
+
     document.getElementById('cetak_cabang').innerText = namaCabang;
     document.getElementById('cetak_alamat').innerText = localStorage.getItem('cfgAlamat') || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
     document.getElementById('cetak_pimpinan').innerText = localStorage.getItem('cfgPimpinan') || 'ENDY PRATAMA';
-    document.getElementById('cetak_teller').innerText = localStorage.getItem('cfgTeller_' + atmId.toUpperCase()) || 'TELLER AKTIF';
-    document.getElementById('cetak_admin').innerText = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
+    document.getElementById('cetak_teller').innerText = teller;
+    document.getElementById('cetak_admin').innerText = admin;
     
     document.getElementById('cetak_kota').innerText = kota;
     document.getElementById('cetak_tgl_ttd').innerText = tglCetak;
@@ -698,8 +695,10 @@ function previewBAOpname() {
     let lebih = selisih > 0 ? selisih : 0;
 
     let namaCabang = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
-    let teller = localStorage.getItem('cfgTeller') || 'FISTRI ARIANDINI';
     let admin = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
+    
+    let teller = localStorage.getItem('cfgTeller_' + atmId.toUpperCase());
+    if(!teller) teller = localStorage.getItem('cfgTeller') || 'TELLER AKTIF';
 
     document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase();
     document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
@@ -721,10 +720,9 @@ function previewBAOpname() {
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
 
-// FUNGSI UNTUK MENCETAK ULANG RIWAYAT BA DARI TABEL
 function printRiwayatBAOpname(rawStr) {
     const row = JSON.parse(decodeURIComponent(rawStr));
-    let waktuInput = row[1]; // Ex: 2026-08-20 14:30
+    let waktuInput = row[1]; 
     let atmId = row[2];
     let sSblm = parseFloat(row[3]) || 0;
     let sTmbh = parseFloat(row[4]) || 0;
@@ -742,9 +740,8 @@ function printRiwayatBAOpname(rawStr) {
     let namaCabang = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
     let admin = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
     
-    // AMBIL NAMA TELLER SPESIFIK UNTUK ATM INI DARI LOKAL STORAGE
     let teller = localStorage.getItem('cfgTeller_' + atmId.toUpperCase());
-    if(!teller) teller = "TELLER AKTIF"; // Fallback jika belum disetting
+    if(!teller) teller = localStorage.getItem('cfgTeller') || 'TELLER AKTIF';
 
     document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase();
     document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
@@ -765,54 +762,6 @@ function printRiwayatBAOpname(rawStr) {
     
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
-
-// PERBAIKI JUGA `previewBAOpname()` (Cetak Langsung dari Form Input)
-function previewBAOpname() {
-    let atmId = document.getElementById('opAtmId').value || ".......";
-    let waktuInput = document.getElementById('opWaktu').value;
-    
-    if (!waktuInput) return PlayfulAlert.fire('Oops!', 'Isi waktu pelaksanaan dulu ya.', 'warning');
-    
-    let dateObj = new Date(waktuInput);
-    let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-    let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-    
-    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0;
-    let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0;
-    let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
-    let sysTotal = sSblm + sTmbh;
-    let selisih = fisik - sSblm; 
-    
-    let kurang = selisih < 0 ? Math.abs(selisih) : 0;
-    let lebih = selisih > 0 ? selisih : 0;
-
-    let namaCabang = localStorage.getItem('cfgCabang') || 'Kantor Cabang Pembantu Babulu';
-    let admin = localStorage.getItem('cfgAdmin') || 'SUCI AINUL FITRI';
-    
-    // Tarik Teller Dinamis
-    let teller = localStorage.getItem('cfgTeller_' + atmId.toUpperCase());
-    if(!teller) teller = "TELLER AKTIF"; 
-
-    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase();
-    document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
-    document.getElementById('cetakOp_petugas1').innerText = `( ${teller} )`;
-    document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
-
-    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()];
-    document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-    document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5);
-    document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
-    
-    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm);
-    document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh);
-    document.getElementById('cetakSysTotal').innerText = formatNum(sysTotal);
-    document.getElementById('cetakFisik').innerText = formatNum(fisik);
-    document.getElementById('cetakKurang').innerText = formatNum(kurang);
-    document.getElementById('cetakLebih').innerText = formatNum(lebih);
-    
-    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
-}
-
 
 async function fetchOpnameHistory() {
     document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
@@ -847,7 +796,7 @@ function renderOpnameTable() {
             if (match) {
                 let key = `${match[1]}_${atmTerpakai}`;
                 baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai);
-                totalDigunakan += nominalTerpakai; // Akumulasi total dipakai
+                totalDigunakan += nominalTerpakai; 
             }
         });
     }
@@ -859,7 +808,7 @@ function renderOpnameTable() {
         let atmBA = String(row[2]).trim();
         let selisihAsli = parseFloat(row[7]);
         
-        totalFisikSemuaBA += Math.abs(selisihAsli); // Akumulasi total fisik
+        totalFisikSemuaBA += Math.abs(selisihAsli); 
         
         let keyBA = `${tglBA_str}_${atmBA}`;
         let terpakai = baUsageMap.get(keyBA) || 0;
@@ -976,4 +925,3 @@ document.getElementById('opAtmId').addEventListener('input', function() {
         this.value = val;
     }
 });
-
