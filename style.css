@@ -238,3 +238,19 @@ body {
 [data-bs-theme="dark"] .bottom-nav,
 [data-bs-theme="dark"] .sidebar { background: #1e1e1e !important; border-color: #2d2d2d !important;}
 [data-bs-theme="dark"] .nav-pills { background: #1e1e1e !important; }
+
+/* Aturan Cetak Kertas A4 */
+@media print {
+    body * { visibility: hidden; }
+    #printBAOpnameArea, #printBAOpnameArea * { visibility: visible; }
+    #printBAOpnameArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 210mm !important;
+        margin: 0 !important;
+        padding: 15mm !important;
+        box-shadow: none !important;
+    }
+    .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; }
+}
