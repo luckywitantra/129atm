@@ -208,16 +208,24 @@ async function triggerAnalysis() {
     }
 }
 
+let globalOpnameData = []; // Memori untuk Riwayat BA Opname
+
 async function fetchSelisihData() {
     document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
     document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })});
-        const result = await response.json();
-        if(result.success) {
-            globalSelisihData = result.data;
-            renderSelisihTablesFiltered();
-        }
+        // Ambil data Selisih DAN data Opname secara bersamaan
+        const [resSelisih, resOpname] = await Promise.all([
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })}),
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname' })})
+        ]);
+        const resultSelisih = await resSelisih.json();
+        const resultOpname = await resOpname.json();
+        
+        if(resultSelisih.success) globalSelisihData = resultSelisih.data;
+        if(resultOpname.success) globalOpnameData = resultOpname.data;
+        
+        renderSelisihTablesFiltered();
     } catch (err) { console.error(err); }
 }
 
@@ -256,13 +264,57 @@ function renderSelisihTablesFiltered() {
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
-    // Render Function dengan Estetika Playful & Compact
+    // Render Function dengan Estetika Playful & Compact + AI MATCHER
     const renderTable = (arr, type) => {
         if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-smile fs-4 d-block mb-1"></i> Data bersih atau tidak ditemukan.</td></tr>`;
         return arr.map(row => {
-            const tgl = String(row[0] || '').substring(0,10);
+            const tglTrx = new Date(row[0]);
+            const tglStr = String(row[0] || '').substring(0,10);
+            const nominalSelisih = parseFloat(row[3]);
+            const atmTrx = String(row[1]).trim();
             const rawStr = encodeURIComponent(JSON.stringify(row));
             
+            // ========================================================
+            // 🤖 SMART AI MATCHER: MENCARI BA OPNAME SEBAGAI JAWABAN
+            // ========================================================
+            let aiBadgeHtml = '';
+            
+            // Hanya jalankan fitur rekomendasi AI pada tab "Belum Selesai"
+            if (type === 'belum' && typeof globalOpnameData !== 'undefined' && globalOpnameData.length > 0) {
+                
+                // Urutkan Riwayat BA dari yang paling lama ke paling baru
+                let sortedOpname = [...globalOpnameData].sort((a,b) => new Date(a[1]) - new Date(b[1]));
+                
+                // Cari BA Opname yang logis untuk menebus selisih transaksi ini
+                let matchedBA = sortedOpname.find(ba => {
+                    let tglBA = new Date(ba[1]);
+                    let atmBA = String(ba[2]).trim();
+                    let selisihFisik = parseFloat(ba[7]); 
+                    
+                    // ATURAN 1: ID Mesin ATM harus sama persis
+                    if (atmBA !== atmTrx) return false;
+                    
+                    // ATURAN 2: Tanggal BA Opname harus >= Tanggal Transaksi (Karena BA dilakukan SETELAH transaksi terjadi)
+                    if (tglBA < tglTrx) return false;
+                    
+                    // ATURAN 3: Nominal fisik pada BA harus bisa meng-cover (atau sama dengan) nominal selisih sistem
+                    if (Math.abs(selisihFisik) < nominalSelisih) return false;
+                    
+                    // ATURAN 4: Kelogisan Sifat. 
+                    // Jika Sistem GL "SELISIH LEBIH" (Uang nganggur di laci), maka BA Fisik juga harus bernilai positif (LEBIH)
+                    // Jika Sistem GL "SELISIH KURANG" (Uang dicolong/keluar), maka BA Fisik juga harus bernilai negatif (KURANG)
+                    let isValidLogically = (row[4] === 'SELISIH LEBIH' && selisihFisik > 0) || (row[4] === 'SELISIH KURANG' && selisihFisik < 0);
+                    
+                    return isValidLogically;
+                });
+
+                if (matchedBA) {
+                    let tglMatched = matchedBA[1].substring(0,10);
+                    aiBadgeHtml = `<div class="mt-1"><span class="badge bg-warning text-dark border border-warning shadow-sm rounded-pill bouncy-hover" style="font-size:0.65rem" title="AI merekomendasikan: Selisih tgl ${tglStr} ini bisa ditutup menggunakan hasil Berita Acara tgl ${tglMatched}."><i class="bi bi-robot text-primary"></i> <b>Saran AI:</b> Pakai BA ${tglMatched}</span></div>`;
+                }
+            }
+            // ========================================================
+
             let actionBtn = "";
             if (type === 'belum') {
                 actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); openResolveModal('${rawStr}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
@@ -272,11 +324,11 @@ function renderSelisihTablesFiltered() {
             }
 
             return `<tr class="align-middle" style="cursor:pointer;" onclick="showDetailPopup('${rawStr}')" title="Klik baris untuk lihat detail lengkap">
-                <td class="fw-medium text-secondary">${tgl}</td>
+                <td class="fw-medium text-secondary">${tglStr}</td>
                 <td><span class="badge bg-secondary shadow-sm rounded-pill">${row[1]}</span></td>
                 <td class="fw-bold">${row[2]}</td>
-                <td class="text-primary fw-bold">${formatRp(row[3])}</td>
-                <td><small class="text-muted d-block text-truncate" style="max-width:150px;">${row[6]}</small></td>
+                <td class="text-primary fw-bold">${formatRp(nominalSelisih)}</td>
+                <td><small class="text-muted d-block text-truncate" style="max-width:150px;">${row[6]}</small>${aiBadgeHtml}</td>
                 <td>${actionBtn}</td>
             </tr>`;
         }).join('');
@@ -519,8 +571,83 @@ function previewBAOpname() {
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
 
+async function fetchOpnameHistory() {
+    document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname' })});
+        const result = await response.json();
+        if(result.success) {
+            globalOpnameData = result.data;
+            renderOpnameTable();
+        }
+    } catch (err) { console.error(err); }
+}
+
+function renderOpnameTable() {
+    const tbody = document.getElementById('tableBodyOpname');
+    if (globalOpnameData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-inbox fs-4 d-block mb-1"></i> Belum ada riwayat Opname.</td></tr>`;
+        return;
+    }
+    
+    // Sort desc (Terbaru diatas)
+    let sortedData = [...globalOpnameData].sort((a,b) => new Date(b[1]) - new Date(a[1]));
+    
+    tbody.innerHTML = sortedData.map(row => {
+        let selisih = parseFloat(row[7]);
+        let badgeClass = selisih > 0 ? "bg-success" : (selisih < 0 ? "bg-danger" : "bg-secondary");
+        let badgeText = selisih > 0 ? "LEBIH" : (selisih < 0 ? "KURANG" : "BALANCE");
+        
+        let rowDataStr = encodeURIComponent(JSON.stringify(row));
+        
+        return `<tr>
+            <td class="fw-medium text-secondary" style="font-size:0.75rem">${row[1].substring(0,16).replace('T', ' ')}</td>
+            <td><span class="badge border border-secondary text-secondary rounded-pill">${row[2]}</span></td>
+            <td class="fw-bold">${formatRp(row[5])}</td>
+            <td class="fw-bold text-dark">${formatRp(row[6])}</td>
+            <td><span class="badge ${badgeClass} rounded-pill shadow-sm" style="font-size:0.65rem">${badgeText} ${formatRp(Math.abs(selisih))}</span></td>
+            <td>
+                <button class="btn btn-sm btn-light text-primary rounded-circle border shadow-sm bouncy-hover me-1" onclick="editOpname('${rowDataStr}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
+                <button class="btn btn-sm btn-light text-danger rounded-circle border shadow-sm bouncy-hover" onclick="deleteOpname('${row[0]}')" title="Hapus"><i class="bi bi-trash-fill"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function editOpname(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr));
+    document.getElementById('opEditId').value = row[0]; // Set Hidden ID
+    document.getElementById('opWaktu').value = row[1]; // Format "YYYY-MM-DDTHH:mm" must match datetime-local
+    document.getElementById('opAtmId').value = row[2];
+    document.getElementById('opSysSebelum').value = row[3];
+    document.getElementById('opSysTambah').value = row[4];
+    document.getElementById('opFisik').value = row[6];
+    calcOpname();
+    
+    // Switch to input tab automatically
+    const tabInput = document.querySelector('[data-bs-target="#op-form-tab"]');
+    if(tabInput) { const bsTab = new bootstrap.Tab(tabInput); bsTab.show(); }
+    PlayfulAlert.fire({title: 'Mode Edit Aktif', icon: 'info', timer: 1500, showConfirmButton: false});
+}
+
+async function deleteOpname(id) {
+    const confirm = await PlayfulAlert.fire({ title: 'Hapus Riwayat BA?', text: "Data tidak bisa dikembalikan.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Hapus!', cancelButtonText: 'Batal'});
+    if(!confirm.isConfirmed) return;
+
+    PlayfulAlert.fire({ title: 'Menghapus...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOpname', data: id }) });
+        const result = await response.json();
+        if(result.success) {
+            PlayfulAlert.fire('Dihapus', 'Riwayat berhasil dibuang.', 'success');
+            fetchOpnameHistory(); // Reload table
+        }
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+}
+
 async function saveOpnameData() {
     let payload = {
+        id: document.getElementById('opEditId').value, // Kosong jika Baru, terisi jika Edit
         atm: document.getElementById('opAtmId').value,
         waktu: document.getElementById('opWaktu').value,
         sysSebelum: document.getElementById('opSysSebelum').value,
@@ -537,14 +664,15 @@ async function saveOpnameData() {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', data: payload }) });
         const result = await response.json();
         if(result.success) {
-            PlayfulAlert.fire('Berhasil!', 'Data Opname Fisik sukses masuk ke Database.', 'success');
-            // Reset Form Opsional
+            PlayfulAlert.fire('Berhasil!', 'Data Opname Fisik sukses tersimpan.', 'success');
+            // Reset Form 
+            document.getElementById('opEditId').value = '';
             document.getElementById('opSysSebelum').value = '';
             document.getElementById('opSysTambah').value = '';
             document.getElementById('opFisik').value = '';
             calcOpname();
-        } else {
-            PlayfulAlert.fire('Gagal', result.message, 'error');
-        }
+            // Fetch ualng agar AI Scanner langsung jalan
+            fetchSelisihData();
+        } else { PlayfulAlert.fire('Gagal', result.message, 'error'); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
