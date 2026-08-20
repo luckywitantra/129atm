@@ -4,185 +4,243 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ATM Recon SuperApp</title>
+    <!-- Google Fonts: Quicksand for a Playful Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Custom Playful & Compact Styles -->
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f4f7fe;
+        }
+        
+        /* Bouncy Hover Effects */
+        .bouncy-hover {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bouncy-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        }
+
+        /* Playful Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5) !important;
+            border-radius: 24px !important;
+        }
+
+        /* Floating Island Bottom Nav for Mobile */
+        .floating-bottom-nav {
+            bottom: 15px !important;
+            left: 15px !important;
+            right: 15px !important;
+            border-radius: 30px !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Compact Table Adjustments */
+        .table-custom-compact th, .table-custom-compact td {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.85rem;
+        }
+        .table-custom-compact th {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        /* Sidebar Nav Pills */
+        .sidebar .nav-link {
+            border-radius: 16px;
+            transition: all 0.2s;
+            font-weight: 700;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+            transform: translateX(4px);
+        }
+
+        /* Playful Gradients */
+        .bg-gradient-playful {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .icon-box-playful {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand bg-gradient-primary shadow-sm fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand text-white fw-bold" href="#"><i class="bi bi-robot"></i> ReconApp</a>
-            <button class="btn btn-light rounded-circle shadow-sm" id="themeToggle"><i class="bi bi-moon-stars-fill text-primary"></i></button>
+    <nav class="navbar navbar-expand bg-gradient-playful shadow-sm fixed-top">
+        <div class="container-fluid px-3">
+            <a class="navbar-brand text-white fw-bold d-flex items-center gap-2" href="#">
+                <i class="bi bi-robot fs-4 bouncy-hover"></i> <span class="pt-1">ReconApp</span>
+            </a>
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" id="themeToggle" style="width: 32px; height: 32px;">
+                <i class="bi bi-moon-stars-fill text-primary"></i>
+            </button>
         </div>
     </nav>
 
-    <div class="container-fluid main-wrapper">
+    <div class="container-fluid main-wrapper mt-5 pt-3">
         <div class="row">
-            <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar shadow-sm h-100 position-fixed bg-glass">
-                <div class="pt-5 mt-4">
-                    <ul class="nav flex-column gap-2 p-3">
-                        <li class="nav-item"><a class="nav-link active menu-btn" href="#" onclick="showPage('dashboard')"><i class="bi bi-grid-1x2-fill"></i> Beranda</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn" href="#" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill"></i> Upload</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn" href="#" onclick="showPage('analisa')"><i class="bi bi-search"></i> Analisa</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn" href="#" onclick="showPage('datamaster')"><i class="bi bi-database-fill"></i> Data Master</a></li>
+            <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar shadow-sm h-100 position-fixed bg-white border-end">
+                <div class="pt-4">
+                    <ul class="nav flex-column gap-1 p-3">
+                        <li class="nav-item"><a class="nav-link active menu-btn py-2" href="#" onclick="showPage('dashboard')"><i class="bi bi-grid-1x2-fill me-2 text-primary"></i> Beranda</a></li>
+                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill me-2 text-info"></i> Upload</a></li>
+                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('analisa')"><i class="bi bi-search me-2 text-warning"></i> Analisa</a></li>
+                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('datamaster')"><i class="bi bi-database-fill me-2 text-success"></i> Data Master</a></li>
                     </ul>
                 </div>
             </nav>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pb-5 mb-5 main-content">
                 
+                <!-- DASHBOARD -->
                 <div id="dashboard" class="page-section fade-in">
-                    <h3 class="fw-bold mb-4 mt-2">Selamat Datang 👋</h3>
-                    <div class="card glass-card border-0 shadow-sm rounded-4">
-                        <div class="card-body p-4 text-center">
-                            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135673.png" width="100" class="mb-3" alt="Recon Icon">
-                            <h5>Aplikasi Rekonsiliasi Pintar</h5>
-                            <p class="text-muted">Sistem akan otomatis melewati data duplikat dan menyorot selisih secara akurat tanpa merusak data lama.</p>
-                            <button class="btn btn-primary rounded-pill px-4" onclick="showPage('upload')">Mulai Upload Data</button>
+                    <h4 class="fw-bold mb-3 mt-2 text-dark">Selamat Datang 👋</h4>
+                    <div class="card glass-card shadow-sm bouncy-hover">
+                        <div class="card-body p-3 text-center">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135673.png" width="80" class="mb-2 bouncy-hover" alt="Recon Icon">
+                            <h5 class="fw-bold text-dark">Aplikasi Rekonsiliasi Pintar</h5>
+                            <p class="text-muted small mb-3">Sistem otomatis menyeleksi duplikat & menyorot selisih secara akurat.</p>
+                            <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" onclick="showPage('upload')"><i class="bi bi-rocket-takeoff-fill me-1"></i> Mulai Upload</button>
                         </div>
                     </div>
                 </div>
 
+                <!-- UPLOAD -->
                 <div id="upload" class="page-section d-none fade-in">
-                    <h3 class="fw-bold mb-4 mt-2">Upload File</h3>
-                    <div class="row g-3">
+                    <h4 class="fw-bold mb-3 mt-2 text-dark">Upload File</h4>
+                    <div class="row g-2">
                         <div class="col-md-6">
-                            <div class="card glass-card border-0 shadow-sm rounded-4 h-100">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="icon-box bg-primary-subtle text-primary me-3"><i class="bi bi-file-earmark-text-fill"></i></div>
-                                        <h5 class="card-title fw-bold mb-0">GL ATM (.txt)</h5>
+                            <div class="card glass-card shadow-sm h-100 bouncy-hover">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="icon-box-playful bg-primary-subtle text-primary me-2"><i class="bi bi-file-earmark-text-fill"></i></div>
+                                        <h6 class="card-title fw-bold mb-0 text-dark">GL ATM (.txt)</h6>
                                     </div>
-                                    <input class="form-control rounded-pill mb-3" type="file" id="glFile" accept=".txt">
-                                    <button class="btn btn-primary rounded-pill w-100" onclick="processGL()"><i class="bi bi-cloud-upload"></i> Proses Data</button>
+                                    <input class="form-control form-control-sm rounded-pill mb-2 border-primary-subtle bg-light" type="file" id="glFile" accept=".txt">
+                                    <button class="btn btn-primary btn-sm rounded-pill w-100 fw-bold shadow-sm" onclick="processGL()"><i class="bi bi-cloud-upload"></i> Proses Data</button>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card glass-card border-0 shadow-sm rounded-4 h-100">
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="icon-box bg-success-subtle text-success me-3"><i class="bi bi-receipt"></i></div>
-                                        <h5 class="card-title fw-bold mb-0">EJ ATM (.jrn)</h5>
+                            <div class="card glass-card shadow-sm h-100 bouncy-hover">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="icon-box-playful bg-success-subtle text-success me-2"><i class="bi bi-receipt"></i></div>
+                                        <h6 class="card-title fw-bold mb-0 text-dark">EJ ATM (.jrn)</h6>
                                     </div>
-                                    <input class="form-control rounded-pill mb-3" type="file" id="ejFile" accept=".jrn,.txt">
-                                    <button class="btn btn-success rounded-pill w-100" onclick="processEJ()"><i class="bi bi-cloud-upload"></i> Proses Data</button>
+                                    <input class="form-control form-control-sm rounded-pill mb-2 border-success-subtle bg-light" type="file" id="ejFile" accept=".jrn,.txt">
+                                    <button class="btn btn-success btn-sm rounded-pill w-100 fw-bold shadow-sm" onclick="processEJ()"><i class="bi bi-cloud-upload"></i> Proses Data</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ANALISA -->
                 <div id="analisa" class="page-section d-none fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
-                        <h3 class="fw-bold mb-0">Hasil Analisa</h3>
-                        <button class="btn btn-warning rounded-pill fw-bold shadow-sm" onclick="triggerAnalysis()"><i class="bi bi-lightning-charge-fill"></i> Proses Sekarang</button>
+                        <h4 class="fw-bold mb-0 text-dark">Hasil Analisa</h4>
+                        <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover" onclick="triggerAnalysis()"><i class="bi bi-lightning-charge-fill text-dark"></i> Proses Sekarang</button>
                     </div>
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="card summary-card summary-lebih border-0 shadow-sm rounded-4 p-3">
+                    <!-- Compact Summary Cards -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="card bg-danger-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div><p class="text-muted mb-1 fw-bold">Total Selisih Lebih</p><h3 id="totalLebihRp" class="text-success fw-bolder mb-0">Rp 0</h3></div>
-                                    <i class="bi bi-arrow-up-circle text-success opacity-50" style="font-size: 3rem;"></i>
+                                    <div><p class="text-danger mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH KURANG</p><h5 id="totalKurangRp" class="text-danger fw-black mb-0">Rp 0</h5></div>
+                                    <i class="bi bi-arrow-down-circle-fill text-danger opacity-50 fs-2"></i>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card summary-card summary-kurang border-0 shadow-sm rounded-4 p-3">
+                        <div class="col-6">
+                            <div class="card bg-success-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div><p class="text-muted mb-1 fw-bold">Total Selisih Kurang</p><h3 id="totalKurangRp" class="text-danger fw-bolder mb-0">Rp 0</h3></div>
-                                    <i class="bi bi-arrow-down-circle text-danger opacity-50" style="font-size: 3rem;"></i>
+                                    <div><p class="text-success mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH LEBIH</p><h5 id="totalLebihRp" class="text-success fw-black mb-0">Rp 0</h5></div>
+                                    <i class="bi bi-arrow-up-circle-fill text-success opacity-50 fs-2"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-2"><label class="small text-muted fw-bold">Cari Resi</label><input type="text" id="filterResiAn" class="form-control form-control-sm rounded-pill" placeholder="No Resi..."></div>
-                            <div class="col-md-3"><label class="small text-muted fw-bold">ID ATM</label><input type="text" id="filterAtmAn" class="form-control form-control-sm rounded-pill" placeholder="Contoh: KTM12901"></div>
-                            <div class="col-md-3"><label class="small text-muted fw-bold">Nominal (Rp)</label><input type="number" id="filterNominalAn" class="form-control form-control-sm rounded-pill" placeholder="Cari nominal spesifik..."></div>
-                            <div class="col-md-2"><label class="small text-muted fw-bold">Urutkan Tanggal</label>
-                                <select id="sortDateAn" class="form-select form-select-sm rounded-pill">
-                                    <option value="desc">Paling Baru</option><option value="asc">Paling Lama</option>
+                    <!-- Compact Filter -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
+                        <div class="row g-1 align-items-end">
+                            <div class="col-4 col-md-3"><input type="text" id="filterResiAn" class="form-control form-control-sm rounded-pill bg-light" placeholder="Cari Resi..."></div>
+                            <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" class="form-control form-control-sm rounded-pill bg-light" placeholder="ID ATM..."></div>
+                            <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" class="form-control form-control-sm rounded-pill bg-light" placeholder="Rp..."></div>
+                            <div class="col-6 col-md-2">
+                                <select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light text-secondary">
+                                    <option value="desc">Baru</option><option value="asc">Lama</option>
                                 </select>
                             </div>
-                            <div class="col-md-2"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold" onclick="renderSelisihTablesFiltered()"><i class="bi bi-funnel-fill"></i> Terapkan</button></div>
+                            <div class="col-6 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm" onclick="renderSelisihTablesFiltered()"><i class="bi bi-funnel-fill"></i></button></div>
                         </div>
                     </div>
 
-                    <ul class="nav nav-pills nav-fill gap-2 p-1 bg-white border rounded-5 shadow-sm mb-3" id="pills-tab" role="tablist">
-                        <li class="nav-item" role="presentation"><button class="nav-link active rounded-5 fw-bold" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button">Selisih Lebih <span class="badge bg-danger ms-1" id="countLebih">0</span></button></li>
-                        <li class="nav-item" role="presentation"><button class="nav-link rounded-5 fw-bold" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button">Selisih Kurang <span class="badge bg-danger ms-1" id="countKurang">0</span></button></li>
-                        <li class="nav-item" role="presentation"><button class="nav-link rounded-5 fw-bold bg-success-subtle text-success" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button"><i class="bi bi-check2-all"></i> Riwayat Selesai</button></li>
+                    <!-- Playful Nav Pills -->
+                    <ul class="nav nav-pills gap-1 p-1 bg-white border rounded-pill shadow-sm mb-3 text-center d-flex flex-nowrap overflow-auto hide-scrollbar" id="pills-tab" role="tablist">
+                        <li class="nav-item flex-fill" role="presentation"><button class="nav-link active rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button" style="font-size: 0.8rem;">Kurang <span class="badge bg-white text-danger ms-1 rounded-pill" id="countKurang">0</span></button></li>
+                        <li class="nav-item flex-fill" role="presentation"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button" style="font-size: 0.8rem;">Lebih <span class="badge bg-danger text-white ms-1 rounded-pill" id="countLebih">0</span></button></li>
+                        <li class="nav-item flex-fill" role="presentation"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap text-success" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button" style="font-size: 0.8rem;"><i class="bi bi-check2-all"></i> Selesai</button></li>
                     </ul>
 
                     <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade show active" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white"><table class="table table-hover align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div></div>
-                        <div class="tab-pane fade" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white"><table class="table table-hover align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div></div>
-                        <div class="tab-pane fade" id="selesai" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white"><table class="table table-hover align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div></div>
+                        <div class="tab-pane fade show active" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div></div>
+                        <div class="tab-pane fade" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div></div>
+                        <div class="tab-pane fade" id="selesai" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div></div>
                     </div>
                 </div>
 
+                <!-- DATA MASTER -->
                 <div id="datamaster" class="page-section d-none fade-in">
-                    <h3 class="fw-bold mb-4 mt-2">Database GL & EJ</h3>
+                    <h4 class="fw-bold mb-3 mt-2 text-dark">Database GL & EJ</h4>
                     
-                    <div class="card glass-card border-0 shadow-sm rounded-4 mb-4">
-                        <div class="card-body p-3">
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-2">
-                                    <label class="small text-muted fw-bold mb-1">Tanggal</label>
-                                    <input type="date" id="filterStart" class="form-control form-control-sm rounded-pill">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="small text-muted fw-bold mb-1">No Resi</label>
-                                    <input type="text" id="filterResiDm" class="form-control form-control-sm rounded-pill" placeholder="Cari Resi...">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="small text-muted fw-bold mb-1">ID ATM</label>
-                                    <input type="text" id="filterAtmDm" class="form-control form-control-sm rounded-pill" placeholder="Cari KTM...">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="small text-muted fw-bold mb-1">Nominal (Rp)</label>
-                                    <input type="number" id="filterNominalDm" class="form-control form-control-sm rounded-pill" placeholder="Cari Nominal...">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="small text-muted fw-bold mb-1">Status Data</label>
-                                    <select id="filterStatus" class="form-select form-select-sm rounded-pill">
-                                        <option value="SEMUA">Semua</option>
-                                        <option value="SELISIH">Hanya Selisih</option>
-                                        <option value="AMAN">Aman (Cocok)</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold" onclick="renderDataMaster()">
-                                        <i class="bi bi-funnel-fill"></i> Terapkan
-                                    </button>
-                                </div>
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
+                        <div class="row g-1 align-items-end">
+                            <div class="col-6 col-md-2"><input type="date" id="filterStart" class="form-control form-control-sm rounded-pill bg-light text-secondary"></div>
+                            <div class="col-6 col-md-2"><input type="text" id="filterResiDm" class="form-control form-control-sm rounded-pill bg-light" placeholder="Cari Resi..."></div>
+                            <div class="col-4 col-md-2"><input type="text" id="filterAtmDm" class="form-control form-control-sm rounded-pill bg-light" placeholder="ID ATM..."></div>
+                            <div class="col-4 col-md-3"><input type="number" id="filterNominalDm" class="form-control form-control-sm rounded-pill bg-light" placeholder="Nominal Rp..."></div>
+                            <div class="col-4 col-md-2">
+                                <select id="filterStatus" class="form-select form-select-sm rounded-pill bg-light text-secondary">
+                                    <option value="SEMUA">Semua</option><option value="SELISIH">Selisih</option><option value="AMAN">Aman</option>
+                                </select>
                             </div>
+                            <div class="col-12 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm" onclick="renderDataMaster()"><i class="bi bi-funnel-fill"></i></button></div>
                         </div>
                     </div>
 
-                    <div class="table-responsive rounded-4 shadow-sm bg-white" style="max-height: 60vh;">
-                        <table class="table align-middle mb-0 text-nowrap table-hover">
+                    <div class="table-responsive rounded-4 shadow-sm bg-white border" style="max-height: 60vh;">
+                        <table class="table align-middle mb-0 text-nowrap table-hover table-sm table-custom-compact">
                             <thead class="table-light sticky-top shadow-sm">
-                                <tr>
-                                    <th>Sumber</th>
-                                    <th>Tanggal</th>
-                                    <th>ATM</th>
-                                    <th>Resi</th>
-                                    <th>Nominal</th>
-                                    <th>Keterangan / Status</th>
-                                </tr>
+                                <tr><th>Sumber</th><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Info</th></tr>
                             </thead>
                             <tbody id="tableBodyDataMaster">
-                                <tr>
-                                    <td colspan="6" class="text-center py-5 text-muted">
-                                        <div class="spinner-border text-primary mb-2" role="status"></div>
-                                        <br>Memuat database...
-                                    </td>
-                                </tr>
+                                <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border text-primary spinner-border-sm mb-1"></div><br><small>Memuat...</small></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -192,85 +250,73 @@
         </div>
     </div>
 
-    <nav class="bottom-nav d-md-none bg-white shadow-lg fixed-bottom border-top">
-        <div class="d-flex justify-content-around p-2">
-            <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn" onclick="showPage('dashboard')">
-                <i class="bi bi-grid-1x2-fill fs-4 d-block"></i><span class="small">Beranda</span>
+    <!-- FLOATING BOTTOM NAV (Mobile Only) -->
+    <nav class="d-md-none fixed-bottom floating-bottom-nav">
+        <div class="d-flex justify-content-around p-1">
+            <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')">
+                <i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Home</span>
             </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn" onclick="showPage('upload')">
-                <i class="bi bi-cloud-arrow-up-fill fs-4 d-block"></i><span class="small">Upload</span>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')">
+                <i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Upload</span>
             </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn" onclick="showPage('analisa')">
-                <i class="bi bi-search fs-4 d-block"></i><span class="small">Analisa</span>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('analisa')">
+                <i class="bi bi-search fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Analisa</span>
             </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn" onclick="showPage('datamaster')">
-                <i class="bi bi-database-fill fs-4 d-block"></i><span class="small">Data</span>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('datamaster')">
+                <i class="bi bi-database-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Data</span>
             </a>
         </div>
     </nav>
 
+    <!-- ALL MODALS (Detail, Preview, Resolve, Berita Acara) KEPT INTACT BUT ROUNDED-5 FOR PLAYFUL LOOK -->
     <div class="modal fade" id="detailSelisihModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
                 <div id="detailModalHeader" class="modal-header border-0 py-3 text-white">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-search me-2"></i> Investigasi Selisih</h5>
+                    <h6 class="modal-title fw-bold"><i class="bi bi-search me-2"></i> Detail Investigasi</h6>
                     <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    
-                    <div class="text-center mb-4">
-                        <span id="detailJenisBadge" class="badge rounded-pill fs-6 px-4 py-2 shadow-sm mb-2"></span>
-                        <h2 id="detailNominal" class="fw-bolder text-dark mb-0">Rp 0</h2>
+                    <div class="text-center mb-3">
+                        <span id="detailJenisBadge" class="badge rounded-pill px-3 py-1 shadow-sm mb-2"></span>
+                        <h3 id="detailNominal" class="fw-black text-dark mb-0">Rp 0</h3>
                     </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-6"><div class="info-box"><span class="info-label"><i class="bi bi-calendar-event"></i> Tanggal</span><p id="detailTanggal" class="info-value">-</p></div></div>
-                        <div class="col-6"><div class="info-box"><span class="info-label"><i class="bi bi-pc-display"></i> ID Mesin ATM</span><p id="detailAtm" class="info-value text-primary">-</p></div></div>
-                        <div class="col-12"><div class="info-box"><span class="info-label"><i class="bi bi-receipt"></i> Nomor Resi</span><p id="detailResi" class="info-value">-</p></div></div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><div class="bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">TANGGAL</span><span id="detailTanggal" class="fw-bold small">-</span></div></div>
+                        <div class="col-6"><div class="bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">ID MESIN</span><span id="detailAtm" class="fw-bold text-primary small">-</span></div></div>
+                        <div class="col-12"><div class="bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">RESI</span><span id="detailResi" class="fw-bold small">-</span></div></div>
                     </div>
-
-                    <div class="alert alert-warning border-warning shadow-sm rounded-3">
-                        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Kronologi Sistem:</h6>
-                        <span id="detailKeterangan" class="text-dark"></span>
+                    <div class="alert alert-warning border-warning shadow-sm rounded-4 p-2 mb-2">
+                        <span class="fw-bold d-block small" style="font-size: 0.7rem;"><i class="bi bi-info-circle-fill me-1"></i> Kronologi:</span>
+                        <span id="detailKeterangan" class="text-dark small" style="font-size: 0.8rem;"></span>
                     </div>
-
-                    <div class="alert bg-white border shadow-sm rounded-3 mb-0">
-                        <h6 class="fw-bold mb-1 text-primary"><i class="bi bi-lightbulb-fill text-primary me-1"></i> Tindakan Disarankan:</h6>
-                        <span id="detailSaran" class="text-secondary small"></span>
+                    <div class="alert bg-white border shadow-sm rounded-4 p-2 mb-0">
+                        <span class="fw-bold d-block text-primary small" style="font-size: 0.7rem;"><i class="bi bi-lightbulb-fill me-1"></i> Saran:</span>
+                        <span id="detailSaran" class="text-secondary small" style="font-size: 0.75rem;"></span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden glass-card">
-                <div class="modal-header bg-gradient-banking text-white border-0 py-3">
-                    <h5 class="modal-title fw-bold" id="previewModalLabel">
-                        <i class="bi bi-file-earmark-text me-2 text-warning"></i> Pratinjau Data <span id="previewType" class="text-warning"></span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
+                <div class="modal-header bg-gradient-playful text-white border-0 py-2">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-eye me-1 text-warning"></i> Pratinjau <span id="previewType" class="text-warning"></span></h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-light">
-                    <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center shadow-sm">
-                        <span class="fw-medium text-secondary">Total Transaksi Terbaca: <strong id="previewCount" class="text-dark fs-5">0</strong> Baris</span>
-                        <span class="badge bg-warning-subtle text-dark border border-warning rounded-pill px-3 py-2">
-                            <i class="bi bi-shield-check text-success"></i> Validasi data sebelum upload
-                        </span>
+                    <div class="p-2 bg-white border-bottom d-flex justify-content-between align-items-center text-sm">
+                        <span class="small text-secondary fw-bold">Total: <strong id="previewCount" class="text-dark">0</strong> baris</span>
                     </div>
-                    <div class="table-responsive" style="max-height: 55vh;">
-                        <table class="table table-hover align-middle mb-0 text-nowrap preview-table">
-                            <thead class="sticky-top shadow-sm" id="previewTableHeader"></thead>
-                            <tbody id="previewTableBody" class="bg-white"></tbody>
-                        </table>
+                    <div class="table-responsive" style="max-height: 50vh;">
+                        <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light sticky-top" id="previewTableHeader"></thead><tbody id="previewTableBody" class="bg-white"></tbody></table>
                     </div>
                 </div>
-                <div class="modal-footer bg-white border-top-0 py-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-medium border" data-bs-dismiss="modal">Batalkan</button>
-                    <button type="button" class="btn rounded-pill px-4 fw-bold banking-btn shadow-sm" id="btnConfirmUpload">
-                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Konfirmasi & Upload
-                    </button>
+                <div class="modal-footer bg-white border-0 py-2">
+                    <button type="button" class="btn btn-light btn-sm rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" id="btnConfirmUpload"><i class="bi bi-cloud-arrow-up-fill"></i> Upload</button>
                 </div>
             </div>
         </div>
@@ -278,13 +324,13 @@
 
     <div class="modal fade" id="resolveModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header bg-primary text-white border-0"><h5 class="modal-title fw-bold">Selesaikan Selisih</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-4">
-                    <p class="text-muted mb-3">Masukkan alasan penyelesaian dan tindakan yang telah dilakukan untuk <b id="resolveIdText" class="text-dark"></b>.</p>
-                    <textarea id="resolveReason" class="form-control" rows="3" placeholder="Contoh: Telah dilakukan pengkreditan manual ke rekening nasabah a/n Budi pada tanggal 06 Juni..."></textarea>
+            <div class="modal-content rounded-5 border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0 py-2"><h6 class="modal-title fw-bold">Selesaikan Selisih</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-3">
+                    <p class="text-muted mb-2 small">Alasan penyelesaian untuk <b id="resolveIdText" class="text-dark"></b>:</p>
+                    <textarea id="resolveReason" class="form-control form-control-sm rounded-4 bg-light" rows="3" placeholder="Contoh: Sudah dikredit ke nasabah..."></textarea>
                 </div>
-                <div class="modal-footer border-0 bg-light"><button class="btn btn-light rounded-pill" data-bs-dismiss="modal">Batal</button><button class="btn btn-primary rounded-pill fw-bold" onclick="submitResolve()"><i class="bi bi-save"></i> Simpan & Buat B/A</button></div>
+                <div class="modal-footer border-0 bg-white py-2"><button class="btn btn-light btn-sm rounded-pill px-3" data-bs-dismiss="modal">Batal</button><button class="btn btn-success btn-sm rounded-pill fw-bold px-3 shadow-sm" onclick="submitResolve()"><i class="bi bi-save"></i> Simpan</button></div>
             </div>
         </div>
     </div>
@@ -292,40 +338,34 @@
     <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
-                <div class="modal-header bg-dark text-white rounded-0"><h5 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau Cetak Berita Acara</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-5 bg-white text-dark" id="beritaAcaraPrintArea">
-                    <div class="text-center border-bottom border-dark border-2 pb-3 mb-4">
-                        <h4 class="fw-bolder mb-0 text-uppercase">BERITA ACARA PENYELESAIAN SELISIH KAS ATM</h4>
-                        <p class="mb-0">PT BPD KALTIM KALTARA</p>
+                <div class="modal-header bg-dark text-white rounded-0 py-2"><h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Berita Acara</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4 bg-white text-dark small" id="beritaAcaraPrintArea">
+                    <div class="text-center border-bottom border-dark border-2 pb-2 mb-3">
+                        <h5 class="fw-bolder mb-0 text-uppercase">BERITA ACARA PENYELESAIAN SELISIH KAS</h5><p class="mb-0 small">PT BPD KALTIM KALTARA</p>
                     </div>
-                    <p style="text-align: justify; line-height: 1.8;">
-                        Pada hari ini tanggal <b id="baTglCetak"></b>, telah dilakukan investigasi dan penyelesaian atas terjadinya selisih kas pada mesin Anjungan Tunai Mandiri (ATM) dengan rincian data transaksi sebagai berikut:
-                    </p>
-                    <table class="table table-borderless table-sm w-75 mx-auto mb-4" style="line-height: 1.8;">
-                        <tr><td width="35%"><strong>Tanggal Transaksi</strong></td><td width="5%">:</td><td id="baTanggal" class="border-bottom border-dark border-dashed"></td></tr>
-                        <tr><td><strong>ID Mesin ATM</strong></td><td>:</td><td id="baAtm" class="border-bottom border-dark border-dashed fw-bold"></td></tr>
-                        <tr><td><strong>Nomor Resi / Ref</strong></td><td>:</td><td id="baResi" class="border-bottom border-dark border-dashed"></td></tr>
-                        <tr><td><strong>Nominal Transaksi</strong></td><td>:</td><td id="baNominal" class="border-bottom border-dark border-dashed fw-bold fs-5"></td></tr>
-                        <tr><td><strong>Jenis Status</strong></td><td>:</td><td id="baJenis" class="border-bottom border-dark border-dashed"></td></tr>
+                    <p style="text-align: justify; line-height: 1.6;" class="mb-3">Pada hari ini tanggal <b id="baTglCetak"></b>, telah dilakukan penyelesaian selisih kas mesin ATM dengan rincian:</p>
+                    <table class="table table-borderless table-sm w-100 mx-auto mb-3" style="line-height: 1.2;">
+                        <tr><td width="35%">Tanggal Transaksi</td><td width="5%">:</td><td id="baTanggal" class="border-bottom border-dark"></td></tr>
+                        <tr><td>ID Mesin ATM</td><td>:</td><td id="baAtm" class="border-bottom border-dark fw-bold"></td></tr>
+                        <tr><td>Nomor Resi / Ref</td><td>:</td><td id="baResi" class="border-bottom border-dark"></td></tr>
+                        <tr><td>Nominal Transaksi</td><td>:</td><td id="baNominal" class="border-bottom border-dark fw-bold text-primary"></td></tr>
+                        <tr><td>Jenis Status</td><td>:</td><td id="baJenis" class="border-bottom border-dark"></td></tr>
                     </table>
-                    <p style="text-align: justify; line-height: 1.8;">
-                        Berdasarkan hasil pencocokan antara Jurnal Elektronik (EJ) dan Pembukuan Kas Bank (GL), transaksi tersebut diputuskan telah <b>SELESAI</b> dengan keterangan tindak lanjut:
-                    </p>
-                    <div class="p-3 border border-dark mb-5" style="min-height: 100px;"><i id="baKeterangan"></i></div>
-                    
-                    <div class="row text-center mt-5">
-                        <div class="col-6"><p>Dibuat Oleh,</p><br><br><br><p class="fw-bold text-decoration-underline mb-0">Petugas Rekonsiliasi</p></div>
-                        <div class="col-6"><p>Disetujui Oleh,</p><br><br><br><p class="fw-bold text-decoration-underline mb-0">Penyelia Operasional</p></div>
+                    <p style="text-align: justify; line-height: 1.6;" class="mb-2">Keputusan <b>SELESAI</b> dengan keterangan tindak lanjut:</p>
+                    <div class="p-2 border border-dark mb-4 bg-light" style="min-height: 60px;"><i id="baKeterangan"></i></div>
+                    <div class="row text-center mt-4">
+                        <div class="col-6"><p class="mb-5">Dibuat Oleh,</p><p class="fw-bold text-decoration-underline mb-0">Petugas Rekonsiliasi</p></div>
+                        <div class="col-6"><p class="mb-5">Disetujui Oleh,</p><p class="fw-bold text-decoration-underline mb-0">Penyelia Operasional</p></div>
                     </div>
                 </div>
-                <div class="modal-footer rounded-0"><button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button><button class="btn btn-success fw-bold" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Dokumen</button></div>
+                <div class="modal-footer rounded-0 py-2"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button><button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Dokumen</button></div>
             </div>
         </div>
     </div>
 
+    <!-- SCRIPT -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="app.js"></script>
-
 </body>
 </html>
