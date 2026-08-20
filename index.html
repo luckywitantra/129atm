@@ -160,7 +160,7 @@
                     </div>
                 </div>
 
-                <!-- ANALISA -->
+                <!-- ANALISA & REKONSILIASI -->
                 <div id="analisa" class="page-section d-none fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
                         <h4 class="fw-bold mb-0 text-dark">Hasil Analisa</h4>
@@ -190,15 +190,22 @@
                     <!-- Compact Filter -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
                         <div class="row g-1 align-items-end">
-                            <div class="col-4 col-md-3"><input type="text" id="filterResiAn" class="form-control form-control-sm rounded-pill bg-light" placeholder="Cari Resi..."></div>
-                            <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" class="form-control form-control-sm rounded-pill bg-light" placeholder="ID ATM..."></div>
-                            <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" class="form-control form-control-sm rounded-pill bg-light" placeholder="Rp..."></div>
+                            <div class="col-4 col-md-3"><input type="text" id="filterResiAn" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..."></div>
+                            <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..."></div>
+                            <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Rp..."></div>
                             <div class="col-6 col-md-2">
-                                <select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light text-secondary">
-                                    <option value="desc">Baru</option><option value="asc">Lama</option>
+                                <select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 text-secondary fw-bold">
+                                    <option value="desc">Terbaru</option><option value="asc">Terlama</option>
                                 </select>
                             </div>
-                            <div class="col-6 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm" onclick="renderSelisihTablesFiltered()"><i class="bi bi-funnel-fill"></i></button></div>
+                            <div class="col-6 col-md-1"><button class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm bouncy-hover" onclick="renderSelisihTablesFiltered()"><i class="bi bi-funnel-fill"></i></button></div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Information Banner -->
+                    <div class="alert bg-primary-subtle border-0 text-primary py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" role="alert" style="font-size: 0.75rem;">
+                        <div>
+                            <i class="bi bi-robot me-1 fs-6"></i> <strong>Smart AI Scanner aktif.</strong> Sistem otomatis mencocokkan selisih dengan Riwayat BA Opname fisik Anda.
                         </div>
                     </div>
 
@@ -210,8 +217,8 @@
                     </ul>
 
                     <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade show active" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div></div>
-                        <div class="tab-pane fade" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div></div>
+                        <div class="tab-pane fade show active" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Rekomendasi AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div></div>
+                        <div class="tab-pane fade" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Rekomendasi AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div></div>
                         <div class="tab-pane fade" id="selesai" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div></div>
                     </div>
                 </div>
