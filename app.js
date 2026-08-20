@@ -1,7 +1,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbwnLjfPZrOM21ln6-crxdnGebqHUQSXInpk6sa5kzxatf9vhUFsZakMFDyr-UxTCUM_/exec';
 
 // ==========================================
-// 1. UI ROUTER & NAVIGASI
+// 1. UI ROUTER, NAVIGASI & THEME SETUP
 // ==========================================
 let pendingUploadData = [];
 let pendingUploadType = '';
@@ -12,6 +12,16 @@ let activeResolveRow = null;
 // Fungsi Global Format Rupiah
 const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
 
+// [BARU] Setup SweetAlert agar Playful & Rounded menyesuaikan tema
+const PlayfulAlert = Swal.mixin({
+    customClass: {
+        popup: 'rounded-5 shadow-lg border-0',
+        confirmButton: 'btn btn-primary rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover',
+        cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover'
+    },
+    buttonsStyling: false
+});
+
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
     const targetPage = document.getElementById(pageId);
@@ -20,6 +30,7 @@ function showPage(pageId) {
     document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.bottom-nav .nav-item').forEach(el => {
         el.classList.remove('active-bottom');
+        el.classList.remove('text-primary');
         el.classList.add('text-secondary');
     });
 
@@ -29,6 +40,7 @@ function showPage(pageId) {
         } else {
             event.currentTarget.classList.add('active-bottom'); 
             event.currentTarget.classList.remove('text-secondary');
+            event.currentTarget.classList.add('text-primary');
         }
     }
 
@@ -46,7 +58,8 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 // ==========================================
 function processGL() {
     const file = document.getElementById('glFile').files[0];
-    if (!file) return Swal.fire('Error', 'Pilih file GL', 'error');
+    if (!file) return PlayfulAlert.fire('Error', 'Pilih file GL terlebih dahulu!', 'error');
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         const text = e.target.result; const lines = text.split('\n'); const glData = [];
@@ -69,7 +82,8 @@ function processGL() {
 
 function processEJ() {
     const file = document.getElementById('ejFile').files[0];
-    if (!file) return Swal.fire('Error', 'Pilih file EJ', 'error');
+    if (!file) return PlayfulAlert.fire('Error', 'Pilih file EJ terlebih dahulu!', 'error');
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         const text = e.target.result; const lines = text.split('\n'); const ejData = [];
@@ -116,7 +130,7 @@ function processEJ() {
             if (line.match(/TRANSACTION \d+ FAILED/) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
         if (currentTx.noResi) saveCurrentTransaction();
-        if (ejData.length === 0) return Swal.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
+        if (ejData.length === 0) return PlayfulAlert.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
         showPreviewModal(ejData, 'EJ');
     };
     reader.readAsText(file);
@@ -137,10 +151,10 @@ function showPreviewModal(data, type) {
     const renderLimit = 100;
     const rowsHtml = data.slice(0, renderLimit).map(row => {
         if (type === 'GL') {
-            return `<tr><td class="text-secondary fw-medium">${row[0]}</td><td><span class="badge bg-secondary">${row[1]}</span></td><td class="fw-bold">${row[2]}</td><td class="text-primary fw-bold">${formatRp(row[3])}</td><td><span class="badge bg-info text-dark border">${row[4]}</span></td><td class="text-muted"><small>${row[5]}</small></td></tr>`;
+            return `<tr><td class="text-secondary fw-medium">${row[0]}</td><td><span class="badge bg-secondary rounded-pill">${row[1]}</span></td><td class="fw-bold">${row[2]}</td><td class="text-primary fw-bold">${formatRp(row[3])}</td><td><span class="badge bg-info text-dark rounded-pill">${row[4]}</span></td><td class="text-muted"><small>${row[5]}</small></td></tr>`;
         } else {
-            let badge = row[4].includes('SUKSES') ? `bg-success-subtle text-success border border-success` : row[4].includes('GAGAL') ? `bg-danger-subtle text-danger border border-danger` : `bg-light text-secondary border`;
-            return `<tr><td class="text-secondary fw-medium">${row[0]}</td><td><span class="badge bg-secondary">${row[1]}</span></td><td class="fw-bold">${row[2]}</td><td class="text-primary fw-bold">${formatRp(row[3])}</td><td><span class="badge px-2 py-1 ${badge}">${row[4]}</span></td></tr>`;
+            let badge = row[4].includes('SUKSES') ? `bg-success-subtle text-success` : row[4].includes('GAGAL') ? `bg-danger-subtle text-danger` : `bg-light text-secondary`;
+            return `<tr><td class="text-secondary fw-medium">${row[0]}</td><td><span class="badge bg-secondary rounded-pill">${row[1]}</span></td><td class="fw-bold">${row[2]}</td><td class="text-primary fw-bold">${formatRp(row[3])}</td><td><span class="badge rounded-pill px-3 py-1 ${badge}">${row[4]}</span></td></tr>`;
         }
     }).join('');
     
@@ -158,30 +172,33 @@ document.getElementById('btnConfirmUpload').addEventListener('click', () => {
 // 4. API & ANALISA SELISIH (FILTER & SORT)
 // ==========================================
 async function sendToBackend(action, data) {
-    Swal.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); Swal.showLoading();
+    PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); 
+    PlayfulAlert.showLoading();
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         const result = await response.json();
-        if(result.success) Swal.fire('Berhasil!', `Dimasukkan: <b>${result.data.added}</b> data baru.<br>Dilewati (Duplikat): <b>${data.length - result.data.added}</b> data.`, 'success');
-        else Swal.fire('Error Backend', result.message, 'error');
-    } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
+        if(result.success) PlayfulAlert.fire('Berhasil!', `Dimasukkan: <b>${result.data.added}</b> data baru.<br>Dilewati (Duplikat): <b>${data.length - result.data.added}</b> data.`, 'success');
+        else PlayfulAlert.fire('Error Backend', result.message, 'error');
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 async function triggerAnalysis() {
-    Swal.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); Swal.showLoading();
+    PlayfulAlert.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); 
+    PlayfulAlert.showLoading();
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
         const result = await response.json();
         if(result.success) {
-            Swal.fire('Analisa Selesai', `Perhitungan terbaru berhasil dimuat.`, 'success');
+            PlayfulAlert.fire('Analisa Selesai', `Perhitungan terbaru berhasil dimuat.`, 'success');
             globalSelisihData = result.data.tableData;
             renderSelisihTablesFiltered(); 
-        } else Swal.fire('Gagal', result.message, 'error');
-    } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
+        } else PlayfulAlert.fire('Gagal', result.message, 'error');
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 async function fetchSelisihData() {
-    document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5">Memuat Data...</td></tr>`;
+    document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
+    document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })});
         const result = await response.json();
@@ -227,27 +244,27 @@ function renderSelisihTablesFiltered() {
     document.getElementById('countLebih').innerText = lebihArr.length;
     document.getElementById('countKurang').innerText = kurangArr.length;
 
-    // Render Function
+    // Render Function dengan Estetika Playful & Compact
     const renderTable = (arr, type) => {
-        if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted">Data bersih atau tidak ditemukan.</td></tr>`;
+        if(arr.length === 0) return `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-smile fs-4 d-block mb-1"></i> Data bersih atau tidak ditemukan.</td></tr>`;
         return arr.map(row => {
             const tgl = String(row[0] || '').substring(0,10);
             const rawStr = encodeURIComponent(JSON.stringify(row));
             
             let actionBtn = "";
             if (type === 'belum') {
-                actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold" onclick="event.stopPropagation(); openResolveModal('${rawStr}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
+                actionBtn = `<button class="btn btn-sm btn-success rounded-pill fw-bold shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); openResolveModal('${rawStr}')"><i class="bi bi-check2-circle"></i> Selesaikan</button>`;
             } else {
-                actionBtn = `<button class="btn btn-sm btn-outline-danger rounded-pill fw-bold me-1" onclick="event.stopPropagation(); revertSelisih('${rawStr}')"><i class="bi bi-arrow-counterclockwise"></i> Batalkan Selesai</button>
-                             <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="event.stopPropagation(); generateBA('${rawStr}')"><i class="bi bi-printer"></i> B/A</button>`;
+                actionBtn = `<button class="btn btn-sm btn-outline-danger rounded-pill fw-bold me-1 shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); revertSelisih('${rawStr}')"><i class="bi bi-arrow-counterclockwise"></i> Batal</button>
+                             <button class="btn btn-sm btn-dark rounded-pill shadow-sm bouncy-hover text-nowrap" style="font-size:0.7rem" onclick="event.stopPropagation(); generateBA('${rawStr}')"><i class="bi bi-printer"></i> B/A</button>`;
             }
 
             return `<tr class="align-middle" style="cursor:pointer;" onclick="showDetailPopup('${rawStr}')" title="Klik baris untuk lihat detail lengkap">
                 <td class="fw-medium text-secondary">${tgl}</td>
-                <td><span class="badge bg-secondary shadow-sm">${row[1]}</span></td>
-                <td class="fw-bold fs-6">${row[2]}</td>
+                <td><span class="badge bg-secondary shadow-sm rounded-pill">${row[1]}</span></td>
+                <td class="fw-bold">${row[2]}</td>
                 <td class="text-primary fw-bold">${formatRp(row[3])}</td>
-                <td><small class="text-muted d-block text-truncate" style="max-width:200px;">${row[6]}</small></td>
+                <td><small class="text-muted d-block text-truncate" style="max-width:150px;">${row[6]}</small></td>
                 <td>${actionBtn}</td>
             </tr>`;
         }).join('');
@@ -263,50 +280,50 @@ function renderSelisihTablesFiltered() {
 // ==========================================
 function openResolveModal(rawStr) {
     activeResolveRow = JSON.parse(decodeURIComponent(rawStr));
-    document.getElementById('resolveIdText').innerText = `Resi ${activeResolveRow[2]} (Rp ${activeResolveRow[3].toLocaleString()})`;
+    document.getElementById('resolveIdText').innerText = `Resi ${activeResolveRow[2]} (${formatRp(activeResolveRow[3])})`;
     document.getElementById('resolveReason').value = activeResolveRow[6]; 
     new bootstrap.Modal(document.getElementById('resolveModal')).show();
 }
 
 async function submitResolve() {
     const reason = document.getElementById('resolveReason').value.trim();
-    if(!reason) return Swal.fire('Peringatan', 'Harap isi alasan / tindakan penyelesaian!', 'warning');
+    if(!reason) return PlayfulAlert.fire('Tunggu dulu!', 'Harap isi alasan penyelesaiannya ya.', 'warning');
     
     bootstrap.Modal.getInstance(document.getElementById('resolveModal')).hide();
     
     const tgl = String(activeResolveRow[0]).substring(0,10);
     const payload = { tanggal: tgl, atm: activeResolveRow[1], resi: activeResolveRow[2], status: 'Selesai', keterangan: reason };
     
-    Swal.fire({ title: 'Memperbarui Status...', allowOutsideClick: false }); Swal.showLoading();
+    PlayfulAlert.fire({ title: 'Menyimpan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
         const result = await response.json();
         if(result.success) {
-            Swal.close();
+            PlayfulAlert.close();
             activeResolveRow[5] = 'Selesai'; activeResolveRow[6] = reason; 
             renderSelisihTablesFiltered(); 
             generateBA(encodeURIComponent(JSON.stringify(activeResolveRow))); 
-        } else { Swal.fire('Gagal', 'Gagal update ke database', 'error'); }
-    } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
+        } else { PlayfulAlert.fire('Gagal', 'Gagal update ke database', 'error'); }
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 async function revertSelisih(rawStr) {
     const row = JSON.parse(decodeURIComponent(rawStr));
-    const confirm = await Swal.fire({ title: 'Batalkan Selesai?', text: "Data akan dikembalikan ke status Belum Selesai.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Kembalikan!'});
+    const confirm = await PlayfulAlert.fire({ title: 'Batalkan Selesai?', text: "Data akan dikembalikan ke tab Belum Selesai.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Kembalikan!', cancelButtonText: 'Batal'});
     if(!confirm.isConfirmed) return;
 
     const tgl = String(row[0]).substring(0,10);
     const payload = { tanggal: tgl, atm: row[1], resi: row[2], status: 'Belum', keterangan: row[6] };
     
-    Swal.fire({ title: 'Mengembalikan...', allowOutsideClick: false }); Swal.showLoading();
+    PlayfulAlert.fire({ title: 'Mengembalikan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
         const result = await response.json();
         if(result.success) {
-            Swal.fire('Berhasil', 'Data dikembalikan ke tabel awal.', 'success');
+            PlayfulAlert.fire('Berhasil', 'Data dikembalikan ke tabel awal.', 'success');
             fetchSelisihData(); 
         }
-    } catch (err) { Swal.fire('Error', err.toString(), 'error'); }
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 function generateBA(rawStr) {
@@ -329,22 +346,22 @@ function showDetailPopup(rowDataStr) {
     document.getElementById('detailAtm').innerText = row[1];
     document.getElementById('detailResi').innerText = row[2];
     document.getElementById('detailNominal').innerText = formatRp(row[3]);
-    document.getElementById('detailKeterangan').innerText = row[6];
+    document.getElementById('detailKeterangan').innerText = row[6] || '-';
     
     const badge = document.getElementById('detailJenisBadge');
     const header = document.getElementById('detailModalHeader');
     const saran = document.getElementById('detailSaran');
 
     if (row[4] === 'SELISIH LEBIH') {
-        badge.innerHTML = '<i class="bi bi-arrow-up-circle-fill"></i> SELISIH LEBIH (Uang Mesin Berlebih)';
-        badge.className = 'badge rounded-pill fs-6 px-4 py-2 shadow-sm mb-2 bg-success text-white';
-        header.style.background = 'linear-gradient(135deg, #198754 0%, #0f5132 100%)';
-        saran.innerHTML = `Sistem GL merekam transaksi terpotong, namun jurnal EJ mesin <b>GAGAL</b>. <br><b>Tindakan:</b> Pastikan saldo nasabah telah dikembalikan (Kredit) atau mesin memang mengalami kendala *Dispenser*.`;
+        badge.innerHTML = '<i class="bi bi-arrow-up-circle-fill"></i> UANG MESIN LEBIH';
+        badge.className = 'badge rounded-pill shadow-sm mb-2 bg-success text-white';
+        header.className = 'modal-header border-0 py-3 text-white bg-success';
+        saran.innerHTML = `Sistem GL merekam transaksi terpotong, namun jurnal EJ mesin <b>GAGAL</b>. <br>Pastikan saldo telah dikredit kembali ke nasabah.`;
     } else {
-        badge.innerHTML = '<i class="bi bi-arrow-down-circle-fill"></i> SELISIH KURANG (Uang Mesin Hilang)';
-        badge.className = 'badge rounded-pill fs-6 px-4 py-2 shadow-sm mb-2 bg-danger text-white';
-        header.style.background = 'linear-gradient(135deg, #dc3545 0%, #842029 100%)';
-        saran.innerHTML = `Mesin sukses mengeluarkan uang fisik, namun transaksi <b>TIDAK TERCATAT</b> di pembukuan GL bank. <br><b>Tindakan:</b> Lakukan pengecekan jurnal suspense (rek. gantung) atau segera lakukan pendebetan manual ke rekening nasabah terkait.`;
+        badge.innerHTML = '<i class="bi bi-arrow-down-circle-fill"></i> UANG MESIN HILANG';
+        badge.className = 'badge rounded-pill shadow-sm mb-2 bg-danger text-white';
+        header.className = 'modal-header border-0 py-3 text-white bg-danger';
+        saran.innerHTML = `Mesin sukses mengeluarkan uang fisik, namun transaksi <b>TIDAK TERCATAT</b> di pembukuan GL. <br>Lakukan pengecekan jurnal suspense (rek. gantung) / debet manual.`;
     }
 
     new bootstrap.Modal(document.getElementById('detailSelisihModal')).show();
@@ -354,7 +371,7 @@ function showDetailPopup(rowDataStr) {
 // 6. ENGINE DATA MASTER (PREVIEW GL & EJ)
 // ==========================================
 async function fetchDatabaseData() {
-    document.getElementById('tableBodyDataMaster').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div><br><span class="text-muted mt-2 d-block">Mengunduh Database...</span></td></tr>`;
+    document.getElementById('tableBodyDataMaster').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Mengunduh Database...</small></td></tr>`;
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase' })});
         const result = await response.json();
@@ -400,11 +417,11 @@ function renderDataMaster() {
 
     filteredData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
     const tbody = document.getElementById('tableBodyDataMaster');
-    if (filteredData.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Tidak ada data yang cocok dengan filter.</td></tr>`;
+    if (filteredData.length === 0) return tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-frown d-block fs-4 mb-1"></i> Tidak ada data yang cocok dengan filter.</td></tr>`;
 
     tbody.innerHTML = filteredData.slice(0, 500).map(item => {
-        const badgeSumber = item.sumber === 'GL' ? `<span class="badge bg-primary px-3 rounded-pill">Data GL</span>` : `<span class="badge bg-success px-3 rounded-pill">Data EJ</span>`;
-        const warnIcon = item.isSelisih ? `<i class="bi bi-exclamation-triangle-fill text-danger me-2" title="Data ini mengalami selisih!"></i>` : ``;
+        const badgeSumber = item.sumber === 'GL' ? `<span class="badge bg-primary px-3 rounded-pill shadow-sm"><i class="bi bi-file-earmark-text"></i> GL</span>` : `<span class="badge bg-success px-3 rounded-pill shadow-sm"><i class="bi bi-receipt"></i> EJ</span>`;
+        const warnIcon = item.isSelisih ? `<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>` : ``;
         const rowClass = item.isSelisih ? 'row-selisih' : 'row-aman';
 
         return `<tr class="${rowClass}">
@@ -413,7 +430,7 @@ function renderDataMaster() {
             <td class="fw-bold">${item.atm}</td>
             <td class="fw-bold">${warnIcon}${item.resi}</td>
             <td class="text-primary fw-bold">${formatRp(item.nominal)}</td>
-            <td class="text-muted small">${item.ket}</td>
+            <td class="text-muted small text-truncate" style="max-width:180px;" title="${item.ket}">${item.ket}</td>
         </tr>`;
     }).join('');
 }
