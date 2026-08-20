@@ -225,6 +225,19 @@
                         </div>
                     </div>
 
+                    <!-- PAPAN HIERARKI PENYELESAIAN (BARU) -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
+                        <h6 class="fw-bold text-dark mb-3" style="font-size: 0.85rem;"><i class="bi bi-bar-chart-fill text-primary"></i> Hierarki Penyelesaian Selisih</h6>
+                        <div class="row text-center mb-2">
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Temuan Selisih</span><h6 class="fw-black text-dark mb-0" id="hierarki-tot-selisih">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Terselesaikan (Selesai)</span><h6 class="fw-black text-success mb-0" id="hierarki-tot-selesai">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Sisa Gantung (Belum)</span><h6 class="fw-black text-danger mb-0" id="hierarki-tot-belum">Rp 0</h6></div>
+                        </div>
+                        <div class="progress rounded-pill shadow-inner" style="height: 6px;">
+                            <div id="hierarki-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
                     <!-- Compact Filter -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
                         <div class="row g-1 align-items-end">
@@ -269,6 +282,19 @@
                         <li class="nav-item flex-fill"><button class="nav-link active rounded-pill fw-bold w-100 py-1" data-bs-toggle="pill" data-bs-target="#op-form-tab" type="button" style="font-size: 0.8rem;"><i class="bi bi-pencil-square"></i> Input BA</button></li>
                         <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-secondary" data-bs-toggle="pill" data-bs-target="#op-riwayat-tab" type="button" style="font-size: 0.8rem;" onclick="fetchOpnameHistory()"><i class="bi bi-clock-history"></i> Riwayat</button></li>
                     </ul>
+
+                    <!-- PAPAN HIERARKI KOMPENSASI BA OPNAME (BARU) -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
+                        <h6 class="fw-bold text-dark mb-3" style="font-size: 0.85rem;"><i class="bi bi-pie-chart-fill text-purple" style="color:#6f42c1;"></i> Status Penyerapan Kuota BA Fisik</h6>
+                        <div class="row text-center mb-2">
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Fisik Selisih BA</span><h6 class="fw-black text-dark mb-0" id="op-hierarki-tot">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Digunakan (Menambal GL)</span><h6 class="fw-black text-info mb-0" id="op-hierarki-pakai">Rp 0</h6></div>
+                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Sisa Kuota Menganggur</span><h6 class="fw-black text-warning mb-0" id="op-hierarki-sisa">Rp 0</h6></div>
+                        </div>
+                        <div class="progress rounded-pill shadow-inner" style="height: 6px;">
+                            <div id="op-hierarki-progress" class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
 
                     <div class="tab-content">
                         <!-- TAB INPUT FORM -->
@@ -417,18 +443,20 @@
                                 <label class="small fw-bold text-muted mb-1">Alamat Cabang</label>
                                 <input type="text" id="cfgAlamat" class="form-control form-control-sm bg-light rounded-pill" placeholder="Jl. Propinsi KM. 48 RT. 05 RW. 02">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-muted mb-1">Nama Pemimpin</label>
                                 <input type="text" id="cfgPimpinan" class="form-control form-control-sm bg-light fw-bold rounded-pill" placeholder="ENDY PRATAMA">
                             </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-muted mb-1">Nama Teller</label>
-                                <input type="text" id="cfgTeller" class="form-control form-control-sm bg-light rounded-pill" placeholder="FISTRI ARIANDINI">
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-muted mb-1">Nama Staff Admin</label>
                                 <input type="text" id="cfgAdmin" class="form-control form-control-sm bg-light rounded-pill" placeholder="SUCI AINUL FITRI">
                             </div>
+                            
+                            <!-- WADAH TELLER DINAMIS (Di-generate oleh JS) -->
+                            <div class="col-12 mt-2 pt-3 border-top" id="tellerConfigContainer">
+                                <div class="text-center text-muted small"><i class="bi bi-hourglass-split"></i> Memuat data ATM...</div>
+                            </div>
+                            
                             <div class="col-12 mt-3 text-end">
                                 <button class="btn btn-warning btn-sm fw-bold rounded-pill px-4 shadow-sm bouncy-hover" onclick="superApp.saveBAConfig()"><i class="bi bi-save"></i> Simpan Konfigurasi</button>
                             </div>
