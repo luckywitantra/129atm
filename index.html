@@ -350,7 +350,57 @@
         </div>
     </nav>
 
-    <!-- ALL MODALS (Detail, Preview, Resolve, Berita Acara) KEPT INTACT BUT ROUNDED-5 FOR PLAYFUL LOOK -->
+    <!-- ALL MODALS -->
+
+    <!-- MODAL PENGATURAN (SYSTEM SETTINGS) -->
+    <div class="modal fade" id="modal-system-settings" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-5 border-0 shadow-lg bg-light">
+                <div class="modal-header bg-gradient-playful text-white border-0 py-3">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2"></i> Pengaturan Sistem</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- KONFIGURASI BERITA ACARA -->
+                    <div class="bg-white border border-slate-200 rounded-4 p-4 flex flex-col shadow-sm bouncy-hover">
+                        <div class="d-flex align-items-center gap-3 border-bottom pb-3 mb-3">
+                            <div class="icon-box-playful bg-warning-subtle text-warning"><i class="bi bi-file-earmark-person-fill"></i></div>
+                            <div>
+                                <h6 class="fw-bold text-dark mb-0">Konfigurasi Surat B/A</h6>
+                                <small class="text-muted">Atur Kop Surat & Nama Pejabat untuk cetak PDF.</small>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-muted mb-1">Nama Cabang / Capem</label>
+                                <input type="text" id="cfgCabang" class="form-control form-control-sm bg-light fw-bold rounded-pill" placeholder="Kantor Cabang Pembantu Babulu">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-muted mb-1">Alamat Cabang</label>
+                                <input type="text" id="cfgAlamat" class="form-control form-control-sm bg-light rounded-pill" placeholder="Jl. Propinsi KM. 48 RT. 05 RW. 02">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small fw-bold text-muted mb-1">Nama Pemimpin</label>
+                                <input type="text" id="cfgPimpinan" class="form-control form-control-sm bg-light fw-bold rounded-pill" placeholder="ENDY PRATAMA">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small fw-bold text-muted mb-1">Nama Teller</label>
+                                <input type="text" id="cfgTeller" class="form-control form-control-sm bg-light rounded-pill" placeholder="FISTRI ARIANDINI">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small fw-bold text-muted mb-1">Nama Staff Admin</label>
+                                <input type="text" id="cfgAdmin" class="form-control form-control-sm bg-light rounded-pill" placeholder="SUCI AINUL FITRI">
+                            </div>
+                            <div class="col-12 mt-3 text-end">
+                                <button class="btn btn-warning btn-sm fw-bold rounded-pill px-4 shadow-sm bouncy-hover" onclick="superApp.saveBAConfig()"><i class="bi bi-save"></i> Simpan Konfigurasi</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="detailSelisihModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
@@ -404,48 +454,146 @@
         </div>
     </div>
 
+    <!-- MODAL FORM PENYELESAIAN CERDAS (TERINTEGRASI NASABAH & AI) -->
     <div class="modal fade" id="resolveModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-5 border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white border-0 py-2"><h6 class="modal-title fw-bold">Selesaikan Selisih</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-3">
-                    <p class="text-muted mb-2 small">Alasan penyelesaian untuk <b id="resolveIdText" class="text-dark"></b>:</p>
-                    <textarea id="resolveReason" class="form-control form-control-sm rounded-4 bg-light" rows="3" placeholder="Contoh: Sudah dikredit ke nasabah..."></textarea>
+                <div class="modal-header bg-success text-white border-0 py-3">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Form Penyelesaian Selisih</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-footer border-0 bg-white py-2"><button class="btn btn-light btn-sm rounded-pill px-3" data-bs-dismiss="modal">Batal</button><button class="btn btn-success btn-sm rounded-pill fw-bold px-3 shadow-sm" onclick="submitResolve()"><i class="bi bi-save"></i> Simpan</button></div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="alert bg-warning-subtle border-warning text-dark rounded-4 shadow-sm p-3 mb-4" id="resolveInfoBox">
+                        <!-- Info Resi & AI Recommendation disuntikkan disini -->
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">No. Rekening Nasabah</label>
+                            <input type="text" id="resRekening" class="form-control form-control-sm rounded-pill fw-bold border-secondary-subtle" placeholder="Contoh: 1292009891">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">Nama Nasabah</label>
+                            <input type="text" id="resNama" class="form-control form-control-sm rounded-pill text-uppercase fw-bold border-secondary-subtle" placeholder="Contoh: ROHADIYANTO">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">Jenis Transaksi</label>
+                            <select id="resTrx" class="form-select form-select-sm rounded-pill border-secondary-subtle">
+                                <option>Tarik Tunai On Us</option><option>Transfer Sesama</option><option>Transfer Antar Bank</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">Problem / Kendala</label>
+                            <input type="text" id="resProblem" class="form-control form-control-sm rounded-pill border-secondary-subtle" placeholder="Contoh: Transaksi terdebet namun uang tidak keluar" value="Transaksi terdebet namun uang tidak keluar">
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold text-muted mb-1">Keterangan / Jurnal Penyelesaian</label>
+                            <textarea id="resolveReason" class="form-control form-control-sm rounded-4 border-secondary-subtle" rows="2" placeholder="Jurnal Debet / Kredit..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-white py-3">
+                    <button class="btn btn-light btn-sm rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-success btn-sm rounded-pill fw-bold px-4 shadow-sm bouncy-hover" onclick="submitResolve()"><i class="bi bi-printer"></i> Simpan & Buat B/A</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- MODAL CETAK SURAT B/A (FORMAT A4 BPD KALTIM KALTARA) -->
     <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
-                <div class="modal-header bg-dark text-white rounded-0 py-2"><h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Berita Acara</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body p-4 bg-white text-dark small" id="beritaAcaraPrintArea">
-                    <div class="text-center border-bottom border-dark border-2 pb-2 mb-3">
-                        <h5 class="fw-bolder mb-0 text-uppercase">BERITA ACARA PENYELESAIAN SELISIH KAS</h5><p class="mb-0 small">PT BPD KALTIM KALTARA</p>
-                    </div>
-                    <p style="text-align: justify; line-height: 1.6;" class="mb-3">Pada hari ini tanggal <b id="baTglCetak"></b>, telah dilakukan penyelesaian selisih kas mesin ATM dengan rincian:</p>
-                    <table class="table table-borderless table-sm w-100 mx-auto mb-3" style="line-height: 1.2;">
-                        <tr><td width="35%">Tanggal Transaksi</td><td width="5%">:</td><td id="baTanggal" class="border-bottom border-dark"></td></tr>
-                        <tr><td>ID Mesin ATM</td><td>:</td><td id="baAtm" class="border-bottom border-dark fw-bold"></td></tr>
-                        <tr><td>Nomor Resi / Ref</td><td>:</td><td id="baResi" class="border-bottom border-dark"></td></tr>
-                        <tr><td>Nominal Transaksi</td><td>:</td><td id="baNominal" class="border-bottom border-dark fw-bold text-primary"></td></tr>
-                        <tr><td>Jenis Status</td><td>:</td><td id="baJenis" class="border-bottom border-dark"></td></tr>
-                    </table>
-                    <p style="text-align: justify; line-height: 1.6;" class="mb-2">Keputusan <b>SELESAI</b> dengan keterangan tindak lanjut:</p>
-                    <div class="p-2 border border-dark mb-4 bg-light" style="min-height: 60px;"><i id="baKeterangan"></i></div>
-                    <div class="row text-center mt-4">
-                        <div class="col-6"><p class="mb-5">Dibuat Oleh,</p><p class="fw-bold text-decoration-underline mb-0">Petugas Rekonsiliasi</p></div>
-                        <div class="col-6"><p class="mb-5">Disetujui Oleh,</p><p class="fw-bold text-decoration-underline mb-0">Penyelia Operasional</p></div>
+                <div class="modal-header bg-dark text-white rounded-0 py-2">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Cetak BA Penyelesaian</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-secondary-subtle d-flex justify-content-center custom-scroll">
+                    
+                    <!-- KERTAS A4 PENYELESAIAN -->
+                    <div id="printBAPenyelesaianArea" class="bg-white text-dark shadow my-4" style="width: 210mm; min-height: 297mm; padding: 20mm; font-family: 'Times New Roman', Times, serif;">
+                        <!-- HEADER -->
+                        <div class="border-bottom border-dark border-2 pb-2 mb-4 d-flex justify-content-between">
+                            <div>
+                                <h5 class="fw-bolder mb-0 text-primary">PT BPD Kaltim Kaltara.</h5>
+                                <p class="mb-0 fw-bold" id="cetak_cabang">Kantor Cabang Pembantu Babulu</p>
+                                <p class="mb-0" id="cetak_alamat" style="font-size: 13px;">Jl. Propinsi KM. 48 RT. 05 RW. 02</p>
+                                <p class="mb-0" style="font-size: 13px;">www.bankaltimtara.co.id</p>
+                            </div>
+                        </div>
+
+                        <!-- JUDUL -->
+                        <div class="text-center mb-4">
+                            <h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5>
+                            <h6 class="fw-bolder mb-0">PENYELESAIAN SELISIH ATM</h6>
+                            <h6 class="fw-bolder" id="cetak_atm_judul">KTMXXXXX</h6>
+                        </div>
+
+                        <!-- ISI SURAT -->
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-3">
+                            Pada hari ini <b id="cetak_hari">Kamis</b> Tanggal <b id="cetak_tgl">20 Agustus 2026</b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm">KTMXXXXX</b>, dengan nominal sebesar <b><span id="cetak_nominal">Rp 0</span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:
+                        </p>
+
+                        <table class="table table-borderless table-sm mb-3 ms-3" style="font-size: 15px;">
+                            <tr><td width="25%">No. Rekening</td><td width="2%">:</td><td id="cetak_rek" class="fw-bold"></td></tr>
+                            <tr><td>Nama</td><td>:</td><td id="cetak_nama" class="fw-bold"></td></tr>
+                            <tr><td>No. Referensi</td><td>:</td><td id="cetak_resi" class="fw-bold"></td></tr>
+                            <tr><td>Transaksi</td><td>:</td><td id="cetak_trx"></td></tr>
+                            <tr><td>Problem</td><td>:</td><td id="cetak_problem"></td></tr>
+                        </table>
+
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2">
+                            <b>Keterangan:</b> <span id="cetak_keterangan"></span>
+                        </p>
+
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2 mt-4">
+                            <b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:
+                        </p>
+                        
+                        <table class="table table-bordered table-sm text-center border-dark mb-4" style="font-size: 14px;">
+                            <thead class="fw-bold align-middle">
+                                <tr><th>Debet</th><th>Kredit</th><th>Nominal</th><th>Keterangan</th></tr>
+                            </thead>
+                            <tbody class="align-middle">
+                                <tr>
+                                    <td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td>
+                                    <td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td>
+                                    <td class="fw-bold" id="cetak_jurnal_nom">Rp 0</td>
+                                    <td id="cetak_jurnal_ket">Transaksi terdebet namun uang tidak keluar</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-5">
+                            Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait.<br>Atas perhatian dan kerjasamanya disampaikan terima kasih.
+                        </p>
+
+                        <!-- TANDA TANGAN -->
+                        <div class="row text-center" style="font-size: 15px;">
+                            <div class="col-12 text-end mb-4"><span id="cetak_kota">Babulu</span>, <span id="cetak_tgl_ttd">20 Agustus 2026</span></div>
+                            <div class="col-8">
+                                <p class="mb-5 pb-3">TIM SKO ATM</p>
+                                <div class="row">
+                                    <div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_teller">TELLER</p><p>Teller</p></div>
+                                    <div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_admin">ADMIN</p><p>Staff Administrasi Capem</p></div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <p class="mb-5 pb-3">Mengetahui,</p>
+                                <p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan">PIMPINAN</p><p>Pemimpin</p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-                <div class="modal-footer rounded-0 py-2"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button><button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Dokumen</button></div>
+                <div class="modal-footer rounded-0 py-2">
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Berita Acara</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CETAK BA OPNAME (A4 FORMAT) -->
+    <!-- MODAL CETAK BA OPNAME FISIK (A4 FORMAT) -->
     <div class="modal fade" id="baOpnameModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
@@ -455,17 +603,17 @@
                 </div>
                 <div class="modal-body p-0 bg-light d-flex justify-content-center">
                     
-                    <!-- KERTAS A4 (Ukuran dan proporsi standar cetak) -->
+                    <!-- KERTAS A4 OPNAME -->
                     <div id="printBAOpnameArea" class="bg-white text-dark shadow-sm my-4" style="width: 210mm; min-height: 297mm; padding: 25mm 20mm; font-family: 'Times New Roman', serif;">
                         
                         <div class="text-center mb-5">
                             <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5>
                             <p class="fw-bold mb-0">PT BANK PEMBANGUNAN DAERAH KALIMANTAN TIMUR DAN KALIMANTAN UTARA</p>
-                            <p class="fw-bold">KANTOR CABANG PEMBANTU BABULU</p>
+                            <p class="fw-bold" id="cetakOp_cabang">KANTOR CABANG PEMBANTU BABULU</p>
                         </div>
                         
                         <p style="text-align: justify; line-height: 1.8; font-size: 14px;" class="mb-4">
-                            Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara Kantor Cabang Pembantu Babulu dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:
+                            Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text">Kantor Cabang Pembantu Babulu</span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:
                         </p>
                         
                         <table class="table table-borderless table-sm w-100 ms-3" style="line-height: 1.8; font-size: 14px;">
@@ -478,14 +626,14 @@
                         </table>
                         
                         <div class="row text-center mt-5 pt-5" style="font-size: 14px;">
-                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0">( ................................... )</p></div>
-                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0">( ................................... )</p></div>
+                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas1">( ................................... )</p></div>
+                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas2">( ................................... )</p></div>
                         </div>
                     </div>
 
                 </div>
                 <div class="modal-footer rounded-0 py-2">
-                    <button class="btn btn-success fw-bold shadow-sm" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button>
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button>
                 </div>
             </div>
         </div>
