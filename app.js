@@ -24,7 +24,6 @@ let databaseData = { gl: [], ej: [], selisih: [] };
 let globalSelisihData = [], globalOpnameData = [], activeResolveRow = null;
 
 const PAGE_SIZE = 10;
-let pageState = { analisaKurang: 1, analisaLebih: 1, analisaSelesai: 1, master: 1, opname: 1, uploadHist: 1 };
 
 const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
 const formatNum = (angka) => (angka ? new Intl.NumberFormat('id-ID').format(angka) : "0");
