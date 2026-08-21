@@ -184,6 +184,7 @@ function processEJ() {
     reader.onload = function(e) {
         const text = e.target.result; const lines = text.split('\n'); const ejData = [];
         let currentTx = {}; let isLookingForJumlah = false; let lastValidAtmId = 'UNKNOWN'; let lastValidDate = '';
+        
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
                 if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
@@ -195,26 +196,38 @@ function processEJ() {
             }
             currentTx = {}; isLookingForJumlah = false;
         }
+
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
             if (line.includes("<- TRANSACTION END") || line.includes("-> TRANSACTION START") || line.includes("EMV AID ")) { if (currentTx.noResi) saveCurrentTransaction(); }
             if (line.includes("CASH TAKEN")) currentTx.cashTaken = true;
+            
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) { currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; lastValidDate = currentTx.tanggal; currentTx.atm = dateMatch[5]; if (/[A-Z]/.test(currentTx.atm)) lastValidAtmId = currentTx.atm; }
+            
             const resiMatch = line.match(/(?:NO\s+RESI|NO\s+REF\.?|REFF\s+NO)\s*:?\s*(\d+)/i);
             if (resiMatch) currentTx.noResi = parseInt(resiMatch[1], 10).toString();
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
+            
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL") || line.includes("PENARIKAN TUNAI TANPA KARTU")) currentTx.jenis = "TARIK TUNAI";
             else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("KE BANK") || line.includes("REK TUJUAN")) currentTx.jenis = "TRANSFER";
+            
+            // [PERBAIKAN REGEX] - Menangkap "RP", ".", ":" atau "spasi" di sekitar nominal
             if ((line.includes("JUMLAH") || line.includes("AMOUNT")) && !line.includes("ENTERED")) {
-                isLookingForJumlah = true; const inlineJumlah = line.match(/RP\.?\s*([\d,]+(?:\.\d+)?)/i);
+                isLookingForJumlah = true; 
+                const inlineJumlah = line.match(/(?:RP\.?|:|\.)\s*([\d,]+(?:\.\d+)?)/i);
                 if (inlineJumlah) { currentTx.nominal = parseFloat(inlineJumlah[1].replace(/,/g, '')); isLookingForJumlah = false; }
             } else if (isLookingForJumlah) {
-                if (!line.match(/^\d{2}:\d{2}:\d{2}/)) { const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/); if (nextLineJumlah) currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, '')); }
+                if (!line.match(/^\d{2}:\d{2}:\d{2}/)) { 
+                    const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/); 
+                    if (nextLineJumlah) currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, '')); 
+                }
                 isLookingForJumlah = false; 
             }
+            
             if (line.includes("TRANSAKSI SUKSES") || line.includes("SUCCESSFUL")) currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
+            
             const errorKeywords = ["SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", "LOW BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR", "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT", "INACTIVE ACCOUNT", "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION", "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", "PROCESSOR TEMP DOWN", "KARTU ANDA TERDAFTAR SBG"];
             errorKeywords.forEach(err => { if (line.includes(err) && !currentTx.cashTaken) currentTx.status = "GAGAL - " + err; });
             if (line.match(/TRANSACTION \d+ FAILED/) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
