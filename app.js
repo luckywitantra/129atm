@@ -35,6 +35,7 @@ window.superApp = window.superApp || {};
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     fetchConfig(); 
+    fetchDatabaseData(); // AUTO-LOAD DATA AGAR ASISTEN AI LANGSUNG BEKERJA
     const settingModal = document.getElementById('modal-system-settings');
     if(settingModal) settingModal.addEventListener('show.bs.modal', renderTellerConfig);
 });
@@ -494,11 +495,17 @@ function showDetailPopup(rowDataStr) {
 // 6. ENGINE DATA MASTER 
 // ==========================================
 async function fetchDatabaseData() {
-    document.getElementById('tableBodyDataMaster').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Mengunduh Database...</small></td></tr>`;
+    const tbody = document.getElementById('tableBodyDataMaster');
+    if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Menyinkronkan Database...</small></td></tr>`;
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase' })});
         const result = await response.json();
-        if(result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); }
+        if(result.success) { 
+            databaseData = result.data; 
+            renderUploadHistory(); 
+            renderDataMaster(); 
+            updateDataCompletenessBanner(); // MEMANGGIL FUNGSI CEK DATA
+        }
     } catch (err) { console.error(err); }
 }
 
@@ -665,6 +672,78 @@ async function saveOpnameData() {
         if(result.success) { PlayfulAlert.fire('Berhasil!', 'Data Opname sukses tersimpan.', 'success'); document.getElementById('opEditId').value = ''; document.getElementById('opSysSebelum').value = ''; document.getElementById('opSysTambah').value = ''; document.getElementById('opFisik').value = ''; calcOpname(); fetchSelisihData(); } 
         else { PlayfulAlert.fire('Gagal', result.message, 'error'); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+}
+
+// ==========================================
+// 8. ASISTEN REKOMENDASI UPLOAD
+// ==========================================
+function updateDataCompletenessBanner() {
+    if (!databaseData || (!databaseData.gl && !databaseData.ej)) return;
+
+    let glMap = new Map(); // Untuk mencari tanggal maksimal tiap ATM di GL
+    (databaseData.gl || []).forEach(r => { 
+        let atm = String(r[2]).trim().toUpperCase();
+        if (atm && atm !== 'ATM') {
+            let d = new Date(String(r[1]).substring(0,10) + "T00:00:00").getTime();
+            if (!glMap.has(atm) || d > glMap.get(atm)) glMap.set(atm, d);
+        }
+    });
+    
+    let ejMap = new Map(); // Untuk mencari tanggal maksimal tiap ATM di EJ
+    (databaseData.ej || []).forEach(r => { 
+        let atm = String(r[2]).trim().toUpperCase();
+        if (atm && atm !== 'ATM') {
+            let d = new Date(String(r[1]).substring(0,10) + "T00:00:00").getTime();
+            if (!ejMap.has(atm) || d > ejMap.get(atm)) ejMap.set(atm, d);
+        }
+    });
+
+    let missingEJ = [], missingGL = [], laggingEJ = [], laggingGL = [];
+
+    // Cek Kekurangan dari sudut pandang GL
+    for (let [atm, glDate] of glMap.entries()) {
+        if (!ejMap.has(atm)) {
+            missingEJ.push(atm);
+        } else {
+            let ejDate = ejMap.get(atm);
+            let diffDays = Math.round((glDate - ejDate) / (1000*60*60*24));
+            if (diffDays > 1) laggingEJ.push(`${atm} (Tertinggal ${diffDays} Hari)`);
+        }
+    }
+
+    // Cek Kekurangan dari sudut pandang EJ
+    for (let [atm, ejDate] of ejMap.entries()) {
+        if (!glMap.has(atm)) {
+            missingGL.push(atm);
+        } else {
+            let glDate = glMap.get(atm);
+            let diffDays = Math.round((ejDate - glDate) / (1000*60*60*24));
+            if (diffDays > 1) laggingGL.push(`${atm} (Tertinggal ${diffDays} Hari)`);
+        }
+    }
+
+    let bannerHtml = '';
+    // Jika ada ketidakseimbangan data, Render Banner
+    if (missingEJ.length > 0 || missingGL.length > 0 || laggingEJ.length > 0 || laggingGL.length > 0) {
+        bannerHtml = `
+            <div class="alert bg-warning-subtle border-0 text-dark py-3 px-4 rounded-4 shadow-sm mb-3 bouncy-hover">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i>
+                    <h6 class="fw-bold text-dark mb-0">Asisten Rekomendasi Upload</h6>
+                </div>
+                <p class="mb-2 small">Sistem mendeteksi ketidakseimbangan data pada database. Agar analisa selisih dapat berjalan maksimal, mohon lengkapi file berikut:</p>
+                <ul class="mb-0 small fw-bold text-danger">`;
+        
+        if (missingEJ.length > 0) bannerHtml += `<li>Belum ada data <span class="badge bg-success rounded-pill px-2">EJ</span> sama sekali untuk mesin: <b>${missingEJ.join(', ')}</b></li>`;
+        if (missingGL.length > 0) bannerHtml += `<li class="mt-1">Belum ada data <span class="badge bg-primary rounded-pill px-2">GL</span> sama sekali untuk mesin: <b>${missingGL.join(', ')}</b></li>`;
+        if (laggingEJ.length > 0) bannerHtml += `<li class="mt-1">Data <span class="badge bg-success rounded-pill px-2">EJ</span> butuh diupdate untuk mesin: <span class="text-dark fw-medium">${laggingEJ.join(', ')}</span></li>`;
+        if (laggingGL.length > 0) bannerHtml += `<li class="mt-1">Data <span class="badge bg-primary rounded-pill px-2">GL</span> butuh diupdate untuk mesin: <span class="text-dark fw-medium">${laggingGL.join(', ')}</span></li>`;
+        
+        bannerHtml += `</ul></div>`;
+    }
+
+    // Tembakkan banner HTML ke semua wadah yang sudah kita sediakan
+    document.querySelectorAll('.data-completeness-banner').forEach(el => el.innerHTML = bannerHtml);
 }
 
 document.getElementById('opAtmId').addEventListener('input', function() {
