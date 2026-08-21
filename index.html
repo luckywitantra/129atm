@@ -252,7 +252,15 @@
                 <div id="datamaster" class="page-section d-none fade-in">
                     <h4 class="fw-bold mb-3 mt-2 text-dark">Database GL & EJ</h4>
                     
+                    <!-- NOTIFIKASI SABUK PENGAMAN -->
+                    <div class="alert bg-info-subtle border-0 text-info py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" style="font-size: 0.75rem;">
+                        <div>
+                            <i class="bi bi-shield-check me-1 fs-6"></i> <strong>Sistem Auto-Limit Aktif.</strong> Menampilkan data maksimal 5.000 transaksi terakhir agar aplikasi tetap ringan & super cepat.
+                        </div>
+                    </div>
+
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
+                        <!-- ... (kode filter Anda) ... -->
                         <div class="row g-1 align-items-end">
                             <div class="col-6 col-md-2"><input type="date" id="filterStart" class="form-control form-control-sm rounded-pill bg-light text-secondary border-0 px-3" onchange="changePage('master', 1); renderDataMaster()"></div>
                             <div class="col-6 col-md-3"><input type="text" id="filterResiDm" list="dl-resi" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..." oninput="changePage('master', 1); renderDataMaster()"></div>
