@@ -188,8 +188,23 @@ function processEJ() {
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
                 if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
-                if (currentTx.cashTaken) currentTx.status = "SUKSES";
-                else if (!currentTx.status) currentTx.status = (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) ? "GAGAL - TIDAK ADA UANG KELUAR" : (currentTx.nominal ? "SUKSES" : "NON-FINANSIAL");
+                
+                // [PENYEMPURNAAN PENENTUAN STATUS]
+                if (currentTx.cashTaken) {
+                    currentTx.status = "SUKSES";
+                } else if (!currentTx.status) {
+                    if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) {
+                        currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
+                    } else if (currentTx.nominal > 0) {
+                        // Jika nominal > 0 tapi bukan tarik tunai, berarti Transfer atau Pembayaran
+                        if (currentTx.jenis === "TRANSFER") currentTx.status = "SUKSES (TRANSFER)";
+                        else if (currentTx.jenis === "PEMBAYARAN") currentTx.status = "SUKSES (PEMBELIAN/PAYMENT)";
+                        else currentTx.status = "SUKSES";
+                    } else {
+                        currentTx.status = "NON-FINANSIAL";
+                    }
+                }
+                
                 if (!currentTx.nominal) currentTx.nominal = 0;
                 
                 let finalAtmId = currentTx.atm; if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
@@ -225,15 +240,24 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
             
-            // [PERBAIKAN 1] DETEKSI EKSPLISIT KATEGORI TRANSAKSI
-            if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL") || line.includes("PENARIKAN TUNAI TANPA KARTU")) currentTx.jenis = "TARIK TUNAI";
-            else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("KE BANK") || line.includes("REK TUJUAN")) currentTx.jenis = "TRANSFER";
-            else if (line.includes("INFORMASI SALDO") || line.includes("UBAH/GANTI PIN") || line.includes("PIN CHANGE") || line.includes("PIN SUCCESSFULLY")) {
+            // [PERBAIKAN] DETEKSI KATEGORI PEMBELIAN VOUCHER & PEMBAYARAN TAGIHAN
+            let textUpper = line.toUpperCase();
+            if (textUpper.includes("PENARIKAN TUNAI") || textUpper.includes("TARIK TUNAI") || textUpper.includes("WITHDRAWAL")) {
+                currentTx.jenis = "TARIK TUNAI";
+            }
+            else if (textUpper.includes("TRANSFER") || textUpper.includes("PEMINDAH BUKUAN") || textUpper.includes("KE BANK") || textUpper.includes("REK TUJUAN")) {
+                currentTx.jenis = "TRANSFER";
+            }
+            else if (textUpper.includes("PEMBELIAN") || textUpper.includes("PEMBAYARAN") || textUpper.includes("VOUCHER") || textUpper.includes("PAYMENT") || textUpper.includes("TOKEN")) {
+                currentTx.jenis = "PEMBAYARAN";
+            }
+            else if (textUpper.includes("INFORMASI SALDO") || textUpper.includes("UBAH/GANTI PIN") || textUpper.includes("PIN CHANGE") || textUpper.includes("PIN SUCCESSFULLY") || textUpper.includes("FORCE CHANGE PIN")) {
                 currentTx.jenis = "NON-FINANSIAL";
-                currentTx.status = "NON-FINANSIAL"; // Langsung kunci statusnya agar tidak terbaca sebagai "SUKSES"
+                currentTx.status = "NON-FINANSIAL"; 
             }
             
-            if ((line.includes("JUMLAH") || line.includes("AMOUNT")) && !line.includes("ENTERED")) {
+            // Perluasan deteksi kata JUMLAH, AMOUNT, atau TOTAL
+            if ((textUpper.includes("JUMLAH") || textUpper.includes("AMOUNT") || textUpper.includes("TOTAL")) && !textUpper.includes("ENTERED") && !textUpper.includes("SALDO")) {
                 isLookingForJumlah = true; 
                 const inlineJumlah = line.match(/(?:RP\.?|:|\.)\s*([\d,]+(?:\.\d+)?)/i);
                 if (inlineJumlah) { currentTx.nominal = parseFloat(inlineJumlah[1].replace(/,/g, '')); isLookingForJumlah = false; }
@@ -245,12 +269,11 @@ function processEJ() {
                 isLookingForJumlah = false; 
             }
             
-            // [PERBAIKAN 2] PASTIKAN KATA "SUCCESSFUL" BUKAN BERASAL DARI GANTI PIN
-            if (line.includes("TRANSAKSI SUKSES") || (line.includes("SUCCESSFUL") && !line.includes("PIN"))) {
-                currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
+            if (textUpper.includes("TRANSAKSI SUKSES") || (textUpper.includes("SUCCESSFUL") && !textUpper.includes("PIN"))) {
+                currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : 
+                                   (currentTx.jenis === "PEMBAYARAN") ? "SUKSES (PEMBELIAN/PAYMENT)" : "SUKSES";
             }
             
-            // [PERBAIKAN 3] TAMBAHKAN "TRANSAKSI SEDANG DIPROSES" KE DAFTAR ERROR (GAGAL)
             const errorKeywords = [
                 "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", 
                 "LOW BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR", 
@@ -259,15 +282,14 @@ function processEJ() {
                 "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", "PROCESSOR TEMP DOWN", 
                 "KARTU ANDA TERDAFTAR SBG", "TRANSAKSI SEDANG DIPROSES", "SUSPECT"
             ];
-            errorKeywords.forEach(err => { if (line.includes(err) && !currentTx.cashTaken) currentTx.status = "GAGAL - " + err; });
-            if (line.match(/TRANSACTION \d+ FAILED/) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
+            errorKeywords.forEach(err => { if (textUpper.includes(err) && !currentTx.cashTaken) currentTx.status = "GAGAL - " + err; });
+            if (line.match(/TRANSACTION \d+ FAILED/i) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
         if (currentTx.noResi) saveCurrentTransaction();
         if (ejData.length === 0) return PlayfulAlert.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
         showPreviewModal(ejData, 'EJ');
     }; reader.readAsText(file);
 }
-
 function showPreviewModal(data, type) {
     pendingUploadData = data; pendingUploadType = type === 'GL' ? 'uploadGL' : 'uploadEJ';
     document.getElementById('previewType').innerText = type; document.getElementById('previewCount').innerText = data.length.toLocaleString('id-ID');
