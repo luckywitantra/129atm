@@ -15,109 +15,30 @@
     
     <!-- Custom Playful & Compact Styles -->
     <style>
-        body {
-            font-family: 'Quicksand', sans-serif;
-            background-color: #f4f7fe;
-        }
+        body { font-family: 'Quicksand', sans-serif; background-color: #f4f7fe; }
         
-        /* Bouncy Hover Effects */
-        .bouncy-hover {
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .bouncy-hover:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
-        }
+        .bouncy-hover { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .bouncy-hover:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
 
-        /* Playful Cards */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.5) !important;
-            border-radius: 24px !important;
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.5) !important; border-radius: 24px !important; }
 
-        /* Floating Island Bottom Nav for Mobile */
-        .floating-bottom-nav {
-            bottom: 15px !important;
-            left: 15px !important;
-            right: 15px !important;
-            border-radius: 30px !important;
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
+        .floating-bottom-nav { bottom: 15px !important; left: 15px !important; right: 15px !important; border-radius: 30px !important; background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(10px); box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important; border: 1px solid rgba(0,0,0,0.05); }
 
-        /* Compact Table Adjustments */
-        .table-custom-compact th, .table-custom-compact td {
-            padding: 0.5rem 0.75rem !important;
-            font-size: 0.85rem;
-        }
-        .table-custom-compact th {
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.75rem;
-            color: #6c757d;
-        }
+        .table-custom-compact th, .table-custom-compact td { padding: 0.5rem 0.75rem !important; font-size: 0.85rem; }
+        .table-custom-compact th { text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; color: #6c757d; }
 
-        /* Sidebar Nav Pills */
-        .sidebar .nav-link {
-            border-radius: 16px;
-            transition: all 0.2s;
-            font-weight: 700;
-        }
-        .sidebar .nav-link:hover {
-            background-color: #e9ecef;
-            transform: translateX(4px);
-        }
+        .sidebar .nav-link { border-radius: 16px; transition: all 0.2s; font-weight: 700; }
+        .sidebar .nav-link:hover { background-color: #e9ecef; transform: translateX(4px); }
 
-        /* Playful Gradients */
-        .bg-gradient-playful {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .icon-box-playful {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            font-size: 1.2rem;
-        }
+        .bg-gradient-playful { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .icon-box-playful { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-size: 1.2rem; }
 
         /* ATURAN CETAK (PRINT) KERTAS A4 UNTUK BERITA ACARA */
         @media print {
             body * { visibility: hidden; }
-            
-            /* Targetkan kedua area cetak */
-            #printBAPenyelesaianArea, #printBAPenyelesaianArea *,
-            #printBAOpnameArea, #printBAOpnameArea * { 
-                visibility: visible; 
-            }
-            
-            #printBAPenyelesaianArea, #printBAOpnameArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 210mm !important;
-                margin: 0 !important;
-                padding: 15mm !important;
-                box-shadow: none !important;
-                border: none !important;
-            }
-            
-            /* Hilangkan background modal hitam saat dicetak */
-            .modal { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                margin: 0; 
-                padding: 0; 
-                overflow: visible!important; 
-                background: transparent !important;
-            }
+            #printBAPenyelesaianArea, #printBAPenyelesaianArea *, #printBAOpnameArea, #printBAOpnameArea * { visibility: visible; }
+            #printBAPenyelesaianArea, #printBAOpnameArea { position: absolute; left: 0; top: 0; width: 210mm !important; margin: 0 !important; padding: 15mm !important; box-shadow: none !important; border: none !important; }
+            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
         }
     </style>
 </head>
@@ -152,9 +73,8 @@
                 </div>
             </nav>
 
-           <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pb-5 mb-5 main-content">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pb-5 mb-5 main-content">
                 
-                <!-- DATALISTS UNTUK FILTER CERDAS (Otomatis terisi dari JS) -->
                 <datalist id="dl-atm"></datalist>
                 <datalist id="dl-resi"></datalist>
                 <datalist id="dl-nominal"></datalist>
@@ -172,7 +92,7 @@
                     </div>
                 </div>
 
-                <!-- UPLOAD & RIWAYAT -->
+                <!-- UPLOAD -->
                 <div id="upload" class="page-section d-none fade-in">
                     <h4 class="fw-bold mb-3 mt-2 text-dark">Upload File</h4>
                     <div class="row g-2 mb-4">
@@ -202,7 +122,7 @@
                         </div>
                     </div>
 
-                  <!-- TABEL RIWAYAT UPLOAD -->
+                    <!-- TABEL RIWAYAT UPLOAD -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="fw-bold text-dark mb-0"><i class="bi bi-calendar3 text-info"></i> Ringkasan Data Berdasarkan Tanggal</h6>
@@ -218,7 +138,7 @@
                     </div>
                 </div>
 
-                <!-- ANALISA & REKONSILIASI -->
+                <!-- ANALISA -->
                 <div id="analisa" class="page-section d-none fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
                         <h4 class="fw-bold mb-0 text-dark">Hasil Analisa</h4>
@@ -227,12 +147,8 @@
 
                     <!-- Summary & Hierarki -->
                     <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <div class="card bg-danger-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-danger mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH KURANG</p><h5 id="totalKurangRp" class="text-danger fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-down-circle-fill text-danger opacity-50 fs-2"></i></div></div>
-                        </div>
-                        <div class="col-6">
-                            <div class="card bg-success-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-success mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH LEBIH</p><h5 id="totalLebihRp" class="text-success fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-up-circle-fill text-success opacity-50 fs-2"></i></div></div>
-                        </div>
+                        <div class="col-6"><div class="card bg-danger-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-danger mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH KURANG</p><h5 id="totalKurangRp" class="text-danger fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-down-circle-fill text-danger opacity-50 fs-2"></i></div></div></div>
+                        <div class="col-6"><div class="card bg-success-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-success mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH LEBIH</p><h5 id="totalLebihRp" class="text-success fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-up-circle-fill text-success opacity-50 fs-2"></i></div></div></div>
                     </div>
 
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
@@ -245,43 +161,27 @@
                         <div class="progress rounded-pill shadow-inner" style="height: 6px;"><div id="hierarki-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
                     </div>
 
-                    <!-- Compact Filter (Real-Time) -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
                         <div class="row g-1 align-items-end">
                             <div class="col-4 col-md-3"><input type="text" id="filterResiAn" list="dl-resi" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"></div>
                             <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"></div>
                             <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" list="dl-nominal" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Rp..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"></div>
-                            <div class="col-12 col-md-3">
-                                <select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 text-secondary fw-bold" onchange="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()">
-                                    <option value="desc">Sortir: Terbaru</option><option value="asc">Sortir: Terlama</option>
-                                </select>
-                            </div>
+                            <div class="col-12 col-md-3"><select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 text-secondary fw-bold" onchange="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"><option value="desc">Sortir: Terbaru</option><option value="asc">Sortir: Terlama</option></select></div>
                         </div>
                     </div>
                     
                     <div class="alert bg-primary-subtle border-0 text-primary py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" style="font-size: 0.75rem;"><div><i class="bi bi-robot me-1 fs-6"></i> <strong>Smart AI Scanner aktif.</strong> Sistem otomatis mencocokkan selisih dengan Riwayat BA Opname.</div></div>
 
-                    <!-- Playful Nav Pills -->
                     <ul class="nav nav-pills gap-1 p-1 bg-white border rounded-pill shadow-sm mb-3 text-center d-flex flex-nowrap overflow-auto hide-scrollbar" id="pills-tab" role="tablist">
                         <li class="nav-item flex-fill"><button class="nav-link active rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button" style="font-size: 0.8rem;">Kurang <span class="badge bg-white text-danger ms-1 rounded-pill" id="countKurang">0</span></button></li>
                         <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button" style="font-size: 0.8rem;">Lebih <span class="badge bg-danger text-white ms-1 rounded-pill" id="countLebih">0</span></button></li>
                         <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap text-success" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button" style="font-size: 0.8rem;"><i class="bi bi-check2-all"></i> Selesai</button></li>
                     </ul>
 
-                    <!-- TABEL & PAGINATION -->
                     <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade show active" id="kurang" role="tabpanel">
-                            <div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div>
-                            <div id="paginationAnalisaKurang"></div>
-                        </div>
-                        <div class="tab-pane fade" id="lebih" role="tabpanel">
-                            <div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div>
-                            <div id="paginationAnalisaLebih"></div>
-                        </div>
-                        <div class="tab-pane fade" id="selesai" role="tabpanel">
-                            <div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div>
-                            <div id="paginationAnalisaSelesai"></div>
-                        </div>
+                        <div class="tab-pane fade show active" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div><div id="paginationAnalisaKurang"></div></div>
+                        <div class="tab-pane fade" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div><div id="paginationAnalisaLebih"></div></div>
+                        <div class="tab-pane fade" id="selesai" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div><div id="paginationAnalisaSelesai"></div></div>
                     </div>
                 </div>
 
@@ -317,7 +217,6 @@
 
                         <!-- TAB RIWAYAT OPNAME -->
                         <div class="tab-pane fade" id="op-riwayat-tab" role="tabpanel">
-                            <!-- Filter Opname -->
                             <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
                                 <div class="row g-1">
                                     <div class="col-6 col-md-4"><input type="text" id="filterAtmOp" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari ID ATM..." oninput="changePage('opname', 1); renderOpnameTable();"></div>
@@ -376,26 +275,15 @@
     <!-- FLOATING BOTTOM NAV (Mobile Only) -->
     <nav class="d-md-none fixed-bottom floating-bottom-nav">
         <div class="d-flex justify-content-around p-1">
-            <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')">
-                <i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Home</span>
-            </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')">
-                <i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Opname</span>
-            </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')">
-                <i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Upload</span>
-            </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('analisa')">
-                <i class="bi bi-search fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Analisa</span>
-            </a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('datamaster')">
-                <i class="bi bi-database-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Data</span>
-            </a>
+            <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')"><i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Home</span></a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')"><i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Opname</span></a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Upload</span></a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('analisa')"><i class="bi bi-search fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Analisa</span></a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('datamaster')"><i class="bi bi-database-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Data</span></a>
         </div>
     </nav>
 
     <!-- ALL MODALS -->
-
     <!-- MODAL PENGATURAN (SYSTEM SETTINGS) -->
     <div class="modal fade" id="modal-system-settings" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -405,41 +293,21 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <!-- KONFIGURASI BERITA ACARA -->
                     <div class="bg-white border border-slate-200 rounded-4 p-4 flex flex-col shadow-sm bouncy-hover">
                         <div class="d-flex align-items-center gap-3 border-bottom pb-3 mb-3">
                             <div class="icon-box-playful bg-warning-subtle text-warning"><i class="bi bi-file-earmark-person-fill"></i></div>
                             <div>
                                 <h6 class="fw-bold text-dark mb-0">Konfigurasi Surat B/A</h6>
-                                <small class="text-muted">Atur Kop Surat & Nama Pejabat untuk cetak PDF.</small>
+                                <small class="text-muted">Atur Kop Surat & Nama Pejabat untuk cetak PDF tersinkronisasi Cloud.</small>
                             </div>
                         </div>
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="small fw-bold text-muted mb-1">Nama Cabang / Capem</label>
-                                <input type="text" id="cfgCabang" class="form-control form-control-sm bg-light fw-bold rounded-pill" placeholder="Kantor Cabang Pembantu Babulu">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="small fw-bold text-muted mb-1">Alamat Cabang</label>
-                                <input type="text" id="cfgAlamat" class="form-control form-control-sm bg-light rounded-pill" placeholder="Jl. Propinsi KM. 48 RT. 05 RW. 02">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="small fw-bold text-muted mb-1">Nama Pemimpin</label>
-                                <input type="text" id="cfgPimpinan" class="form-control form-control-sm bg-light fw-bold rounded-pill" placeholder="ENDY PRATAMA">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="small fw-bold text-muted mb-1">Nama Staff Admin</label>
-                                <input type="text" id="cfgAdmin" class="form-control form-control-sm bg-light rounded-pill" placeholder="SUCI AINUL FITRI">
-                            </div>
-                            
-                            <!-- WADAH TELLER DINAMIS (Di-generate oleh JS) -->
-                            <div class="col-12 mt-2 pt-3 border-top" id="tellerConfigContainer">
-                                <div class="text-center text-muted small"><i class="bi bi-hourglass-split"></i> Memuat data ATM...</div>
-                            </div>
-                            
-                            <div class="col-12 mt-3 text-end">
-                                <button class="btn btn-warning btn-sm fw-bold rounded-pill px-4 shadow-sm bouncy-hover" onclick="superApp.saveBAConfig()"><i class="bi bi-save"></i> Simpan Konfigurasi</button>
-                            </div>
+                            <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nama Cabang / Capem</label><input type="text" id="cfgCabang" class="form-control form-control-sm bg-light fw-bold rounded-pill"></div>
+                            <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Alamat Cabang</label><input type="text" id="cfgAlamat" class="form-control form-control-sm bg-light rounded-pill"></div>
+                            <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nama Pemimpin</label><input type="text" id="cfgPimpinan" class="form-control form-control-sm bg-light fw-bold rounded-pill"></div>
+                            <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nama Staff Admin</label><input type="text" id="cfgAdmin" class="form-control form-control-sm bg-light rounded-pill"></div>
+                            <div class="col-12 mt-2 pt-3 border-top" id="tellerConfigContainer"><div class="text-center text-muted small"><i class="bi bi-hourglass-split"></i> Memuat data ATM...</div></div>
+                            <div class="col-12 mt-3 text-end"><button class="btn btn-warning btn-sm fw-bold rounded-pill px-4 shadow-sm bouncy-hover" onclick="superApp.saveBAConfig()"><i class="bi bi-cloud-check-fill"></i> Simpan ke Cloud</button></div>
                         </div>
                     </div>
                 </div>
@@ -448,7 +316,7 @@
     </div>
 
     <!-- MODAL DETAIL TRANSAKSI SELISIH -->
-    <div class="modal fade" id="detailSelisihModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="detailSelisihModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
                 <div id="detailModalHeader" class="modal-header border-0 py-3 text-white">
@@ -456,30 +324,21 @@
                     <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    <div class="text-center mb-3">
-                        <span id="detailJenisBadge" class="badge rounded-pill px-3 py-1 shadow-sm mb-2"></span>
-                        <h3 id="detailNominal" class="fw-black text-dark mb-0">Rp 0</h3>
-                    </div>
+                    <div class="text-center mb-3"><span id="detailJenisBadge" class="badge rounded-pill px-3 py-1 shadow-sm mb-2"></span><h3 id="detailNominal" class="fw-black text-dark mb-0">Rp 0</h3></div>
                     <div class="row g-2 mb-3">
                         <div class="col-6"><div class="bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">TANGGAL</span><span id="detailTanggal" class="fw-bold small">-</span></div></div>
                         <div class="col-6"><div class="bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">ID MESIN</span><span id="detailAtm" class="fw-bold text-primary small">-</span></div></div>
                         <div class="col-12"><div class="bg-white p-2 rounded-4 shadow-sm text-center border"><span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;">RESI</span><span id="detailResi" class="fw-bold small">-</span></div></div>
                     </div>
-                    <div class="alert alert-warning border-warning shadow-sm rounded-4 p-2 mb-2">
-                        <span class="fw-bold d-block small" style="font-size: 0.7rem;"><i class="bi bi-info-circle-fill me-1"></i> Kronologi:</span>
-                        <span id="detailKeterangan" class="text-dark small" style="font-size: 0.8rem;"></span>
-                    </div>
-                    <div class="alert bg-white border shadow-sm rounded-4 p-2 mb-0">
-                        <span class="fw-bold d-block text-primary small" style="font-size: 0.7rem;"><i class="bi bi-lightbulb-fill me-1"></i> Saran:</span>
-                        <span id="detailSaran" class="text-secondary small" style="font-size: 0.75rem;"></span>
-                    </div>
+                    <div class="alert alert-warning border-warning shadow-sm rounded-4 p-2 mb-2"><span class="fw-bold d-block small" style="font-size: 0.7rem;"><i class="bi bi-info-circle-fill me-1"></i> Kronologi:</span><span id="detailKeterangan" class="text-dark small" style="font-size: 0.8rem;"></span></div>
+                    <div class="alert bg-white border shadow-sm rounded-4 p-2 mb-0"><span class="fw-bold d-block text-primary small" style="font-size: 0.7rem;"><i class="bi bi-lightbulb-fill me-1"></i> Saran:</span><span id="detailSaran" class="text-secondary small" style="font-size: 0.75rem;"></span></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- MODAL PREVIEW UPLOAD -->
-    <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="previewModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg rounded-5 overflow-hidden">
                 <div class="modal-header bg-gradient-playful text-white border-0 py-2">
@@ -487,155 +346,12 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-light">
-                    <div class="p-2 bg-white border-bottom d-flex justify-content-between align-items-center text-sm">
-                        <span class="small text-secondary fw-bold">Total: <strong id="previewCount" class="text-dark">0</strong> baris</span>
-                    </div>
-                    <div class="table-responsive" style="max-height: 50vh;">
-                        <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light sticky-top" id="previewTableHeader"></thead><tbody id="previewTableBody" class="bg-white"></tbody></table>
-                    </div>
+                    <div class="p-2 bg-white border-bottom d-flex justify-content-between align-items-center text-sm"><span class="small text-secondary fw-bold">Total: <strong id="previewCount" class="text-dark">0</strong> baris</span></div>
+                    <div class="table-responsive" style="max-height: 50vh;"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light sticky-top" id="previewTableHeader"></thead><tbody id="previewTableBody" class="bg-white"></tbody></table></div>
                 </div>
                 <div class="modal-footer bg-white border-0 py-2">
                     <button type="button" class="btn btn-light btn-sm rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Batal</button>
                     <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" id="btnConfirmUpload"><i class="bi bi-cloud-arrow-up-fill"></i> Upload</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL FORM PENYELESAIAN CERDAS (TERINTEGRASI NASABAH & AI) -->
-    <div class="modal fade" id="resolveModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-5 border-0 shadow-lg">
-                <div class="modal-header bg-success text-white border-0 py-3">
-                    <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Form Penyelesaian Selisih</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4 bg-light">
-                    <div class="alert bg-warning-subtle border-warning text-dark rounded-4 shadow-sm p-3 mb-4" id="resolveInfoBox">
-                        <!-- Info Resi & AI Recommendation disuntikkan disini -->
-                    </div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted mb-1">No. Rekening Nasabah</label>
-                            <input type="text" id="resRekening" class="form-control form-control-sm rounded-pill fw-bold border-secondary-subtle" placeholder="Contoh: 1292009891">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted mb-1">Nama Nasabah</label>
-                            <input type="text" id="resNama" class="form-control form-control-sm rounded-pill text-uppercase fw-bold border-secondary-subtle" placeholder="Contoh: ROHADIYANTO">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted mb-1">Jenis Transaksi</label>
-                            <select id="resTrx" class="form-select form-select-sm rounded-pill border-secondary-subtle">
-                                <option>Tarik Tunai On Us</option><option>Transfer Sesama</option><option>Transfer Antar Bank</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted mb-1">Problem / Kendala</label>
-                            <input type="text" id="resProblem" class="form-control form-control-sm rounded-pill border-secondary-subtle" placeholder="Contoh: Transaksi terdebet namun uang tidak keluar" value="Transaksi terdebet namun uang tidak keluar">
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-bold text-muted mb-1">Keterangan / Jurnal Penyelesaian</label>
-                            <textarea id="resolveReason" class="form-control form-control-sm rounded-4 border-secondary-subtle" rows="2" placeholder="Jurnal Debet / Kredit..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 bg-white py-3">
-                    <button class="btn btn-light btn-sm rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                    <button class="btn btn-success btn-sm rounded-pill fw-bold px-4 shadow-sm bouncy-hover" onclick="submitResolve()"><i class="bi bi-printer"></i> Simpan & Buat B/A</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL CETAK SURAT B/A (FORMAT A4 BPD KALTIM KALTARA) -->
-    <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content rounded-0 border-0 shadow">
-                <div class="modal-header bg-dark text-white rounded-0 py-2">
-                    <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Cetak BA Penyelesaian</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-0 bg-secondary-subtle d-flex justify-content-center custom-scroll">
-                    
-                    <!-- KERTAS A4 PENYELESAIAN -->
-                    <div id="printBAPenyelesaianArea" class="bg-white text-dark shadow my-4" style="width: 210mm; min-height: 297mm; padding: 20mm; font-family: 'Times New Roman', Times, serif;">
-                        <!-- HEADER -->
-                        <div class="border-bottom border-dark border-2 pb-2 mb-4 d-flex justify-content-between">
-                            <div>
-                                <h5 class="fw-bolder mb-0 text-primary">PT BPD Kaltim Kaltara.</h5>
-                                <p class="mb-0 fw-bold" id="cetak_cabang">Kantor Cabang Pembantu Babulu</p>
-                                <p class="mb-0" id="cetak_alamat" style="font-size: 13px;">Jl. Propinsi KM. 48 RT. 05 RW. 02</p>
-                                <p class="mb-0" style="font-size: 13px;">www.bankaltimtara.co.id</p>
-                            </div>
-                        </div>
-
-                        <!-- JUDUL -->
-                        <div class="text-center mb-4">
-                            <h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5>
-                            <h6 class="fw-bolder mb-0">PENYELESAIAN SELISIH ATM</h6>
-                            <h6 class="fw-bolder" id="cetak_atm_judul">KTMXXXXX</h6>
-                        </div>
-
-                        <!-- ISI SURAT -->
-                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-3">
-                            Pada hari ini <b id="cetak_hari">Kamis</b> Tanggal <b id="cetak_tgl">20 Agustus 2026</b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm">KTMXXXXX</b>, dengan nominal sebesar <b><span id="cetak_nominal">Rp 0</span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:
-                        </p>
-
-                        <table class="table table-borderless table-sm mb-3 ms-3" style="font-size: 15px;">
-                            <tr><td width="25%">No. Rekening</td><td width="2%">:</td><td id="cetak_rek" class="fw-bold"></td></tr>
-                            <tr><td>Nama</td><td>:</td><td id="cetak_nama" class="fw-bold"></td></tr>
-                            <tr><td>No. Referensi</td><td>:</td><td id="cetak_resi" class="fw-bold"></td></tr>
-                            <tr><td>Transaksi</td><td>:</td><td id="cetak_trx"></td></tr>
-                            <tr><td>Problem</td><td>:</td><td id="cetak_problem"></td></tr>
-                        </table>
-
-                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2">
-                            <b>Keterangan:</b> <span id="cetak_keterangan"></span>
-                        </p>
-
-                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2 mt-4">
-                            <b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:
-                        </p>
-                        
-                        <table class="table table-bordered table-sm text-center border-dark mb-4" style="font-size: 14px;">
-                            <thead class="fw-bold align-middle">
-                                <tr><th>Debet</th><th>Kredit</th><th>Nominal</th><th>Keterangan</th></tr>
-                            </thead>
-                            <tbody class="align-middle">
-                                <tr>
-                                    <td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td>
-                                    <td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td>
-                                    <td class="fw-bold" id="cetak_jurnal_nom">Rp 0</td>
-                                    <td id="cetak_jurnal_ket">Transaksi terdebet namun uang tidak keluar</td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-5">
-                            Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait.<br>Atas perhatian dan kerjasamanya disampaikan terima kasih.
-                        </p>
-
-                        <!-- TANDA TANGAN -->
-                        <div class="row text-center" style="font-size: 15px;">
-                            <div class="col-12 text-end mb-4"><span id="cetak_kota">Babulu</span>, <span id="cetak_tgl_ttd">20 Agustus 2026</span></div>
-                            <div class="col-8">
-                                <p class="mb-5 pb-3">TIM SKO ATM</p>
-                                <div class="row">
-                                    <div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_teller">TELLER</p><p>Teller</p></div>
-                                    <div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_admin">ADMIN</p><p>Staff Administrasi Capem</p></div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <p class="mb-5 pb-3">Mengetahui,</p>
-                                <p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan">PIMPINAN</p><p>Pemimpin</p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="modal-footer rounded-0 py-2">
-                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Berita Acara</button>
                 </div>
             </div>
         </div>
@@ -658,62 +374,75 @@
                         <span class="small text-muted fw-bold">Total: <span id="histDetailCount" class="text-dark">0</span> Transaksi</span>
                     </div>
                     <div class="table-responsive" style="max-height: 50vh;">
-                        <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
-                            <thead class="table-light sticky-top shadow-sm" id="histDetailThead"></thead>
-                            <tbody id="histDetailTbody" class="bg-white"></tbody>
-                        </table>
+                        <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light sticky-top shadow-sm" id="histDetailThead"></thead><tbody id="histDetailTbody" class="bg-white"></tbody></table>
                     </div>
                     <div id="histDetailPagination"></div>
                 </div>
-                <div class="modal-footer bg-white border-0 py-2">
-                    <button type="button" class="btn btn-light btn-sm rounded-pill px-4 fw-bold shadow-sm bouncy-hover" data-bs-dismiss="modal">Tutup Rincian</button>
-                </div>
+                <div class="modal-footer bg-white border-0 py-2"><button type="button" class="btn btn-light btn-sm rounded-pill px-4 fw-bold shadow-sm bouncy-hover" data-bs-dismiss="modal">Tutup Rincian</button></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CETAK BA OPNAME FISIK (A4 FORMAT) -->
+    <!-- MODAL FORM PENYELESAIAN CERDAS -->
+    <div class="modal fade" id="resolveModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-5 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white border-0 py-3">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Form Penyelesaian Selisih</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="alert bg-warning-subtle border-warning text-dark rounded-4 shadow-sm p-3 mb-4" id="resolveInfoBox"></div>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">No. Rekening Nasabah</label><input type="text" id="resRekening" class="form-control form-control-sm rounded-pill fw-bold border-secondary-subtle" placeholder="Contoh: 1292009891"></div>
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nama Nasabah</label><input type="text" id="resNama" class="form-control form-control-sm rounded-pill text-uppercase fw-bold border-secondary-subtle" placeholder="Contoh: ROHADIYANTO"></div>
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Jenis Transaksi</label><select id="resTrx" class="form-select form-select-sm rounded-pill border-secondary-subtle"><option>Tarik Tunai On Us</option><option>Transfer Sesama</option><option>Transfer Antar Bank</option></select></div>
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Problem / Kendala</label><input type="text" id="resProblem" class="form-control form-control-sm rounded-pill border-secondary-subtle" placeholder="Contoh: Transaksi terdebet namun uang tidak keluar" value="Transaksi terdebet namun uang tidak keluar"></div>
+                        <div class="col-12"><label class="small fw-bold text-muted mb-1">Keterangan / Jurnal Penyelesaian</label><textarea id="resolveReason" class="form-control form-control-sm rounded-4 border-secondary-subtle" rows="2" placeholder="Jurnal Debet / Kredit..."></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-white py-3"><button class="btn btn-light btn-sm rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button class="btn btn-success btn-sm rounded-pill fw-bold px-4 shadow-sm bouncy-hover" onclick="submitResolve()"><i class="bi bi-printer"></i> Simpan & Buat B/A</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CETAK SURAT B/A PENYELESAIAN -->
+    <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content rounded-0 border-0 shadow">
+                <div class="modal-header bg-dark text-white rounded-0 py-2"><h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Cetak BA Penyelesaian</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-0 bg-secondary-subtle d-flex justify-content-center custom-scroll">
+                    <div id="printBAPenyelesaianArea" class="bg-white text-dark shadow my-4" style="width: 210mm; min-height: 297mm; padding: 20mm; font-family: 'Times New Roman', Times, serif;">
+                        <div class="border-bottom border-dark border-2 pb-2 mb-4 d-flex justify-content-between"><div><h5 class="fw-bolder mb-0 text-primary">PT BPD Kaltim Kaltara.</h5><p class="mb-0 fw-bold" id="cetak_cabang"></p><p class="mb-0" id="cetak_alamat" style="font-size: 13px;"></p><p class="mb-0" style="font-size: 13px;">www.bankaltimtara.co.id</p></div></div>
+                        <div class="text-center mb-4"><h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5><h6 class="fw-bolder mb-0">PENYELESAIAN SELISIH ATM</h6><h6 class="fw-bolder" id="cetak_atm_judul"></h6></div>
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-3">Pada hari ini <b id="cetak_hari"></b> Tanggal <b id="cetak_tgl"></b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm"></b>, dengan nominal sebesar <b><span id="cetak_nominal"></span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:</p>
+                        <table class="table table-borderless table-sm mb-3 ms-3" style="font-size: 15px;"><tr><td width="25%">No. Rekening</td><td width="2%">:</td><td id="cetak_rek" class="fw-bold"></td></tr><tr><td>Nama</td><td>:</td><td id="cetak_nama" class="fw-bold"></td></tr><tr><td>No. Referensi</td><td>:</td><td id="cetak_resi" class="fw-bold"></td></tr><tr><td>Transaksi</td><td>:</td><td id="cetak_trx"></td></tr><tr><td>Problem</td><td>:</td><td id="cetak_problem"></td></tr></table>
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2"><b>Keterangan:</b> <span id="cetak_keterangan"></span></p>
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2 mt-4"><b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:</p>
+                        <table class="table table-bordered table-sm text-center border-dark mb-4" style="font-size: 14px;"><thead class="fw-bold align-middle"><tr><th>Debet</th><th>Kredit</th><th>Nominal</th><th>Keterangan</th></tr></thead><tbody class="align-middle"><tr><td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td><td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td><td class="fw-bold" id="cetak_jurnal_nom"></td><td id="cetak_jurnal_ket"></td></tr></tbody></table>
+                        <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-5">Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait.<br>Atas perhatian dan kerjasamanya disampaikan terima kasih.</p>
+                        <div class="row text-center" style="font-size: 15px;"><div class="col-12 text-end mb-4"><span id="cetak_kota"></span>, <span id="cetak_tgl_ttd"></span></div><div class="col-8"><p class="mb-5 pb-3">TIM SKO ATM</p><div class="row"><div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_teller"></p><p>Teller</p></div><div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_admin"></p><p>Staff Administrasi Capem</p></div></div></div><div class="col-4"><p class="mb-5 pb-3">Mengetahui,</p><p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan"></p><p>Pemimpin</p></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer rounded-0 py-2"><button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Berita Acara</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CETAK BA OPNAME FISIK -->
     <div class="modal fade" id="baOpnameModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
-                <div class="modal-header bg-dark text-white rounded-0 py-2">
-                    <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau Berita Acara Opname</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header bg-dark text-white rounded-0 py-2"><h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau Berita Acara Opname</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body p-0 bg-light d-flex justify-content-center">
-                    
-                    <!-- KERTAS A4 OPNAME -->
                     <div id="printBAOpnameArea" class="bg-white text-dark shadow-sm my-4" style="width: 210mm; min-height: 297mm; padding: 25mm 20mm; font-family: 'Times New Roman', serif;">
-                        
-                        <div class="text-center mb-5">
-                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5>
-                            <p class="fw-bold mb-0">PT BANK PEMBANGUNAN DAERAH KALIMANTAN TIMUR DAN KALIMANTAN UTARA</p>
-                            <p class="fw-bold" id="cetakOp_cabang">KANTOR CABANG PEMBANTU BABULU</p>
-                        </div>
-                        
-                        <p style="text-align: justify; line-height: 1.8; font-size: 14px;" class="mb-4">
-                            Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text">Kantor Cabang Pembantu Babulu</span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:
-                        </p>
-                        
-                        <table class="table table-borderless table-sm w-100 ms-3" style="line-height: 1.8; font-size: 14px;">
-                            <tr><td width="55%">1. Saldo Kas Sebelum Pengisian (System Core)</td><td width="5%">: Rp</td><td id="cetakSysSebelum" class="text-end pe-5">0</td></tr>
-                            <tr><td>2. Saldo Kas Yang Ditambahkan (System Core)</td><td>: Rp</td><td id="cetakSysTambah" class="text-end pe-5">0</td></tr>
-                            <tr><td>3. Saldo Kas Setelah Penambahan (System Core)</td><td>: Rp</td><td id="cetakSysTotal" class="text-end pe-5 fw-bold">0</td></tr>
-                            <tr><td>4. Saldo Kas Menurut Jumlah Fisik</td><td>: Rp</td><td id="cetakFisik" class="text-end pe-5 fw-bold">0</td></tr>
-                            <tr><td>5. Selisih Kurang Saldo Kas</td><td>: Rp</td><td id="cetakKurang" class="text-end pe-5">0</td></tr>
-                            <tr><td>6. Selisih Lebih</td><td>: Rp</td><td id="cetakLebih" class="text-end pe-5">0</td></tr>
-                        </table>
-                        
-                        <div class="row text-center mt-5 pt-5" style="font-size: 14px;">
-                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas1">( ................................... )</p></div>
-                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas2">( ................................... )</p></div>
-                        </div>
+                        <div class="text-center mb-5"><h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5><p class="fw-bold mb-0">PT BANK PEMBANGUNAN DAERAH KALIMANTAN TIMUR DAN KALIMANTAN UTARA</p><p class="fw-bold" id="cetakOp_cabang"></p></div>
+                        <p style="text-align: justify; line-height: 1.8; font-size: 14px;" class="mb-4">Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text"></span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:</p>
+                        <table class="table table-borderless table-sm w-100 ms-3" style="line-height: 1.8; font-size: 14px;"><tr><td width="55%">1. Saldo Kas Sebelum Pengisian (System Core)</td><td width="5%">: Rp</td><td id="cetakSysSebelum" class="text-end pe-5">0</td></tr><tr><td>2. Saldo Kas Yang Ditambahkan (System Core)</td><td>: Rp</td><td id="cetakSysTambah" class="text-end pe-5">0</td></tr><tr><td>3. Saldo Kas Setelah Penambahan (System Core)</td><td>: Rp</td><td id="cetakSysTotal" class="text-end pe-5 fw-bold">0</td></tr><tr><td>4. Saldo Kas Menurut Jumlah Fisik</td><td>: Rp</td><td id="cetakFisik" class="text-end pe-5 fw-bold">0</td></tr><tr><td>5. Selisih Kurang Saldo Kas</td><td>: Rp</td><td id="cetakKurang" class="text-end pe-5">0</td></tr><tr><td>6. Selisih Lebih</td><td>: Rp</td><td id="cetakLebih" class="text-end pe-5">0</td></tr></table>
+                        <div class="row text-center mt-5 pt-5" style="font-size: 14px;"><div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas1"></p></div><div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas2"></p></div></div>
                     </div>
-
                 </div>
-                <div class="modal-footer rounded-0 py-2">
-                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button>
-                </div>
+                <div class="modal-footer rounded-0 py-2"><button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button></div>
             </div>
         </div>
     </div>
