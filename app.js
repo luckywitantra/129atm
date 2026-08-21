@@ -183,7 +183,11 @@ function processEJ() {
     const reader = new FileReader();
     reader.onload = function(e) {
         const text = e.target.result; const lines = text.split('\n'); const ejData = [];
-        let currentTx = {}; let isLookingForJumlah = false; let lastValidAtmId = 'UNKNOWN'; let lastValidDate = '';
+        let currentTx = {}; let isLookingForJumlah = false; 
+        
+        // MEMORI UNTUK MENGINGAT ID ATM YANG BENAR (YANG ADA KATA "KTM")
+        let lastValidAtmId = 'UNKNOWN'; 
+        let lastValidDate = '';
         
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
@@ -191,7 +195,11 @@ function processEJ() {
                 if (currentTx.cashTaken) currentTx.status = "SUKSES";
                 else if (!currentTx.status) currentTx.status = (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) ? "GAGAL - TIDAK ADA UANG KELUAR" : (currentTx.nominal ? "SUKSES" : "NON-FINANSIAL");
                 if (!currentTx.nominal) currentTx.nominal = 0;
-                let finalAtmId = currentTx.atm; if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
+                
+                // Gunakan ID ATM Memori jika ID saat ini aneh (seperti "346")
+                let finalAtmId = currentTx.atm; 
+                if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
+                
                 ejData.push([currentTx.tanggal, finalAtmId, currentTx.noResi, currentTx.nominal, currentTx.status]);
             }
             currentTx = {}; isLookingForJumlah = false;
@@ -202,8 +210,19 @@ function processEJ() {
             if (line.includes("<- TRANSACTION END") || line.includes("-> TRANSACTION START") || line.includes("EMV AID ")) { if (currentTx.noResi) saveCurrentTransaction(); }
             if (line.includes("CASH TAKEN")) currentTx.cashTaken = true;
             
+            // Tangkap Tanggal dan ID ATM
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
-            if (dateMatch) { currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; lastValidDate = currentTx.tanggal; currentTx.atm = dateMatch[5]; if (/[A-Z]/.test(currentTx.atm)) lastValidAtmId = currentTx.atm; }
+            if (dateMatch) { 
+                currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; 
+                lastValidDate = currentTx.tanggal; 
+                
+                // [PERBAIKAN] Hanya ingat ID ATM jika mengandung huruf (seperti KTM) agar kode 346 diabaikan
+                let tempAtm = dateMatch[5];
+                if (/[A-Z]/i.test(tempAtm)) {
+                    lastValidAtmId = tempAtm;
+                }
+                currentTx.atm = lastValidAtmId; // Selalu pakai ID yang sudah valid
+            }
             
             const resiMatch = line.match(/(?:NO\s+RESI|NO\s+REF\.?|REFF\s+NO)\s*:?\s*(\d+)/i);
             if (resiMatch) currentTx.noResi = parseInt(resiMatch[1], 10).toString();
@@ -213,7 +232,6 @@ function processEJ() {
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL") || line.includes("PENARIKAN TUNAI TANPA KARTU")) currentTx.jenis = "TARIK TUNAI";
             else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("KE BANK") || line.includes("REK TUJUAN")) currentTx.jenis = "TRANSFER";
             
-            // [PERBAIKAN REGEX] - Menangkap "RP", ".", ":" atau "spasi" di sekitar nominal
             if ((line.includes("JUMLAH") || line.includes("AMOUNT")) && !line.includes("ENTERED")) {
                 isLookingForJumlah = true; 
                 const inlineJumlah = line.match(/(?:RP\.?|:|\.)\s*([\d,]+(?:\.\d+)?)/i);
