@@ -12,33 +12,134 @@ let globalHistMap = new Map(), currentDetailData = [], detailType = '';
 let pageState = { analisaKurang: 1, analisaLebih: 1, analisaSelesai: 1, master: 1, opname: 1, uploadHist: 1, histDetail: 1 };
 const PAGE_SIZE = 10;
 
-function changePage(section, newPage) {
-    pageState[section] = newPage;
-    if(section.includes('analisa')) renderSelisihTablesFiltered();
-    else if(section === 'master') renderDataMaster();
-    else if(section === 'opname') renderOpnameTable();
-    else if(section === 'uploadHist') renderUploadHistory();
-    else if(section === 'histDetail') renderHistoryDetailTable();
+// MENGAMBIL FORMAT BULAN AKTIF (Contoh: "082026")
+function getActivePeriod() {
+    let val = document.getElementById('globalPeriod').value;
+    if(!val) {
+        let d = new Date();
+        val = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0');
+        document.getElementById('globalPeriod').value = val;
+    }
+    let parts = val.split('-');
+    return parts[1] + parts[0]; 
 }
-
-const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
-const formatNum = (angka) => (angka ? new Intl.NumberFormat('id-ID').format(angka) : "0");
-
-const PlayfulAlert = Swal.mixin({
-    customClass: { popup: 'rounded-5 shadow-lg border-0', confirmButton: 'btn btn-primary rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover', cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover' }, buttonsStyling: false
-});
 
 window.superApp = window.superApp || {};
 
-// ==========================================
-// AUTO-LOAD & PENYIMPANAN CLOUD CONFIG
-// ==========================================
+// SAAT USER MENGGANTI BULAN DI NAVBAR
+superApp.changePeriod = function() {
+    PlayfulAlert.fire({ title: 'Berpindah Bulan...', text: 'Memuat data dari dimensi waktu yang dipilih.', allowOutsideClick: false });
+    PlayfulAlert.showLoading();
+    // Tarik ulang semua data sesuai bulan yang dipilih
+    Promise.all([
+        fetchDatabaseData(),
+        fetchSelisihData()
+    ]).then(() => {
+        PlayfulAlert.close();
+    });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
+    getActivePeriod(); // Setel Input Tgl Bulan ke Hari Ini
     fetchConfig(); 
-    fetchDatabaseData(); // AUTO-LOAD DATA AGAR ASISTEN AI LANGSUNG BEKERJA
+    fetchDatabaseData(); 
     const settingModal = document.getElementById('modal-system-settings');
     if(settingModal) settingModal.addEventListener('show.bs.modal', renderTellerConfig);
 });
+
+// [... Biarkan fungsi fetchConfig() dan renderTellerConfig() sama seperti sebelumnya ...]
+
+// ==========================================
+// 3. API PENGIRIMAN DATA DENGAN PERIODE
+// ==========================================
+async function sendToBackend(action, data) {
+    let currentPeriod = getActivePeriod();
+    PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    try {
+        // [PERBAIKAN] Tambahkan properti 'periode' ke payload
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, periode: currentPeriod, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        const result = await response.json();
+        if(result.success) {
+            PlayfulAlert.fire('Berhasil!', `Data didistribusikan otomatis ke Sheet bulan transaksi. Dimasukkan: <b>${result.data.added}</b> baris baru.`, 'success');
+            fetchDatabaseData(); 
+        } else PlayfulAlert.fire('Error Backend', result.message, 'error');
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+}
+
+async function triggerAnalysis() {
+    let currentPeriod = getActivePeriod();
+    PlayfulAlert.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze', periode: currentPeriod }) });
+        const result = await response.json();
+        if(result.success) {
+            const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan bulan ini berhasil dimuat.";
+            const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
+            PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
+            globalSelisihData = result.data.tableData;
+            renderSelisihTablesFiltered(); 
+        } else PlayfulAlert.fire('Gagal', result.message, 'error');
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+}
+
+async function fetchSelisihData() {
+    let currentPeriod = getActivePeriod();
+    try {
+        const [resSelisih, resOpname] = await Promise.all([ 
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih', periode: currentPeriod })}), 
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })}) 
+        ]);
+        const resultSelisih = await resSelisih.json(); const resultOpname = await resOpname.json();
+        if(resultSelisih.success) globalSelisihData = resultSelisih.data;
+        if(resultOpname.success) globalOpnameData = resultOpname.data;
+        
+        let dAtms = new Set(), dResis = new Set(), dNoms = new Set();
+        (globalSelisihData||[]).forEach(r => { dAtms.add(String(r[1]).trim()); dResis.add(String(r[2]).trim()); dNoms.add(parseFloat(r[3])); });
+        populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
+        renderSelisihTablesFiltered();
+    } catch (err) { console.error(err); }
+}
+
+async function fetchDatabaseData() {
+    let currentPeriod = getActivePeriod();
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase', periode: currentPeriod })});
+        const result = await response.json();
+        if(result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); }
+    } catch (err) { console.error(err); }
+}
+
+// SAAT SUBMIT ATAU REVERT SELISIH, PASTIKAN PERIODE DIBAWA:
+async function submitResolve() {
+    // ... [Kode mengambil reason, rek, nama, trx, dll] ...
+    const tglSafe = String(activeResolveRow[0]).substring(0,10); 
+    const atmSafe = String(activeResolveRow[1]).trim(); 
+    const resiSafe = String(activeResolveRow[2]).trim();
+    
+    // finalKeterangan = ...
+    const payload = { tanggal: tglSafe, atm: atmSafe, resi: resiSafe, status: 'Selesai', keterangan: finalKeterangan };
+    
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', periode: getActivePeriod(), data: payload }) });
+        // ... [Sisa eksekusi]
+    }
+}
+
+// SAAT SAVE OPNAME, BAWA JUGA PERIODENYA:
+async function saveOpnameData() {
+    // ... [Payload setup] ...
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', periode: getActivePeriod(), data: payload }) });
+        // ... [Sisa eksekusi]
+    }
+}
+
+// SAAT DELETE OPNAME:
+async function deleteOpname(id) {
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOpname', periode: getActivePeriod(), data: id }) });
+    }
+}
 
 async function fetchConfig() {
     try {
@@ -225,12 +326,14 @@ document.getElementById('btnConfirmUpload').addEventListener('click', () => {
 // 3. API PENGIRIMAN & RIWAYAT UPLOAD (GROUP BY DATE)
 // ==========================================
 async function sendToBackend(action, data) {
+    let currentPeriod = getActivePeriod();
     PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+        // [PERBAIKAN] Tambahkan properti 'periode' ke payload
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, periode: currentPeriod, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         const result = await response.json();
         if(result.success) {
-            PlayfulAlert.fire('Berhasil!', `Dimasukkan: <b>${result.data.added}</b> data baru.<br>Dilewati (Duplikat): <b>${data.length - result.data.added}</b> data.`, 'success');
+            PlayfulAlert.fire('Berhasil!', `Data didistribusikan otomatis ke Sheet bulan transaksi. Dimasukkan: <b>${result.data.added}</b> baris baru.`, 'success');
             fetchDatabaseData(); 
         } else PlayfulAlert.fire('Error Backend', result.message, 'error');
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
@@ -291,12 +394,13 @@ function renderHistoryDetailTable() {
 // 4. ANALISA SELISIH (AI MATCHER & HIERARKI)
 // ==========================================
 async function triggerAnalysis() {
+    let currentPeriod = getActivePeriod();
     PlayfulAlert.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze' }) });
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze', periode: currentPeriod }) });
         const result = await response.json();
         if(result.success) {
-            const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan terbaru berhasil dimuat.";
+            const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan bulan ini berhasil dimuat.";
             const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
             PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
             globalSelisihData = result.data.tableData;
@@ -306,10 +410,12 @@ async function triggerAnalysis() {
 }
 
 async function fetchSelisihData() {
-    document.getElementById('tableBodyLebih').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
-    document.getElementById('tableBodyKurang').innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>`;
+    let currentPeriod = getActivePeriod();
     try {
-        const [resSelisih, resOpname] = await Promise.all([ fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih' })}), fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname' })}) ]);
+        const [resSelisih, resOpname] = await Promise.all([ 
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih', periode: currentPeriod })}), 
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })}) 
+        ]);
         const resultSelisih = await resSelisih.json(); const resultOpname = await resOpname.json();
         if(resultSelisih.success) globalSelisihData = resultSelisih.data;
         if(resultOpname.success) globalOpnameData = resultOpname.data;
@@ -317,7 +423,6 @@ async function fetchSelisihData() {
         let dAtms = new Set(), dResis = new Set(), dNoms = new Set();
         (globalSelisihData||[]).forEach(r => { dAtms.add(String(r[1]).trim()); dResis.add(String(r[2]).trim()); dNoms.add(parseFloat(r[3])); });
         populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
-
         renderSelisihTablesFiltered();
     } catch (err) { console.error(err); }
 }
@@ -495,17 +600,11 @@ function showDetailPopup(rowDataStr) {
 // 6. ENGINE DATA MASTER 
 // ==========================================
 async function fetchDatabaseData() {
-    const tbody = document.getElementById('tableBodyDataMaster');
-    if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Menyinkronkan Database...</small></td></tr>`;
+    let currentPeriod = getActivePeriod();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase' })});
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase', periode: currentPeriod })});
         const result = await response.json();
-        if(result.success) { 
-            databaseData = result.data; 
-            renderUploadHistory(); 
-            renderDataMaster(); 
-            updateDataCompletenessBanner(); // MEMANGGIL FUNGSI CEK DATA
-        }
+        if(result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); }
     } catch (err) { console.error(err); }
 }
 
