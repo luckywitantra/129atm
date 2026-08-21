@@ -40,6 +40,15 @@
             #printBAPenyelesaianArea, #printBAOpnameArea { position: absolute; left: 0; top: 0; width: 210mm !important; margin: 0 !important; padding: 15mm !important; box-shadow: none !important; border: none !important; }
             .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
         }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printBAPenyelesaianArea, #printBAPenyelesaianArea *,
+            #printBAOpnameArea, #printBAOpnameArea *,
+            #printLaporanArea, #printLaporanArea * { visibility: visible; }
+            #printBAPenyelesaianArea, #printBAOpnameArea, #printLaporanArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0 !important; padding: 10mm !important; box-shadow: none !important; border: none !important; }
+            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
+        }
     </style>
 </head>
 <body>
@@ -150,7 +159,10 @@
                 <div id="analisa" class="page-section d-none fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
                         <h4 class="fw-bold mb-0 text-dark">Hasil Analisa</h4>
-                        <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover" onclick="triggerAnalysis()"><i class="bi bi-lightning-charge-fill text-dark"></i> Proses Sekarang</button>
+                        <div>
+                            <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover" onclick="triggerAnalysis()"><i class="bi bi-lightning-charge-fill text-dark"></i> Proses</button>
+                            <button class="btn btn-dark btn-sm rounded-pill fw-bold shadow-sm bouncy-hover ms-1" onclick="superApp.bukaLaporanModal()"><i class="bi bi-file-earmark-pdf-fill"></i> Cetak Laporan</button>
+                        </div>
                     </div>
                     <div class="data-completeness-banner"></div>
 
@@ -460,6 +472,67 @@
                     </div>
                 </div>
                 <div class="modal-footer rounded-0 py-2"><button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CETAK LAPORAN REKENING GANTUNG -->
+    <div class="modal fade" id="laporanModal" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+            <div class="modal-content rounded-0 border-0 shadow">
+                <div class="modal-header bg-dark text-white rounded-0 py-2">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-file-earmark-pdf"></i> Laporan Selisih ATM (Buku Besar)</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-secondary-subtle d-flex justify-content-center custom-scroll">
+                    
+                    <!-- KERTAS A4 LANDSCAPE -->
+                    <div id="printLaporanArea" class="bg-white text-dark shadow-sm my-4" style="width: 297mm; min-height: 210mm; padding: 15mm 15mm; font-family: 'Arial', sans-serif;">
+                        
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">Periode: <span id="lap_periode" class="text-uppercase"></span></h6>
+                                <h6 class="fw-bold mb-0">KWJBN SGR-ATM DLM PENYELESAIAN: 1299000105</h6>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline" id="lap_judul_atas">LAPORAN SELISIH ATM</h5>
+                            </div>
+                        </div>
+                        
+                        <table class="table table-bordered border-dark table-sm align-middle" style="font-size: 11px;">
+                            <thead class="text-center align-middle fw-bold">
+                                <tr>
+                                    <th width="3%">NO</th>
+                                    <th width="15%">TANGGAL CASH OPNAME / PENY. SELISIH ATM</th>
+                                    <th width="8%">NOMOR REFERENSI</th>
+                                    <th width="6%">ID ATM</th>
+                                    <th width="9%">KREDIT (Rp)</th>
+                                    <th width="9%">DEBET (Rp)</th>
+                                    <th width="10%">SALDO (Rp)</th>
+                                    <th width="20%">KETERANGAN</th>
+                                    <th width="10%">SALDO ATM DALAM PENCARIAN</th>
+                                    <th width="10%">SALDO OFF US BELUM DITARIK KANPUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lap_tbody">
+                                <!-- Data Di-Generate oleh JS -->
+                            </tbody>
+                        </table>
+
+                        <div class="row text-center mt-5 pt-4" style="font-size: 12px;">
+                            <div class="col-8"></div>
+                            <div class="col-4">
+                                <p class="mb-5 pb-4"><span id="lap_kota">Babulu</span>, <span id="lap_tgl_cetak">Agustus 2026</span><br>PT BANK PEMBANGUNAN DAERAH<br>KALIMANTAN TIMUR DAN KALIMANTAN UTARA<br><span class="text-uppercase fw-bold" id="lap_cabang_bawah">CABANG PEMBANTU BABULU</span></p>
+                                <p class="fw-bold text-decoration-underline mb-0" id="lap_pimpinan">ENDY PRATAMA</p>
+                                <p>Pemimpin</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer rounded-0 py-2">
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="superApp.printLaporan()"><i class="bi bi-printer-fill"></i> Cetak PDF (Landscape)</button>
+                </div>
             </div>
         </div>
     </div>
