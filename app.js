@@ -27,10 +27,19 @@ function getActivePeriod() {
 window.superApp = window.superApp || {};
 
 // SAAT USER MENGGANTI BULAN DI NAVBAR
-superApp.changePeriod = function() {
+superApp.changePeriod = async function() {
     PlayfulAlert.fire({ title: 'Berpindah Bulan...', text: 'Memuat data dari dimensi waktu yang dipilih.', allowOutsideClick: false });
     PlayfulAlert.showLoading();
-    Promise.all([ fetchDatabaseData(), fetchSelisihData() ]).then(() => { PlayfulAlert.close(); });
+    
+    // [PERBAIKAN] Eksekusi berurutan agar tidak terjadi tabrakan di server Google
+    try {
+        await fetchDatabaseData();
+        await fetchSelisihData();
+    } catch (e) {
+        console.error("Gagal berpindah bulan:", e);
+    } finally {
+        PlayfulAlert.close();
+    }
 };
 
 function changePage(section, newPage) {
@@ -327,11 +336,13 @@ async function triggerAnalysis() {
 async function fetchSelisihData() {
     let currentPeriod = getActivePeriod();
     try {
-        const [resSelisih, resOpname] = await Promise.all([ 
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih', periode: currentPeriod })}), 
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })}) 
-        ]);
-        const resultSelisih = await resSelisih.json(); const resultOpname = await resOpname.json();
+        // [PERBAIKAN] Tarik data satu per satu (Sekuensial) agar Google tidak memblokir koneksi
+        const resSelisih = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih', periode: currentPeriod })});
+        const resultSelisih = await resSelisih.json();
+        
+        const resOpname = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })});
+        const resultOpname = await resOpname.json();
+        
         if(resultSelisih.success) globalSelisihData = resultSelisih.data;
         if(resultOpname.success) globalOpnameData = resultOpname.data;
         
@@ -339,7 +350,7 @@ async function fetchSelisihData() {
         (globalSelisihData||[]).forEach(r => { dAtms.add(String(r[1]).trim()); dResis.add(String(r[2]).trim()); dNoms.add(parseFloat(r[3])); });
         populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
         renderSelisihTablesFiltered();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error Fetch Selisih:", err); }
 }
 
 function renderSelisihTablesFiltered() {
