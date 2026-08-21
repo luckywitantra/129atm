@@ -30,14 +30,24 @@ window.superApp = window.superApp || {};
 superApp.changePeriod = function() {
     PlayfulAlert.fire({ title: 'Berpindah Bulan...', text: 'Memuat data dari dimensi waktu yang dipilih.', allowOutsideClick: false });
     PlayfulAlert.showLoading();
-    // Tarik ulang semua data sesuai bulan yang dipilih
-    Promise.all([
-        fetchDatabaseData(),
-        fetchSelisihData()
-    ]).then(() => {
-        PlayfulAlert.close();
-    });
+    Promise.all([ fetchDatabaseData(), fetchSelisihData() ]).then(() => { PlayfulAlert.close(); });
 };
+
+function changePage(section, newPage) {
+    pageState[section] = newPage;
+    if(section.includes('analisa')) renderSelisihTablesFiltered();
+    else if(section === 'master') renderDataMaster();
+    else if(section === 'opname') renderOpnameTable();
+    else if(section === 'uploadHist') renderUploadHistory();
+    else if(section === 'histDetail') renderHistoryDetailTable();
+}
+
+const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
+const formatNum = (angka) => (angka ? new Intl.NumberFormat('id-ID').format(angka) : "0");
+
+const PlayfulAlert = Swal.mixin({
+    customClass: { popup: 'rounded-5 shadow-lg border-0', confirmButton: 'btn btn-primary rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover', cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover' }, buttonsStyling: false
+});
 
 document.addEventListener("DOMContentLoaded", () => {
     getActivePeriod(); // Setel Input Tgl Bulan ke Hari Ini
@@ -46,100 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const settingModal = document.getElementById('modal-system-settings');
     if(settingModal) settingModal.addEventListener('show.bs.modal', renderTellerConfig);
 });
-
-// [... Biarkan fungsi fetchConfig() dan renderTellerConfig() sama seperti sebelumnya ...]
-
-// ==========================================
-// 3. API PENGIRIMAN DATA DENGAN PERIODE
-// ==========================================
-async function sendToBackend(action, data) {
-    let currentPeriod = getActivePeriod();
-    PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
-    try {
-        // [PERBAIKAN] Tambahkan properti 'periode' ke payload
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, periode: currentPeriod, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        const result = await response.json();
-        if(result.success) {
-            PlayfulAlert.fire('Berhasil!', `Data didistribusikan otomatis ke Sheet bulan transaksi. Dimasukkan: <b>${result.data.added}</b> baris baru.`, 'success');
-            fetchDatabaseData(); 
-        } else PlayfulAlert.fire('Error Backend', result.message, 'error');
-    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
-}
-
-async function triggerAnalysis() {
-    let currentPeriod = getActivePeriod();
-    PlayfulAlert.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); PlayfulAlert.showLoading();
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze', periode: currentPeriod }) });
-        const result = await response.json();
-        if(result.success) {
-            const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan bulan ini berhasil dimuat.";
-            const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
-            PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
-            globalSelisihData = result.data.tableData;
-            renderSelisihTablesFiltered(); 
-        } else PlayfulAlert.fire('Gagal', result.message, 'error');
-    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
-}
-
-async function fetchSelisihData() {
-    let currentPeriod = getActivePeriod();
-    try {
-        const [resSelisih, resOpname] = await Promise.all([ 
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih', periode: currentPeriod })}), 
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })}) 
-        ]);
-        const resultSelisih = await resSelisih.json(); const resultOpname = await resOpname.json();
-        if(resultSelisih.success) globalSelisihData = resultSelisih.data;
-        if(resultOpname.success) globalOpnameData = resultOpname.data;
-        
-        let dAtms = new Set(), dResis = new Set(), dNoms = new Set();
-        (globalSelisihData||[]).forEach(r => { dAtms.add(String(r[1]).trim()); dResis.add(String(r[2]).trim()); dNoms.add(parseFloat(r[3])); });
-        populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
-        renderSelisihTablesFiltered();
-    } catch (err) { console.error(err); }
-}
-
-async function fetchDatabaseData() {
-    let currentPeriod = getActivePeriod();
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase', periode: currentPeriod })});
-        const result = await response.json();
-        if(result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); }
-    } catch (err) { console.error(err); }
-}
-
-// SAAT SUBMIT ATAU REVERT SELISIH, PASTIKAN PERIODE DIBAWA:
-async function submitResolve() {
-    // ... [Kode mengambil reason, rek, nama, trx, dll] ...
-    const tglSafe = String(activeResolveRow[0]).substring(0,10); 
-    const atmSafe = String(activeResolveRow[1]).trim(); 
-    const resiSafe = String(activeResolveRow[2]).trim();
-    
-    // finalKeterangan = ...
-    const payload = { tanggal: tglSafe, atm: atmSafe, resi: resiSafe, status: 'Selesai', keterangan: finalKeterangan };
-    
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', periode: getActivePeriod(), data: payload }) });
-        // ... [Sisa eksekusi]
-    }
-}
-
-// SAAT SAVE OPNAME, BAWA JUGA PERIODENYA:
-async function saveOpnameData() {
-    // ... [Payload setup] ...
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', periode: getActivePeriod(), data: payload }) });
-        // ... [Sisa eksekusi]
-    }
-}
-
-// SAAT DELETE OPNAME:
-async function deleteOpname(id) {
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOpname', periode: getActivePeriod(), data: id }) });
-    }
-}
 
 async function fetchConfig() {
     try {
@@ -329,7 +245,6 @@ async function sendToBackend(action, data) {
     let currentPeriod = getActivePeriod();
     PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        // [PERBAIKAN] Tambahkan properti 'periode' ke payload
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, periode: currentPeriod, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
         const result = await response.json();
         if(result.success) {
@@ -524,7 +439,7 @@ async function submitResolve() {
     
     PlayfulAlert.fire({ title: 'Menyimpan & Membuat B/A...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', periode: getActivePeriod(), data: payload }) });
         const result = await response.json();
         if(result.success) {
             PlayfulAlert.close();
@@ -546,7 +461,7 @@ async function revertSelisih(rawStr) {
     
     PlayfulAlert.fire({ title: 'Mengembalikan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', data: payload }) });
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', periode: getActivePeriod(), data: payload }) });
         const result = await response.json();
         if(result.success) { 
             PlayfulAlert.fire('Berhasil', 'Data dikembalikan.', 'success'); 
@@ -601,6 +516,8 @@ function showDetailPopup(rowDataStr) {
 // ==========================================
 async function fetchDatabaseData() {
     let currentPeriod = getActivePeriod();
+    const tbody = document.getElementById('tableBodyDataMaster');
+    if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Menyinkronkan Database...</small></td></tr>`;
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase', periode: currentPeriod })});
         const result = await response.json();
@@ -682,9 +599,10 @@ function printRiwayatBAOpname(rawStr) {
 }
 
 async function fetchOpnameHistory() {
+    let currentPeriod = getActivePeriod();
     document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname' })});
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })});
         const result = await response.json();
         if(result.success) { globalOpnameData = result.data; renderOpnameTable(); }
     } catch (err) { console.error(err); }
@@ -693,7 +611,7 @@ async function fetchOpnameHistory() {
 function renderOpnameTable() {
     const tbody = document.getElementById('tableBodyOpname');
     if (globalOpnameData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-inbox fs-4 d-block mb-1"></i> Belum ada riwayat Opname.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-inbox fs-4 d-block mb-1"></i> Belum ada riwayat Opname di bulan ini.</td></tr>`;
         return;
     }
     
@@ -755,7 +673,7 @@ async function deleteOpname(id) {
     if(!confirm.isConfirmed) return;
     PlayfulAlert.fire({ title: 'Menghapus...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOpname', data: id }) });
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOpname', periode: getActivePeriod(), data: id }) });
         const result = await response.json();
         if(result.success) { PlayfulAlert.fire('Dihapus', 'Riwayat berhasil dibuang.', 'success'); fetchOpnameHistory(); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
@@ -766,7 +684,7 @@ async function saveOpnameData() {
     if(!payload.atm || !payload.waktu || !payload.fisik) return PlayfulAlert.fire('Isian Kurang', 'Pastikan ID ATM, Waktu, dan Saldo Fisik terisi.', 'warning');
     PlayfulAlert.fire({ title: 'Menyimpan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', data: payload }) });
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', periode: getActivePeriod(), data: payload }) });
         const result = await response.json();
         if(result.success) { PlayfulAlert.fire('Berhasil!', 'Data Opname sukses tersimpan.', 'success'); document.getElementById('opEditId').value = ''; document.getElementById('opSysSebelum').value = ''; document.getElementById('opSysTambah').value = ''; document.getElementById('opFisik').value = ''; calcOpname(); fetchSelisihData(); } 
         else { PlayfulAlert.fire('Gagal', result.message, 'error'); }
@@ -779,7 +697,7 @@ async function saveOpnameData() {
 function updateDataCompletenessBanner() {
     if (!databaseData || (!databaseData.gl && !databaseData.ej)) return;
 
-    let glMap = new Map(); // Untuk mencari tanggal maksimal tiap ATM di GL
+    let glMap = new Map(); 
     (databaseData.gl || []).forEach(r => { 
         let atm = String(r[2]).trim().toUpperCase();
         if (atm && atm !== 'ATM') {
@@ -788,7 +706,7 @@ function updateDataCompletenessBanner() {
         }
     });
     
-    let ejMap = new Map(); // Untuk mencari tanggal maksimal tiap ATM di EJ
+    let ejMap = new Map(); 
     (databaseData.ej || []).forEach(r => { 
         let atm = String(r[2]).trim().toUpperCase();
         if (atm && atm !== 'ATM') {
@@ -799,49 +717,29 @@ function updateDataCompletenessBanner() {
 
     let missingEJ = [], missingGL = [], laggingEJ = [], laggingGL = [];
 
-    // Cek Kekurangan dari sudut pandang GL
     for (let [atm, glDate] of glMap.entries()) {
-        if (!ejMap.has(atm)) {
-            missingEJ.push(atm);
-        } else {
-            let ejDate = ejMap.get(atm);
-            let diffDays = Math.round((glDate - ejDate) / (1000*60*60*24));
-            if (diffDays > 1) laggingEJ.push(`${atm} (Tertinggal ${diffDays} Hari)`);
-        }
+        if (!ejMap.has(atm)) { missingEJ.push(atm); } 
+        else { let ejDate = ejMap.get(atm); let diffDays = Math.round((glDate - ejDate) / (1000*60*60*24)); if (diffDays > 1) laggingEJ.push(`${atm} (Tertinggal ${diffDays} Hari)`); }
     }
 
-    // Cek Kekurangan dari sudut pandang EJ
     for (let [atm, ejDate] of ejMap.entries()) {
-        if (!glMap.has(atm)) {
-            missingGL.push(atm);
-        } else {
-            let glDate = glMap.get(atm);
-            let diffDays = Math.round((ejDate - glDate) / (1000*60*60*24));
-            if (diffDays > 1) laggingGL.push(`${atm} (Tertinggal ${diffDays} Hari)`);
-        }
+        if (!glMap.has(atm)) { missingGL.push(atm); } 
+        else { let glDate = glMap.get(atm); let diffDays = Math.round((ejDate - glDate) / (1000*60*60*24)); if (diffDays > 1) laggingGL.push(`${atm} (Tertinggal ${diffDays} Hari)`); }
     }
 
     let bannerHtml = '';
-    // Jika ada ketidakseimbangan data, Render Banner
     if (missingEJ.length > 0 || missingGL.length > 0 || laggingEJ.length > 0 || laggingGL.length > 0) {
         bannerHtml = `
             <div class="alert bg-warning-subtle border-0 text-dark py-3 px-4 rounded-4 shadow-sm mb-3 bouncy-hover">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i>
-                    <h6 class="fw-bold text-dark mb-0">Asisten Rekomendasi Upload</h6>
-                </div>
-                <p class="mb-2 small">Sistem mendeteksi ketidakseimbangan data pada database. Agar analisa selisih dapat berjalan maksimal, mohon lengkapi file berikut:</p>
+                <div class="d-flex align-items-center mb-2"><i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i><h6 class="fw-bold text-dark mb-0">Asisten Rekomendasi Upload</h6></div>
+                <p class="mb-2 small">Sistem mendeteksi ketidakseimbangan data pada database bulan ini. Agar analisa selisih maksimal, mohon lengkapi:</p>
                 <ul class="mb-0 small fw-bold text-danger">`;
-        
         if (missingEJ.length > 0) bannerHtml += `<li>Belum ada data <span class="badge bg-success rounded-pill px-2">EJ</span> sama sekali untuk mesin: <b>${missingEJ.join(', ')}</b></li>`;
         if (missingGL.length > 0) bannerHtml += `<li class="mt-1">Belum ada data <span class="badge bg-primary rounded-pill px-2">GL</span> sama sekali untuk mesin: <b>${missingGL.join(', ')}</b></li>`;
         if (laggingEJ.length > 0) bannerHtml += `<li class="mt-1">Data <span class="badge bg-success rounded-pill px-2">EJ</span> butuh diupdate untuk mesin: <span class="text-dark fw-medium">${laggingEJ.join(', ')}</span></li>`;
         if (laggingGL.length > 0) bannerHtml += `<li class="mt-1">Data <span class="badge bg-primary rounded-pill px-2">GL</span> butuh diupdate untuk mesin: <span class="text-dark fw-medium">${laggingGL.join(', ')}</span></li>`;
-        
         bannerHtml += `</ul></div>`;
     }
-
-    // Tembakkan banner HTML ke semua wadah yang sudah kita sediakan
     document.querySelectorAll('.data-completeness-banner').forEach(el => el.innerHTML = bannerHtml);
 }
 
