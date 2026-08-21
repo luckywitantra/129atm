@@ -48,7 +48,13 @@
             <a class="navbar-brand text-white fw-bold d-flex items-center gap-2" href="#">
                 <i class="bi bi-robot fs-4 bouncy-hover"></i> <span class="pt-1">ReconApp</span>
             </a>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
+                <!-- MESIN WAKTU (PEMILIH BULAN) -->
+                <div class="d-flex align-items-center bg-white rounded-pill px-3 py-1 shadow-sm border border-light">
+                    <i class="bi bi-calendar-month-fill text-primary me-2"></i>
+                    <input type="month" id="globalPeriod" class="form-control form-control-sm border-0 bg-transparent fw-bolder text-dark p-0" style="width: 110px; cursor: pointer; outline: none;" onchange="superApp.changePeriod()" title="Pilih Bulan Rekonsiliasi">
+                </div>
+                
                 <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" onclick="new bootstrap.Modal(document.getElementById('modal-system-settings')).show()" style="width: 32px; height: 32px;" title="Pengaturan">
                     <i class="bi bi-gear-fill text-primary"></i>
                 </button>
