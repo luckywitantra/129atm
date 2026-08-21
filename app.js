@@ -797,6 +797,138 @@ function updateDataCompletenessBanner() {
     document.querySelectorAll('.data-completeness-banner').forEach(el => el.innerHTML = bannerHtml);
 }
 
+// ==========================================
+// 9. ENGINE BUKU BESAR (LAPORAN REKENING GANTUNG)
+// ==========================================
+superApp.bukaLaporanModal = async function() {
+    PlayfulAlert.fire({ title: 'Menyusun Buku Besar...', text: 'Menggabungkan seluruh riwayat selisih dari awal tahun...', allowOutsideClick: false });
+    PlayfulAlert.showLoading();
+    
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getLaporan' }) });
+        const result = await response.json();
+        if(!result.success) throw new Error(result.message);
+        
+        let rawData = result.data;
+        let ledger = [];
+        
+        // Terjemahkan baris demi baris menjadi format Akuntansi
+        rawData.forEach(r => {
+            let tglTrx = String(r[0]).substring(0,10);
+            let atm = r[1].replace('KTM', ''); // Buang "KTM" agar persis PDF
+            let resi = r[2];
+            let nom = parseFloat(r[3]) || 0;
+            let jenis = r[4];
+            let status = String(r[5]).toLowerCase();
+            let ket = r[6] || '';
+            let tglSelesai = r[7] ? String(r[7]).substring(0,10) : tglTrx;
+            let isResolved = status !== 'belum';
+
+            if (jenis === 'SELISIH LEBIH') {
+                // POSISI KREDIT (Uang Fisik Lebih = Sistem Kurang Debet = Masuk Rek. Gantung)
+                let ketKredit = isResolved ? `Selesai/ON US, EJ & GL Klop, Menunggu Pengaduan Nasabah (${formatNum(nom)})` : `EJ & GL Klop, Menunggu Pengaduan Nasabah`;
+                ledger.push({ dateObj: new Date(tglTrx), resi: resi, atm: atm, debet: 0, kredit: nom, ket: ketKredit, isRes: false, statusAkhir: status });
+                
+                // JIKA SELESAI -> POSISI DEBET (Uang ditarik dari Rek Gantung untuk Nasabah)
+                if (isResolved) {
+                    ledger.push({ dateObj: new Date(tglSelesai), resi: resi, atm: atm, debet: nom, kredit: 0, ket: `PENY. ON US (${formatDateIndo(new Date(tglTrx))})`, isRes: true, statusAkhir: status });
+                }
+            } else if (jenis === 'SELISIH KURANG') {
+                // POSISI DEBET (Uang Fisik Hilang = Sistem Kurang Kredit = Beban Sementara Rek. Gantung)
+                let ketDebet = isResolved ? `KANTOR PUSAT SALAH DEBET (EJ GAGAL & GL TDK TERCATAT) (${formatNum(nom)})` : `KANTOR PUSAT SALAH DEBET (EJ GAGAL & GL TDK TERCATAT)`;
+                ledger.push({ dateObj: new Date(tglTrx), resi: resi, atm: atm, debet: nom, kredit: 0, ket: ketDebet, isRes: false, statusAkhir: status });
+                
+                // JIKA SELESAI -> POSISI KREDIT (Kompensasi masuk menutupi Rek Gantung)
+                if (isResolved) {
+                    ledger.push({ dateObj: new Date(tglSelesai), resi: resi, atm: atm, debet: 0, kredit: nom, ket: `KOREKSI PUSAT - ${ket}`, isRes: true, statusAkhir: status });
+                }
+            }
+        });
+
+        // Urutkan secara mutlak berdasarkan waktu kejadian
+        ledger.sort((a,b) => a.dateObj - b.dateObj);
+        
+        let tbodyHtml = '';
+        let saldo = 0;
+        let totalUnresolved = 0;
+        
+        ledger.forEach((item, index) => {
+            saldo += (item.kredit - item.debet); // Selisih Lebih menaikkan saldo, Selisih Kurang menurunkan saldo.
+            
+            let unresHtml = '';
+            if (!item.isRes && item.statusAkhir === 'belum') {
+                let amt = item.kredit > 0 ? item.kredit : item.debet;
+                unresHtml = formatNum(amt);
+                totalUnresolved += amt; 
+            }
+
+            tbodyHtml += `
+                <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td>${formatDateIndo(item.dateObj)}</td>
+                    <td class="text-center">${item.resi}</td>
+                    <td class="text-center">${item.atm}</td>
+                    <td class="text-end text-success">${item.kredit > 0 ? formatNum(item.kredit) : ''}</td>
+                    <td class="text-end text-danger">${item.debet > 0 ? formatNum(item.debet) : ''}</td>
+                    <td class="text-end fw-bold">${formatNum(saldo)}</td>
+                    <td>${item.ket}</td>
+                    <td class="text-end text-danger">${unresHtml}</td>
+                    <td></td>
+                </tr>
+            `;
+        });
+        
+        // Baris TOTAL Bawah
+        tbodyHtml += `
+            <tr class="fw-bold bg-light">
+                <td colspan="6" class="text-end pe-3">TOTAL KESELURUHAN</td>
+                <td class="text-end">${formatNum(saldo)}</td>
+                <td></td>
+                <td class="text-end text-danger">${formatNum(totalUnresolved)}</td>
+                <td></td>
+            </tr>
+        `;
+
+        document.getElementById('lap_tbody').innerHTML = tbodyHtml;
+        
+        // Suntikkan Variabel Kantor dari Pengaturan Cloud
+        let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; 
+        let kota = namaCabang.replace('Kantor Cabang Pembantu', '').replace('Cabang', '').trim();
+        let dateSelect = document.getElementById('globalPeriod').value; // cth: "2026-08"
+        let year = dateSelect.split('-')[0];
+        let monthIdx = parseInt(dateSelect.split('-')[1]) - 1;
+        const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        
+        document.getElementById('lap_periode').innerText = `${bulanArr[monthIdx]} ${year}`;
+        document.getElementById('lap_judul_atas').innerText = `LAPORAN SELISIH ATM ${namaCabang.toUpperCase()}`;
+        document.getElementById('lap_kota').innerText = kota;
+        document.getElementById('lap_tgl_cetak').innerText = `${bulanArr[new Date().getMonth()]} ${new Date().getFullYear()}`;
+        document.getElementById('lap_cabang_bawah').innerText = namaCabang;
+        document.getElementById('lap_pimpinan').innerText = globalConfig.cfgPimpinan || 'ENDY PRATAMA';
+
+        PlayfulAlert.close();
+        new bootstrap.Modal(document.getElementById('laporanModal')).show();
+
+    } catch (err) {
+        PlayfulAlert.fire('Error', err.toString(), 'error');
+    }
+};
+
+// Fungsi Rahasia: Mengubah Kertas Menjadi Landscape Hanya Saat Cetak Laporan Ini
+superApp.printLaporan = function() {
+    const style = document.createElement('style');
+    style.innerHTML = `@page { size: A4 landscape; margin: 10mm; }`;
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => style.remove(), 1000); // Cabut kembali agar BA lain tetap Portrait
+};
+
+function formatDateIndo(dateObj) {
+    const hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    return `${hariArr[dateObj.getDay()]}, ${String(dateObj.getDate()).padStart(2,'0')} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+}
+
 document.getElementById('opAtmId').addEventListener('input', function() {
     let val = this.value.toUpperCase().replace(/\s/g, ''); if (/^\d/.test(val) && val.length > 0) this.value = 'KTM' + val; else this.value = val;
 });
