@@ -815,6 +815,9 @@ async function fetchOpnameHistory() {
     } catch (err) { console.error(err); }
 }
 
+// ==========================================
+// RENDER TABEL OPNAME DENGAN FILTER & HIERARKI
+// ==========================================
 function renderOpnameTable() {
     const tbody = document.getElementById('tableBodyOpname');
     if (globalOpnameData.length === 0) {
@@ -822,7 +825,7 @@ function renderOpnameTable() {
         return;
     }
     
-    // Terapkan Filter
+    // Terapkan Filter Pencarian Real-Time
     const fAtm = document.getElementById('filterAtmOp') ? document.getElementById('filterAtmOp').value.toLowerCase() : '';
     const fTgl = document.getElementById('filterTglOp') ? document.getElementById('filterTglOp').value : '';
 
@@ -833,35 +836,94 @@ function renderOpnameTable() {
         return match;
     });
     
-    let baUsageMap = new Map(); let totalFisikSemuaBA = 0; let totalDigunakan = 0;
+    // Hitung Kuota Terpakai (Berdasarkan Selisih yang sudah Diselesaikan pakai BA ini)
+    let baUsageMap = new Map(); 
+    let totalFisikSemuaBA = 0; 
+    let totalDigunakan = 0;
+    
     if (globalSelisihData) {
         let selesaiData = globalSelisihData.filter(r => String(r[5]).toLowerCase() !== 'belum');
         selesaiData.forEach(r => {
-            let reason = String(r[6] || ''); let nominalTerpakai = parseFloat(r[3]) || 0; let atmTerpakai = String(r[1]).trim();
+            let reason = String(r[6] || ''); 
+            let nominalTerpakai = parseFloat(r[3]) || 0; 
+            let atmTerpakai = String(r[1]).trim();
+            // Cari kecocokan tanggal pada teks alasan AI
             let match = reason.match(/tanggal (\d{4}-\d{2}-\d{2})/);
-            if (match) { let key = `${match[1]}_${atmTerpakai}`; baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai); totalDigunakan += nominalTerpakai; }
+            if (match) { 
+                let key = `${match[1]}_${atmTerpakai}`; 
+                baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai); 
+                totalDigunakan += nominalTerpakai; 
+            }
         });
     }
     
+    // Urutkan Data: Terbaru di Atas
     let sortedData = [...filteredData].sort((a,b) => new Date(String(b[1]).replace(' ', 'T')) - new Date(String(a[1]).replace(' ', 'T')));
     
+    // Potong Array Berdasarkan Halaman (Pagination)
     const pageData = sortedData.slice((pageState.opname - 1) * PAGE_SIZE, pageState.opname * PAGE_SIZE);
 
     if (pageData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small">Tidak ada data cocok.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-smile d-block fs-4 mb-1"></i> Tidak ada data Opname yang cocok dengan pencarian Anda.</td></tr>`;
     } else {
+        // Render Baris Tabel
         tbody.innerHTML = pageData.map(row => {
-            // [LOGIKA MAP HTML SEPERTI SEBELUMNYA]
-            // ... biarkan sama ...
+            let tglBA_str = String(row[1]).substring(0,10); 
+            let atmBA = String(row[2]).trim(); 
+            let selisihAsli = parseFloat(row[7]);
+            
+            totalFisikSemuaBA += Math.abs(selisihAsli); 
+            
+            let keyBA = `${tglBA_str}_${atmBA}`; 
+            let terpakai = baUsageMap.get(keyBA) || 0; 
+            let sisa = Math.abs(selisihAsli) - terpakai; 
+            let persenPakai = Math.abs(selisihAsli) === 0 ? 0 : (terpakai / Math.abs(selisihAsli)) * 100;
+            
+            let badgeClass = selisihAsli > 0 ? "bg-success" : (selisihAsli < 0 ? "bg-danger" : "bg-secondary"); 
+            let badgeText = selisihAsli > 0 ? "LEBIH" : (selisihAsli < 0 ? "KURANG" : "BALANCE");
+            
+            // Progress Bar Visualisasi Penambalan Selisih (Mini Hierarki per Baris)
+            let progressHtml = '';
+            if (Math.abs(selisihAsli) > 0) {
+                let statusTeks = sisa === 0 ? '<span class="text-success"><i class="bi bi-check-all"></i> Selesai (Tuntas)</span>' : `<span class="text-warning">Tersisa: ${formatRp(sisa)}</span>`;
+                progressHtml = `
+                    <div class="mt-1" style="width: 130px;">
+                        <div class="d-flex justify-content-between text-[0.6rem] mb-1 fw-bold text-muted" style="font-size:0.6rem">
+                            <span>${statusTeks}</span>
+                        </div>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar ${sisa === 0 ? 'bg-success' : 'bg-info'}" role="progressbar" style="width: ${persenPakai}%"></div>
+                        </div>
+                    </div>`;
+            } else { 
+                progressHtml = `<span class="text-muted" style="font-size:0.65rem">- Tidak ada selisih -</span>`; 
+            }
+            
+            let rowDataStr = encodeURIComponent(JSON.stringify(row));
+            
+            return `<tr>
+                <td class="fw-medium text-secondary" style="font-size:0.75rem">${row[1].substring(0,16).replace('T', ' ')}</td>
+                <td><span class="badge border border-secondary text-secondary rounded-pill">${atmBA}</span></td>
+                <td><span class="badge ${badgeClass} rounded-pill shadow-sm" style="font-size:0.65rem">${badgeText} ${formatRp(Math.abs(selisihAsli))}</span></td>
+                <td>${progressHtml}</td>
+                <td>
+                    <button class="btn btn-sm btn-light text-success rounded-circle border shadow-sm bouncy-hover me-1" onclick="printRiwayatBAOpname('${rowDataStr}')" title="Cetak Ulang B/A"><i class="bi bi-printer-fill"></i></button>
+                    <button class="btn btn-sm btn-light text-primary rounded-circle border shadow-sm bouncy-hover me-1" onclick="editOpname('${rowDataStr}')" title="Edit"><i class="bi bi-pencil-fill"></i></button>
+                    <button class="btn btn-sm btn-light text-danger rounded-circle border shadow-sm bouncy-hover" onclick="deleteOpname('${row[0]}')" title="Hapus"><i class="bi bi-trash-fill"></i></button>
+                </td>
+            </tr>`;
         }).join('');
     }
 
+    // UPDATE PAPAN HIERARKI BESAR DI ATAS TABEL OPNAME
     document.getElementById('op-hierarki-tot').innerText = formatRp(totalFisikSemuaBA); 
     document.getElementById('op-hierarki-pakai').innerText = formatRp(totalDigunakan); 
     document.getElementById('op-hierarki-sisa').innerText = formatRp(totalFisikSemuaBA - totalDigunakan); 
-    document.getElementById('op-hierarki-progress').style.width = `${totalFisikSemuaBA === 0 ? 0 : (totalDigunakan / totalFisikSemuaBA) * 100}%`;
+    let persenOpname = totalFisikSemuaBA === 0 ? 0 : (totalDigunakan / totalFisikSemuaBA) * 100;
+    document.getElementById('op-hierarki-progress').style.width = `${persenOpname}%`;
     
-    document.getElementById('paginationOpname').innerHTML = renderPagination(sortedData.length, pageState.opname, PAGE_SIZE, 'opname');
+    // RENDER TOMBOL HALAMAN (PAGINATION)
+    document.getElementById('paginationOpname').innerHTML = renderPagination(filteredData.length, pageState.opname, PAGE_SIZE, 'opname');
 }
 
 function editOpname(rawStr) {
