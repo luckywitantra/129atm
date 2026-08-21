@@ -1,6 +1,31 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzawSNj45jOqdyEFKhF79w6-uW_MJansgX5c-nEoQ-aimJWCbxkH7lRNBYTVFAEp4VI/exec';
 
 // ==========================================
+// 0. API CALL WRAPPER (SISTEM AUTO-RETRY KEBAL ERROR)
+// ==========================================
+async function apiCall(action, dataPayload = null, customPeriod = null) {
+    let period = customPeriod || getActivePeriod();
+    let payload = { action: action, periode: period };
+    if (dataPayload !== null) payload.data = dataPayload;
+
+    let retries = 3; // Maksimal coba 3 kali jika server Google menolak
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            return await response.json();
+        } catch (err) {
+            if (i === retries - 1) throw err; // Lempar error hanya jika sudah 3x gagal
+            await new Promise(res => setTimeout(res, 1000 * (i + 1))); // Jeda 1 detik, lalu 2 detik sebelum nembak ulang
+        }
+    }
+}
+
+// ==========================================
 // 1. STATE MANAGEMENT, THEME & PAGINATION
 // ==========================================
 let pendingUploadData = [], pendingUploadType = '';
@@ -12,7 +37,6 @@ let globalHistMap = new Map(), currentDetailData = [], detailType = '';
 let pageState = { analisaKurang: 1, analisaLebih: 1, analisaSelesai: 1, master: 1, opname: 1, uploadHist: 1, histDetail: 1 };
 const PAGE_SIZE = 10;
 
-// MENGAMBIL FORMAT BULAN AKTIF (Contoh: "082026")
 function getActivePeriod() {
     let val = document.getElementById('globalPeriod').value;
     if(!val) {
@@ -30,15 +54,13 @@ window.superApp = window.superApp || {};
 superApp.changePeriod = async function() {
     PlayfulAlert.fire({ title: 'Berpindah Bulan...', text: 'Memuat data dari dimensi waktu yang dipilih.', allowOutsideClick: false });
     PlayfulAlert.showLoading();
-    
-    // [PERBAIKAN] Eksekusi berurutan agar tidak terjadi tabrakan di server Google
     try {
         await fetchDatabaseData();
         await fetchSelisihData();
+        PlayfulAlert.close();
     } catch (e) {
         console.error("Gagal berpindah bulan:", e);
-    } finally {
-        PlayfulAlert.close();
+        PlayfulAlert.fire('Koneksi Lemah', 'Google menolak memuat data bulan ini. Silakan coba klik/refresh lagi.', 'error');
     }
 };
 
@@ -54,12 +76,10 @@ function changePage(section, newPage) {
 const formatRp = (angka) => (angka ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka) : "Rp 0");
 const formatNum = (angka) => (angka ? new Intl.NumberFormat('id-ID').format(angka) : "0");
 
-const PlayfulAlert = Swal.mixin({
-    customClass: { popup: 'rounded-5 shadow-lg border-0', confirmButton: 'btn btn-primary rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover', cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover' }, buttonsStyling: false
-});
+const PlayfulAlert = Swal.mixin({ customClass: { popup: 'rounded-5 shadow-lg border-0', confirmButton: 'btn btn-primary rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover', cancelButton: 'btn btn-light rounded-pill px-4 fw-bold shadow-sm mx-1 bouncy-hover' }, buttonsStyling: false });
 
 document.addEventListener("DOMContentLoaded", () => {
-    getActivePeriod(); // Setel Input Tgl Bulan ke Hari Ini
+    getActivePeriod(); 
     fetchConfig(); 
     fetchDatabaseData(); 
     const settingModal = document.getElementById('modal-system-settings');
@@ -68,9 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function fetchConfig() {
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
-        const result = await response.json();
-        if(result.success) {
+        const result = await apiCall('getConfig');
+        if(result && result.success) {
             globalConfig = result.data; 
             document.getElementById('cfgCabang').value = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu';
             document.getElementById('cfgAlamat').value = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
@@ -98,16 +117,12 @@ function renderTellerConfig() {
 }
 
 superApp.saveBAConfig = async function() {
-    let payload = {
-        cfgCabang: document.getElementById('cfgCabang').value, cfgAlamat: document.getElementById('cfgAlamat').value,
-        cfgPimpinan: document.getElementById('cfgPimpinan').value, cfgAdmin: document.getElementById('cfgAdmin').value
-    };
+    let payload = { cfgCabang: document.getElementById('cfgCabang').value, cfgAlamat: document.getElementById('cfgAlamat').value, cfgPimpinan: document.getElementById('cfgPimpinan').value, cfgAdmin: document.getElementById('cfgAdmin').value };
     document.querySelectorAll('.cfg-teller-input').forEach(input => { payload['cfgTeller_' + input.getAttribute('data-atm')] = input.value.toUpperCase(); });
     PlayfulAlert.fire({ title: 'Menyimpan ke Cloud...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveConfig', data: payload }) });
-        const result = await response.json();
-        if(result.success) {
+        const result = await apiCall('saveConfig', payload);
+        if(result && result.success) {
             globalConfig = payload; 
             PlayfulAlert.fire('Berhasil!', 'Konfigurasi Surat & Teller berhasil disimpan ke Database Cloud.', 'success');
         } else PlayfulAlert.fire('Gagal', result.message, 'error');
@@ -134,16 +149,13 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 function renderPagination(totalItems, currentPage, pageSize, callbackSection) {
     const totalPages = Math.ceil(totalItems / pageSize) || 1;
     if (totalItems === 0) return '';
-    let html = `<div class="d-flex justify-content-between align-items-center mt-2 px-3 py-2 bg-light rounded-bottom-4 border-top">
-                <small class="text-muted fw-bold" style="font-size:0.7rem">Menampilkan ${(currentPage-1)*pageSize + 1} - ${Math.min(currentPage*pageSize, totalItems)} dari ${totalItems} baris</small>
-                <nav><ul class="pagination pagination-sm mb-0 shadow-sm">`;
+    let html = `<div class="d-flex justify-content-between align-items-center mt-2 px-3 py-2 bg-light rounded-bottom-4 border-top"><small class="text-muted fw-bold" style="font-size:0.7rem">Menampilkan ${(currentPage-1)*pageSize + 1} - ${Math.min(currentPage*pageSize, totalItems)} dari ${totalItems} baris</small><nav><ul class="pagination pagination-sm mb-0 shadow-sm">`;
     html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link rounded-start-pill fw-bold" href="#" onclick="changePage('${callbackSection}', ${currentPage - 1})">Prev</a></li>`;
     let startPage = Math.max(1, currentPage - 1); let endPage = Math.min(totalPages, currentPage + 1);
     if(startPage > 1) html += `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`;
     for(let i=startPage; i<=endPage; i++){ html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link fw-bold" href="#" onclick="changePage('${callbackSection}', ${i})">${i}</a></li>`; }
     if(endPage < totalPages) html += `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`;
-    html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link rounded-end-pill fw-bold" href="#" onclick="changePage('${callbackSection}', ${currentPage + 1})">Next</a></li>`;
-    html += `</ul></nav></div>`;
+    html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link rounded-end-pill fw-bold" href="#" onclick="changePage('${callbackSection}', ${currentPage + 1})">Next</a></li></ul></nav></div>`;
     return html;
 }
 
@@ -188,25 +200,16 @@ function processEJ() {
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
                 if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
-                
-                // [PENYEMPURNAAN PENENTUAN STATUS]
-                if (currentTx.cashTaken) {
-                    currentTx.status = "SUKSES";
-                } else if (!currentTx.status) {
-                    if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) {
-                        currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
-                    } else if (currentTx.nominal > 0) {
-                        // Jika nominal > 0 tapi bukan tarik tunai, berarti Transfer atau Pembayaran
+                if (currentTx.cashTaken) { currentTx.status = "SUKSES"; } 
+                else if (!currentTx.status) {
+                    if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
+                    else if (currentTx.nominal > 0) {
                         if (currentTx.jenis === "TRANSFER") currentTx.status = "SUKSES (TRANSFER)";
                         else if (currentTx.jenis === "PEMBAYARAN") currentTx.status = "SUKSES (PEMBELIAN/PAYMENT)";
                         else currentTx.status = "SUKSES";
-                    } else {
-                        currentTx.status = "NON-FINANSIAL";
-                    }
+                    } else currentTx.status = "NON-FINANSIAL";
                 }
-                
                 if (!currentTx.nominal) currentTx.nominal = 0;
-                
                 let finalAtmId = currentTx.atm; if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
                 ejData.push([currentTx.tanggal, finalAtmId, currentTx.noResi, currentTx.nominal, currentTx.status]);
             }
@@ -215,24 +218,13 @@ function processEJ() {
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
-            
-            if (line.includes("<- TRANSACTION END") || 
-                line.includes("-> TRANSACTION START") || 
-                line.includes("EMV AID ") || 
-                line.includes("PIN ENTERED") || 
-                line.includes("TRACK 2 DATA")) { 
-                if (currentTx.noResi) saveCurrentTransaction(); 
-            }
-            
+            if (line.includes("<- TRANSACTION END") || line.includes("-> TRANSACTION START") || line.includes("EMV AID ") || line.includes("PIN ENTERED") || line.includes("TRACK 2 DATA")) { if (currentTx.noResi) saveCurrentTransaction(); }
             if (line.includes("CASH TAKEN")) currentTx.cashTaken = true;
             
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) { 
-                currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; 
-                lastValidDate = currentTx.tanggal; 
-                let tempAtm = dateMatch[5];
-                if (/[A-Z]/i.test(tempAtm)) lastValidAtmId = tempAtm;
-                currentTx.atm = lastValidAtmId; 
+                currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; lastValidDate = currentTx.tanggal; 
+                let tempAtm = dateMatch[5]; if (/[A-Z]/i.test(tempAtm)) lastValidAtmId = tempAtm; currentTx.atm = lastValidAtmId; 
             }
             
             const resiMatch = line.match(/(?:NO\s+RESI|NO\s+REF\.?|REFF\s+NO)\s*:?\s*(\d+)/i);
@@ -240,48 +232,25 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
             
-            // [PERBAIKAN] DETEKSI KATEGORI PEMBELIAN VOUCHER & PEMBAYARAN TAGIHAN
             let textUpper = line.toUpperCase();
-            if (textUpper.includes("PENARIKAN TUNAI") || textUpper.includes("TARIK TUNAI") || textUpper.includes("WITHDRAWAL")) {
-                currentTx.jenis = "TARIK TUNAI";
-            }
-            else if (textUpper.includes("TRANSFER") || textUpper.includes("PEMINDAH BUKUAN") || textUpper.includes("KE BANK") || textUpper.includes("REK TUJUAN")) {
-                currentTx.jenis = "TRANSFER";
-            }
-            else if (textUpper.includes("PEMBELIAN") || textUpper.includes("PEMBAYARAN") || textUpper.includes("VOUCHER") || textUpper.includes("PAYMENT") || textUpper.includes("TOKEN")) {
-                currentTx.jenis = "PEMBAYARAN";
-            }
-            else if (textUpper.includes("INFORMASI SALDO") || textUpper.includes("UBAH/GANTI PIN") || textUpper.includes("PIN CHANGE") || textUpper.includes("PIN SUCCESSFULLY") || textUpper.includes("FORCE CHANGE PIN")) {
-                currentTx.jenis = "NON-FINANSIAL";
-                currentTx.status = "NON-FINANSIAL"; 
-            }
+            if (textUpper.includes("PENARIKAN TUNAI") || textUpper.includes("TARIK TUNAI") || textUpper.includes("WITHDRAWAL")) currentTx.jenis = "TARIK TUNAI";
+            else if (textUpper.includes("TRANSFER") || textUpper.includes("PEMINDAH BUKUAN") || textUpper.includes("KE BANK") || textUpper.includes("REK TUJUAN")) currentTx.jenis = "TRANSFER";
+            else if (textUpper.includes("PEMBELIAN") || textUpper.includes("PEMBAYARAN") || textUpper.includes("VOUCHER") || textUpper.includes("PAYMENT") || textUpper.includes("TOKEN")) currentTx.jenis = "PEMBAYARAN";
+            else if (textUpper.includes("INFORMASI SALDO") || textUpper.includes("UBAH/GANTI PIN") || textUpper.includes("PIN CHANGE") || textUpper.includes("PIN SUCCESSFULLY") || textUpper.includes("FORCE CHANGE PIN")) { currentTx.jenis = "NON-FINANSIAL"; currentTx.status = "NON-FINANSIAL"; }
             
-            // Perluasan deteksi kata JUMLAH, AMOUNT, atau TOTAL
             if ((textUpper.includes("JUMLAH") || textUpper.includes("AMOUNT") || textUpper.includes("TOTAL")) && !textUpper.includes("ENTERED") && !textUpper.includes("SALDO")) {
-                isLookingForJumlah = true; 
-                const inlineJumlah = line.match(/(?:RP\.?|:|\.)\s*([\d,]+(?:\.\d+)?)/i);
+                isLookingForJumlah = true; const inlineJumlah = line.match(/(?:RP\.?|:|\.)\s*([\d,]+(?:\.\d+)?)/i);
                 if (inlineJumlah) { currentTx.nominal = parseFloat(inlineJumlah[1].replace(/,/g, '')); isLookingForJumlah = false; }
             } else if (isLookingForJumlah) {
-                if (!line.match(/^\d{2}:\d{2}:\d{2}/)) { 
-                    const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/); 
-                    if (nextLineJumlah) currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, '')); 
-                }
+                if (!line.match(/^\d{2}:\d{2}:\d{2}/)) { const nextLineJumlah = line.match(/^([\d,]+(?:\.\d+)?)/); if (nextLineJumlah) currentTx.nominal = parseFloat(nextLineJumlah[1].replace(/,/g, '')); }
                 isLookingForJumlah = false; 
             }
             
             if (textUpper.includes("TRANSAKSI SUKSES") || (textUpper.includes("SUCCESSFUL") && !textUpper.includes("PIN"))) {
-                currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : 
-                                   (currentTx.jenis === "PEMBAYARAN") ? "SUKSES (PEMBELIAN/PAYMENT)" : "SUKSES";
+                currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : (currentTx.jenis === "PEMBAYARAN") ? "SUKSES (PEMBELIAN/PAYMENT)" : "SUKSES";
             }
             
-            const errorKeywords = [
-                "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", 
-                "LOW BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR", 
-                "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT", 
-                "INACTIVE ACCOUNT", "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION", 
-                "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", "PROCESSOR TEMP DOWN", 
-                "KARTU ANDA TERDAFTAR SBG", "TRANSAKSI SEDANG DIPROSES", "SUSPECT"
-            ];
+            const errorKeywords = ["SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", "LOW BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR", "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT", "INACTIVE ACCOUNT", "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION", "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", "PROCESSOR TEMP DOWN", "KARTU ANDA TERDAFTAR SBG", "TRANSAKSI SEDANG DIPROSES", "SUSPECT"];
             errorKeywords.forEach(err => { if (textUpper.includes(err) && !currentTx.cashTaken) currentTx.status = "GAGAL - " + err; });
             if (line.match(/TRANSACTION \d+ FAILED/i) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
@@ -290,13 +259,12 @@ function processEJ() {
         showPreviewModal(ejData, 'EJ');
     }; reader.readAsText(file);
 }
+
 function showPreviewModal(data, type) {
     pendingUploadData = data; pendingUploadType = type === 'GL' ? 'uploadGL' : 'uploadEJ';
     document.getElementById('previewType').innerText = type; document.getElementById('previewCount').innerText = data.length.toLocaleString('id-ID');
     const thead = document.getElementById('previewTableHeader'); const tbody = document.getElementById('previewTableBody');
-    thead.innerHTML = type === 'GL' 
-        ? `<tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Jenis</th><th>Referensi</th></tr>`
-        : `<tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Status Transaksi</th></tr>`;
+    thead.innerHTML = type === 'GL' ? `<tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Jenis</th><th>Referensi</th></tr>` : `<tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Status Transaksi</th></tr>`;
     const rowsHtml = data.slice(0, 100).map(row => {
         if (type === 'GL') return `<tr><td class="text-secondary fw-medium">${row[0]}</td><td><span class="badge bg-secondary rounded-pill">${row[1]}</span></td><td class="fw-bold">${row[2]}</td><td class="text-primary fw-bold">${formatRp(row[3])}</td><td><span class="badge bg-info text-dark rounded-pill">${row[4]}</span></td><td class="text-muted"><small>${row[5]}</small></td></tr>`;
         let badge = row[4].includes('SUKSES') ? `bg-success-subtle text-success` : row[4].includes('GAGAL') ? `bg-danger-subtle text-danger` : `bg-light text-secondary`;
@@ -312,36 +280,22 @@ document.getElementById('btnConfirmUpload').addEventListener('click', () => {
     sendToBackend(pendingUploadType, pendingUploadData);
 });
 
-// ==========================================
-// 3. API PENGIRIMAN & RIWAYAT UPLOAD (GROUP BY DATE)
-// ==========================================
 async function sendToBackend(action, data) {
-    let currentPeriod = getActivePeriod();
     PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, periode: currentPeriod, data: data }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-        const result = await response.json();
-        if(result.success) {
+        const result = await apiCall(action, data);
+        if(result && result.success) {
             PlayfulAlert.fire('Berhasil!', `Data didistribusikan otomatis ke Sheet bulan transaksi. Dimasukkan: <b>${result.data.added}</b> baris baru.`, 'success');
             fetchDatabaseData(); 
-        } else PlayfulAlert.fire('Error Backend', result.message, 'error');
+        } else PlayfulAlert.fire('Error Backend', result ? result.message : 'Koneksi terputus', 'error');
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 function renderUploadHistory() {
     if(!databaseData.gl && !databaseData.ej) return;
     globalHistMap.clear();
-    
-    (databaseData.gl || []).forEach(r => {
-        let tgl = String(r[1]).substring(0,10); if(!tgl || tgl === 'undefined') return;
-        let key = `GL_${tgl}`; if(!globalHistMap.has(key)) globalHistMap.set(key, {date: tgl, type: 'GL', data: []});
-        globalHistMap.get(key).data.push(r);
-    });
-    (databaseData.ej || []).forEach(r => {
-        let tgl = String(r[1]).substring(0,10); if(!tgl || tgl === 'undefined') return;
-        let key = `EJ_${tgl}`; if(!globalHistMap.has(key)) globalHistMap.set(key, {date: tgl, type: 'EJ', data: []});
-        globalHistMap.get(key).data.push(r);
-    });
+    (databaseData.gl || []).forEach(r => { let tgl = String(r[1]).substring(0,10); if(!tgl || tgl === 'undefined') return; let key = `GL_${tgl}`; if(!globalHistMap.has(key)) globalHistMap.set(key, {date: tgl, type: 'GL', data: []}); globalHistMap.get(key).data.push(r); });
+    (databaseData.ej || []).forEach(r => { let tgl = String(r[1]).substring(0,10); if(!tgl || tgl === 'undefined') return; let key = `EJ_${tgl}`; if(!globalHistMap.has(key)) globalHistMap.set(key, {date: tgl, type: 'EJ', data: []}); globalHistMap.get(key).data.push(r); });
 
     let histArr = Array.from(globalHistMap.values()).sort((a,b) => new Date(b.date) - new Date(a.date));
     const fTerm = document.getElementById('filterUploadHist').value.toLowerCase();
@@ -349,10 +303,8 @@ function renderUploadHistory() {
 
     const pageData = histArr.slice((pageState.uploadHist - 1) * PAGE_SIZE, pageState.uploadHist * PAGE_SIZE);
     let tbody = document.getElementById('tableBodyUploadHist');
-    
     if(pageData.length === 0) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-4 d-block mb-1"></i>Belum ada data transaksi.</td></tr>`;
     else tbody.innerHTML = pageData.map(h => `<tr><td><span class="badge ${h.type==='GL'?'bg-primary':'bg-success'} rounded-pill shadow-sm px-3"><i class="bi ${h.type==='GL'?'bi-file-earmark-text':'bi-receipt'}"></i> Data ${h.type}</span></td><td class="fw-bold text-secondary">${h.date}</td><td><span class="badge bg-light text-dark border rounded-pill">${h.data.length.toLocaleString('id-ID')} Transaksi</span></td><td><button class="btn btn-sm btn-outline-primary rounded-pill fw-bold shadow-sm bouncy-hover" style="font-size:0.7rem" onclick="openHistoryDetail('${h.type}_${h.date}')"><i class="bi bi-eye"></i> Rincian</button></td></tr>`).join('');
-    
     document.getElementById('paginationUploadHist').innerHTML = renderPagination(histArr.length, pageState.uploadHist, PAGE_SIZE, 'uploadHist');
 }
 
@@ -360,22 +312,18 @@ function openHistoryDetail(key) {
     detailType = key.split('_')[0]; currentDetailData = globalHistMap.get(key).data; 
     document.getElementById('histDetailTitle').innerText = `${detailType} - ${key.split('_')[1]}`;
     document.getElementById('histDetailSearch').value = ''; pageState.histDetail = 1;
-    renderHistoryDetailTable();
-    new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+    renderHistoryDetailTable(); new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
 }
 
 function renderHistoryDetailTable() {
     let term = document.getElementById('histDetailSearch').value.toLowerCase();
     let filtered = currentDetailData.filter(r => String(r[3]).toLowerCase().includes(term) || String(r[2]).toLowerCase().includes(term));
     document.getElementById('histDetailCount').innerText = filtered.length;
-    
     const thead = document.getElementById('histDetailThead'); const tbody = document.getElementById('histDetailTbody');
     thead.innerHTML = detailType === 'GL' ? `<tr><th>ATM</th><th>Resi</th><th>Nominal</th><th>Jenis Transaksi</th><th>Referensi</th></tr>` : `<tr><th>ATM</th><th>Resi</th><th>Nominal</th><th>Status Mesin</th></tr>`;
-    
     let pageData = filtered.slice((pageState.histDetail - 1) * PAGE_SIZE, pageState.histDetail * PAGE_SIZE);
     if (pageData.length === 0) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted small"><i class="bi bi-emoji-smile fs-4 d-block mb-1"></i> Tidak ada transaksi yang cocok.</td></tr>`;
     else tbody.innerHTML = pageData.map(r => detailType === 'GL' ? `<tr><td><span class="badge bg-secondary rounded-pill">${r[2]}</span></td><td class="fw-bold">${r[3]}</td><td class="text-primary fw-bold">${formatRp(r[4])}</td><td><span class="badge bg-light text-secondary border rounded-pill">${r[5]}</span></td><td><small class="text-muted">${r[6] || '-'}</small></td></tr>` : `<tr><td><span class="badge bg-secondary rounded-pill">${r[2]}</span></td><td class="fw-bold">${r[3]}</td><td class="text-primary fw-bold">${formatRp(r[4])}</td><td><span class="badge rounded-pill px-3 py-1 ${String(r[5]).includes('SUKSES') ? 'bg-success-subtle text-success' : String(r[5]).includes('GAGAL') ? 'bg-danger-subtle text-danger' : 'bg-light text-secondary'}">${r[5]}</span></td></tr>`).join('');
-    
     document.getElementById('histDetailPagination').innerHTML = renderPagination(filtered.length, pageState.histDetail, PAGE_SIZE, 'histDetail');
 }
 
@@ -383,39 +331,32 @@ function renderHistoryDetailTable() {
 // 4. ANALISA SELISIH (AI MATCHER & HIERARKI)
 // ==========================================
 async function triggerAnalysis() {
-    let currentPeriod = getActivePeriod();
     PlayfulAlert.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'analyze', periode: currentPeriod }) });
-        const result = await response.json();
-        if(result.success) {
+        const result = await apiCall('analyze');
+        if(result && result.success) {
             const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan bulan ini berhasil dimuat.";
             const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
             PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
             globalSelisihData = result.data.tableData;
             renderSelisihTablesFiltered(); 
-        } else PlayfulAlert.fire('Gagal', result.message, 'error');
+        } else PlayfulAlert.fire('Gagal', result ? result.message : 'Koneksi terputus', 'error');
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
 async function fetchSelisihData() {
-    let currentPeriod = getActivePeriod();
     try {
-        // [PERBAIKAN] Tarik data satu per satu (Sekuensial) agar Google tidak memblokir koneksi
-        const resSelisih = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getSelisih', periode: currentPeriod })});
-        const resultSelisih = await resSelisih.json();
+        const resultSelisih = await apiCall('getSelisih');
+        const resultOpname = await apiCall('getOpname');
         
-        const resOpname = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })});
-        const resultOpname = await resOpname.json();
-        
-        if(resultSelisih.success) globalSelisihData = resultSelisih.data;
-        if(resultOpname.success) globalOpnameData = resultOpname.data;
+        if(resultSelisih && resultSelisih.success) globalSelisihData = resultSelisih.data;
+        if(resultOpname && resultOpname.success) globalOpnameData = resultOpname.data;
         
         let dAtms = new Set(), dResis = new Set(), dNoms = new Set();
         (globalSelisihData||[]).forEach(r => { dAtms.add(String(r[1]).trim()); dResis.add(String(r[2]).trim()); dNoms.add(parseFloat(r[3])); });
         populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
         renderSelisihTablesFiltered();
-    } catch (err) { console.error("Error Fetch Selisih:", err); }
+    } catch (err) { console.error("Error Fetch Selisih:", err); throw err; }
 }
 
 function renderSelisihTablesFiltered() {
@@ -515,9 +456,8 @@ async function submitResolve() {
     
     PlayfulAlert.fire({ title: 'Menyimpan & Membuat B/A...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', periode: getActivePeriod(), data: payload }) });
-        const result = await response.json();
-        if(result.success) {
+        const result = await apiCall('updateSelisih', payload);
+        if(result && result.success) {
             PlayfulAlert.close();
             let targetRow = globalSelisihData.find(r => String(r[0]).substring(0,10) === tglSafe && String(r[1]).trim() === atmSafe && String(r[2]).trim() === resiSafe);
             if (targetRow) { targetRow[5] = 'Selesai'; targetRow[6] = finalKeterangan; }
@@ -537,9 +477,8 @@ async function revertSelisih(rawStr) {
     
     PlayfulAlert.fire({ title: 'Mengembalikan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateSelisih', periode: getActivePeriod(), data: payload }) });
-        const result = await response.json();
-        if(result.success) { 
+        const result = await apiCall('updateSelisih', payload);
+        if(result && result.success) { 
             PlayfulAlert.fire('Berhasil', 'Data dikembalikan.', 'success'); 
             let targetRow = globalSelisihData.find(r => String(r[0]).substring(0,10) === tglSafe && String(r[1]).trim() === atmSafe && String(r[2]).trim() === resiSafe);
             if (targetRow) targetRow[5] = 'Belum';
@@ -591,14 +530,12 @@ function showDetailPopup(rowDataStr) {
 // 6. ENGINE DATA MASTER 
 // ==========================================
 async function fetchDatabaseData() {
-    let currentPeriod = getActivePeriod();
     const tbody = document.getElementById('tableBodyDataMaster');
     if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Menyinkronkan Database...</small></td></tr>`;
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getDatabase', periode: currentPeriod })});
-        const result = await response.json();
-        if(result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); }
-    } catch (err) { console.error(err); }
+        const result = await apiCall('getDatabase');
+        if(result && result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); }
+    } catch (err) { console.error("fetchDatabaseData Error:", err); throw err; }
 }
 
 function renderDataMaster() {
@@ -675,12 +612,10 @@ function printRiwayatBAOpname(rawStr) {
 }
 
 async function fetchOpnameHistory() {
-    let currentPeriod = getActivePeriod();
     document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getOpname', periode: currentPeriod })});
-        const result = await response.json();
-        if(result.success) { globalOpnameData = result.data; renderOpnameTable(); }
+        const result = await apiCall('getOpname');
+        if(result && result.success) { globalOpnameData = result.data; renderOpnameTable(); }
     } catch (err) { console.error(err); }
 }
 
@@ -749,9 +684,8 @@ async function deleteOpname(id) {
     if(!confirm.isConfirmed) return;
     PlayfulAlert.fire({ title: 'Menghapus...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteOpname', periode: getActivePeriod(), data: id }) });
-        const result = await response.json();
-        if(result.success) { PlayfulAlert.fire('Dihapus', 'Riwayat berhasil dibuang.', 'success'); fetchOpnameHistory(); }
+        const result = await apiCall('deleteOpname', id);
+        if(result && result.success) { PlayfulAlert.fire('Dihapus', 'Riwayat berhasil dibuang.', 'success'); fetchOpnameHistory(); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
@@ -760,10 +694,9 @@ async function saveOpnameData() {
     if(!payload.atm || !payload.waktu || !payload.fisik) return PlayfulAlert.fire('Isian Kurang', 'Pastikan ID ATM, Waktu, dan Saldo Fisik terisi.', 'warning');
     PlayfulAlert.fire({ title: 'Menyimpan...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'uploadOpname', periode: getActivePeriod(), data: payload }) });
-        const result = await response.json();
-        if(result.success) { PlayfulAlert.fire('Berhasil!', 'Data Opname sukses tersimpan.', 'success'); document.getElementById('opEditId').value = ''; document.getElementById('opSysSebelum').value = ''; document.getElementById('opSysTambah').value = ''; document.getElementById('opFisik').value = ''; calcOpname(); fetchSelisihData(); } 
-        else { PlayfulAlert.fire('Gagal', result.message, 'error'); }
+        const result = await apiCall('uploadOpname', payload);
+        if(result && result.success) { PlayfulAlert.fire('Berhasil!', 'Data Opname sukses tersimpan.', 'success'); document.getElementById('opEditId').value = ''; document.getElementById('opSysSebelum').value = ''; document.getElementById('opSysTambah').value = ''; document.getElementById('opFisik').value = ''; calcOpname(); fetchSelisihData(); } 
+        else { PlayfulAlert.fire('Gagal', result ? result.message : 'Koneksi gagal', 'error'); }
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
@@ -819,6 +752,10 @@ function updateDataCompletenessBanner() {
     document.querySelectorAll('.data-completeness-banner').forEach(el => el.innerHTML = bannerHtml);
 }
 
+document.getElementById('opAtmId').addEventListener('input', function() {
+    let val = this.value.toUpperCase().replace(/\s/g, ''); if (/^\d/.test(val) && val.length > 0) this.value = 'KTM' + val; else this.value = val;
+});
+
 // ==========================================
 // 9. ENGINE BUKU BESAR (LAPORAN REKENING GANTUNG)
 // ==========================================
@@ -827,98 +764,44 @@ superApp.bukaLaporanModal = async function() {
     PlayfulAlert.showLoading();
     
     try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getLaporan' }) });
-        const result = await response.json();
-        if(!result.success) throw new Error(result.message);
+        const result = await apiCall('getLaporan');
+        if(!result || !result.success) throw new Error(result ? result.message : "Gagal memuat laporan");
         
         let rawData = result.data;
         let ledger = [];
         
-        // Terjemahkan baris demi baris menjadi format Akuntansi
         rawData.forEach(r => {
             let tglTrx = String(r[0]).substring(0,10);
-            let atm = r[1].replace('KTM', ''); // Buang "KTM" agar persis PDF
-            let resi = r[2];
-            let nom = parseFloat(r[3]) || 0;
-            let jenis = r[4];
-            let status = String(r[5]).toLowerCase();
-            let ket = r[6] || '';
-            let tglSelesai = r[7] ? String(r[7]).substring(0,10) : tglTrx;
-            let isResolved = status !== 'belum';
+            let atm = r[1].replace('KTM', ''); 
+            let resi = r[2]; let nom = parseFloat(r[3]) || 0; let jenis = r[4]; let status = String(r[5]).toLowerCase();
+            let ket = r[6] || ''; let tglSelesai = r[7] ? String(r[7]).substring(0,10) : tglTrx; let isResolved = status !== 'belum';
 
             if (jenis === 'SELISIH LEBIH') {
-                // POSISI KREDIT (Uang Fisik Lebih = Sistem Kurang Debet = Masuk Rek. Gantung)
                 let ketKredit = isResolved ? `Selesai/ON US, EJ & GL Klop, Menunggu Pengaduan Nasabah (${formatNum(nom)})` : `EJ & GL Klop, Menunggu Pengaduan Nasabah`;
                 ledger.push({ dateObj: new Date(tglTrx), resi: resi, atm: atm, debet: 0, kredit: nom, ket: ketKredit, isRes: false, statusAkhir: status });
-                
-                // JIKA SELESAI -> POSISI DEBET (Uang ditarik dari Rek Gantung untuk Nasabah)
-                if (isResolved) {
-                    ledger.push({ dateObj: new Date(tglSelesai), resi: resi, atm: atm, debet: nom, kredit: 0, ket: `PENY. ON US (${formatDateIndo(new Date(tglTrx))})`, isRes: true, statusAkhir: status });
-                }
+                if (isResolved) ledger.push({ dateObj: new Date(tglSelesai), resi: resi, atm: atm, debet: nom, kredit: 0, ket: `PENY. ON US (${formatDateIndo(new Date(tglTrx))})`, isRes: true, statusAkhir: status });
             } else if (jenis === 'SELISIH KURANG') {
-                // POSISI DEBET (Uang Fisik Hilang = Sistem Kurang Kredit = Beban Sementara Rek. Gantung)
                 let ketDebet = isResolved ? `KANTOR PUSAT SALAH DEBET (EJ GAGAL & GL TDK TERCATAT) (${formatNum(nom)})` : `KANTOR PUSAT SALAH DEBET (EJ GAGAL & GL TDK TERCATAT)`;
                 ledger.push({ dateObj: new Date(tglTrx), resi: resi, atm: atm, debet: nom, kredit: 0, ket: ketDebet, isRes: false, statusAkhir: status });
-                
-                // JIKA SELESAI -> POSISI KREDIT (Kompensasi masuk menutupi Rek Gantung)
-                if (isResolved) {
-                    ledger.push({ dateObj: new Date(tglSelesai), resi: resi, atm: atm, debet: 0, kredit: nom, ket: `KOREKSI PUSAT - ${ket}`, isRes: true, statusAkhir: status });
-                }
+                if (isResolved) ledger.push({ dateObj: new Date(tglSelesai), resi: resi, atm: atm, debet: 0, kredit: nom, ket: `KOREKSI PUSAT - ${ket}`, isRes: true, statusAkhir: status });
             }
         });
 
-        // Urutkan secara mutlak berdasarkan waktu kejadian
         ledger.sort((a,b) => a.dateObj - b.dateObj);
         
-        let tbodyHtml = '';
-        let saldo = 0;
-        let totalUnresolved = 0;
-        
+        let tbodyHtml = ''; let saldo = 0; let totalUnresolved = 0;
         ledger.forEach((item, index) => {
-            saldo += (item.kredit - item.debet); // Selisih Lebih menaikkan saldo, Selisih Kurang menurunkan saldo.
-            
+            saldo += (item.kredit - item.debet); 
             let unresHtml = '';
-            if (!item.isRes && item.statusAkhir === 'belum') {
-                let amt = item.kredit > 0 ? item.kredit : item.debet;
-                unresHtml = formatNum(amt);
-                totalUnresolved += amt; 
-            }
-
-            tbodyHtml += `
-                <tr>
-                    <td class="text-center">${index + 1}</td>
-                    <td>${formatDateIndo(item.dateObj)}</td>
-                    <td class="text-center">${item.resi}</td>
-                    <td class="text-center">${item.atm}</td>
-                    <td class="text-end text-success">${item.kredit > 0 ? formatNum(item.kredit) : ''}</td>
-                    <td class="text-end text-danger">${item.debet > 0 ? formatNum(item.debet) : ''}</td>
-                    <td class="text-end fw-bold">${formatNum(saldo)}</td>
-                    <td>${item.ket}</td>
-                    <td class="text-end text-danger">${unresHtml}</td>
-                    <td></td>
-                </tr>
-            `;
+            if (!item.isRes && item.statusAkhir === 'belum') { let amt = item.kredit > 0 ? item.kredit : item.debet; unresHtml = formatNum(amt); totalUnresolved += amt; }
+            tbodyHtml += `<tr><td class="text-center">${index + 1}</td><td>${formatDateIndo(item.dateObj)}</td><td class="text-center">${item.resi}</td><td class="text-center">${item.atm}</td><td class="text-end text-success">${item.kredit > 0 ? formatNum(item.kredit) : ''}</td><td class="text-end text-danger">${item.debet > 0 ? formatNum(item.debet) : ''}</td><td class="text-end fw-bold">${formatNum(saldo)}</td><td>${item.ket}</td><td class="text-end text-danger">${unresHtml}</td><td></td></tr>`;
         });
         
-        // Baris TOTAL Bawah
-        tbodyHtml += `
-            <tr class="fw-bold bg-light">
-                <td colspan="6" class="text-end pe-3">TOTAL KESELURUHAN</td>
-                <td class="text-end">${formatNum(saldo)}</td>
-                <td></td>
-                <td class="text-end text-danger">${formatNum(totalUnresolved)}</td>
-                <td></td>
-            </tr>
-        `;
-
+        tbodyHtml += `<tr class="fw-bold bg-light"><td colspan="6" class="text-end pe-3">TOTAL KESELURUHAN</td><td class="text-end">${formatNum(saldo)}</td><td></td><td class="text-end text-danger">${formatNum(totalUnresolved)}</td><td></td></tr>`;
         document.getElementById('lap_tbody').innerHTML = tbodyHtml;
         
-        // Suntikkan Variabel Kantor dari Pengaturan Cloud
-        let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; 
-        let kota = namaCabang.replace('Kantor Cabang Pembantu', '').replace('Cabang', '').trim();
-        let dateSelect = document.getElementById('globalPeriod').value; // cth: "2026-08"
-        let year = dateSelect.split('-')[0];
-        let monthIdx = parseInt(dateSelect.split('-')[1]) - 1;
+        let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let kota = namaCabang.replace('Kantor Cabang Pembantu', '').replace('Cabang', '').trim();
+        let dateSelect = document.getElementById('globalPeriod').value; let year = dateSelect.split('-')[0]; let monthIdx = parseInt(dateSelect.split('-')[1]) - 1;
         const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         
         document.getElementById('lap_periode').innerText = `${bulanArr[monthIdx]} ${year}`;
@@ -930,19 +813,13 @@ superApp.bukaLaporanModal = async function() {
 
         PlayfulAlert.close();
         new bootstrap.Modal(document.getElementById('laporanModal')).show();
-
-    } catch (err) {
-        PlayfulAlert.fire('Error', err.toString(), 'error');
-    }
+    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 };
 
-// Fungsi Rahasia: Mengubah Kertas Menjadi Landscape Hanya Saat Cetak Laporan Ini
 superApp.printLaporan = function() {
     const style = document.createElement('style');
     style.innerHTML = `@page { size: A4 landscape; margin: 10mm; }`;
-    document.head.appendChild(style);
-    window.print();
-    setTimeout(() => style.remove(), 1000); // Cabut kembali agar BA lain tetap Portrait
+    document.head.appendChild(style); window.print(); setTimeout(() => style.remove(), 1000); 
 };
 
 function formatDateIndo(dateObj) {
@@ -950,7 +827,3 @@ function formatDateIndo(dateObj) {
     const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     return `${hariArr[dateObj.getDay()]}, ${String(dateObj.getDate()).padStart(2,'0')} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 }
-
-document.getElementById('opAtmId').addEventListener('input', function() {
-    let val = this.value.toUpperCase().replace(/\s/g, ''); if (/^\d/.test(val) && val.length > 0) this.value = 'KTM' + val; else this.value = val;
-});
