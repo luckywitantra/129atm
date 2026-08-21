@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbwnLjfPZrOM21ln6-crxdnGebqHUQSXInpk6sa5kzxatf9vhUFsZakMFDyr-UxTCUM_/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzawSNj45jOqdyEFKhF79w6-uW_MJansgX5c-nEoQ-aimJWCbxkH7lRNBYTVFAEp4VI/exec';
 
 // ==========================================
 // 1. STATE MANAGEMENT, THEME & PAGINATION
