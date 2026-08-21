@@ -201,7 +201,6 @@ function processEJ() {
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
             
-            // [PERBAIKAN] Tambahkan "PIN ENTERED" & "TRACK 2 DATA" sebagai pemicu untuk menyimpan transaksi beruntun (Multi-Transaction)
             if (line.includes("<- TRANSACTION END") || 
                 line.includes("-> TRANSACTION START") || 
                 line.includes("EMV AID ") || 
@@ -226,8 +225,13 @@ function processEJ() {
             const smartEmvMatch = line.match(/SMART EMV\s+(\d+)/);
             if (smartEmvMatch) currentTx.noResi = parseInt(smartEmvMatch[1], 10).toString();
             
+            // [PERBAIKAN 1] DETEKSI EKSPLISIT KATEGORI TRANSAKSI
             if (line.includes("PENARIKAN TUNAI") || line.includes("TARIK TUNAI") || line.includes("WITHDRAWAL") || line.includes("PENARIKAN TUNAI TANPA KARTU")) currentTx.jenis = "TARIK TUNAI";
             else if (line.includes("TRANSFER") || line.includes("PEMINDAH BUKUAN") || line.includes("KE BANK") || line.includes("REK TUJUAN")) currentTx.jenis = "TRANSFER";
+            else if (line.includes("INFORMASI SALDO") || line.includes("UBAH/GANTI PIN") || line.includes("PIN CHANGE") || line.includes("PIN SUCCESSFULLY")) {
+                currentTx.jenis = "NON-FINANSIAL";
+                currentTx.status = "NON-FINANSIAL"; // Langsung kunci statusnya agar tidak terbaca sebagai "SUKSES"
+            }
             
             if ((line.includes("JUMLAH") || line.includes("AMOUNT")) && !line.includes("ENTERED")) {
                 isLookingForJumlah = true; 
@@ -241,9 +245,20 @@ function processEJ() {
                 isLookingForJumlah = false; 
             }
             
-            if (line.includes("TRANSAKSI SUKSES") || line.includes("SUCCESSFUL")) currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
+            // [PERBAIKAN 2] PASTIKAN KATA "SUCCESSFUL" BUKAN BERASAL DARI GANTI PIN
+            if (line.includes("TRANSAKSI SUKSES") || (line.includes("SUCCESSFUL") && !line.includes("PIN"))) {
+                currentTx.status = (currentTx.jenis === "TRANSFER") ? "SUKSES (TRANSFER)" : "SUKSES";
+            }
             
-            const errorKeywords = ["SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", "LOW BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR", "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT", "INACTIVE ACCOUNT", "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION", "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", "PROCESSOR TEMP DOWN", "KARTU ANDA TERDAFTAR SBG"];
+            // [PERBAIKAN 3] TAMBAHKAN "TRANSAKSI SEDANG DIPROSES" KE DAFTAR ERROR (GAGAL)
+            const errorKeywords = [
+                "SALDO KURANG", "SALAH MASUKKAN PIN", "KARTU ANDA SUDAH KADALUARSA", "HIGH BILL MIX ERROR", 
+                "LOW BILL MIX ERROR", "DISPENSER ERROR", "COMMUNICATION ERROR", "CDM ERROR", 
+                "KD.ARE/NO.TELP TDK TERDAFTA", "RESTRICTED PHONE NUMBER", "MELEBIHI LIMIT", 
+                "INACTIVE ACCOUNT", "UNABLE TO PROCESS", "INVALID ZERO AMOUNT", "INVALID INSTITUTION", 
+                "RESPONSE CODE GAGAL", "CHIP CARD SECURITY FAILURE", "PROCESSOR TEMP DOWN", 
+                "KARTU ANDA TERDAFTAR SBG", "TRANSAKSI SEDANG DIPROSES", "SUSPECT"
+            ];
             errorKeywords.forEach(err => { if (line.includes(err) && !currentTx.cashTaken) currentTx.status = "GAGAL - " + err; });
             if (line.match(/TRANSACTION \d+ FAILED/) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
