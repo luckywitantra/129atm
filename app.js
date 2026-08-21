@@ -183,11 +183,7 @@ function processEJ() {
     const reader = new FileReader();
     reader.onload = function(e) {
         const text = e.target.result; const lines = text.split('\n'); const ejData = [];
-        let currentTx = {}; let isLookingForJumlah = false; 
-        
-        // MEMORI UNTUK MENGINGAT ID ATM YANG BENAR (YANG ADA KATA "KTM")
-        let lastValidAtmId = 'UNKNOWN'; 
-        let lastValidDate = '';
+        let currentTx = {}; let isLookingForJumlah = false; let lastValidAtmId = 'UNKNOWN'; let lastValidDate = '';
         
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
@@ -196,10 +192,7 @@ function processEJ() {
                 else if (!currentTx.status) currentTx.status = (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) ? "GAGAL - TIDAK ADA UANG KELUAR" : (currentTx.nominal ? "SUKSES" : "NON-FINANSIAL");
                 if (!currentTx.nominal) currentTx.nominal = 0;
                 
-                // Gunakan ID ATM Memori jika ID saat ini aneh (seperti "346")
-                let finalAtmId = currentTx.atm; 
-                if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
-                
+                let finalAtmId = currentTx.atm; if (!finalAtmId || /^\d+$/.test(finalAtmId)) finalAtmId = lastValidAtmId;
                 ejData.push([currentTx.tanggal, finalAtmId, currentTx.noResi, currentTx.nominal, currentTx.status]);
             }
             currentTx = {}; isLookingForJumlah = false;
@@ -207,21 +200,25 @@ function processEJ() {
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
-            if (line.includes("<- TRANSACTION END") || line.includes("-> TRANSACTION START") || line.includes("EMV AID ")) { if (currentTx.noResi) saveCurrentTransaction(); }
+            
+            // [PERBAIKAN] Tambahkan "PIN ENTERED" & "TRACK 2 DATA" sebagai pemicu untuk menyimpan transaksi beruntun (Multi-Transaction)
+            if (line.includes("<- TRANSACTION END") || 
+                line.includes("-> TRANSACTION START") || 
+                line.includes("EMV AID ") || 
+                line.includes("PIN ENTERED") || 
+                line.includes("TRACK 2 DATA")) { 
+                if (currentTx.noResi) saveCurrentTransaction(); 
+            }
+            
             if (line.includes("CASH TAKEN")) currentTx.cashTaken = true;
             
-            // Tangkap Tanggal dan ID ATM
             const dateMatch = line.match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z0-9]+)/);
             if (dateMatch) { 
                 currentTx.tanggal = `20${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; 
                 lastValidDate = currentTx.tanggal; 
-                
-                // [PERBAIKAN] Hanya ingat ID ATM jika mengandung huruf (seperti KTM) agar kode 346 diabaikan
                 let tempAtm = dateMatch[5];
-                if (/[A-Z]/i.test(tempAtm)) {
-                    lastValidAtmId = tempAtm;
-                }
-                currentTx.atm = lastValidAtmId; // Selalu pakai ID yang sudah valid
+                if (/[A-Z]/i.test(tempAtm)) lastValidAtmId = tempAtm;
+                currentTx.atm = lastValidAtmId; 
             }
             
             const resiMatch = line.match(/(?:NO\s+RESI|NO\s+REF\.?|REFF\s+NO)\s*:?\s*(\d+)/i);
