@@ -356,6 +356,7 @@ async function fetchSelisihData() {
         (globalSelisihData||[]).forEach(r => { dAtms.add(String(r[1]).trim()); dResis.add(String(r[2]).trim()); dNoms.add(parseFloat(r[3])); });
         populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
         renderSelisihTablesFiltered();
+        renderCalendar();
     } catch (err) { console.error("Error Fetch Selisih:", err); throw err; }
 }
 
@@ -534,7 +535,7 @@ async function fetchDatabaseData() {
     if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Menyinkronkan Database...</small></td></tr>`;
     try {
         const result = await apiCall('getDatabase');
-        if(result && result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); }
+        if(result && result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); renderCalendar();}
     } catch (err) { console.error("fetchDatabaseData Error:", err); throw err; }
 }
 
@@ -815,6 +816,96 @@ superApp.bukaLaporanModal = async function() {
         new bootstrap.Modal(document.getElementById('laporanModal')).show();
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 };
+
+// ==========================================
+// 10. ENGINE KALENDER REKONSILIASI CERDAS
+// ==========================================
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const label = document.getElementById('calendarMonthLabel');
+    if (!grid) return;
+
+    const period = getActivePeriod(); // cth: "082026"
+    const year = parseInt(period.substring(2,6));
+    const month = parseInt(period.substring(0,2)) - 1; 
+
+    const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    if (label) label.innerText = `${bulanArr[month]} ${year}`;
+
+    // Cari tahu jumlah hari dan hari pertama di bulan ini
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay(); // 0 = Minggu
+
+    // Siapkan wadah memori per tanggal
+    let dayData = {};
+    for(let i=1; i<=daysInMonth; i++) dayData[i] = { gl: 0, ej: 0, selisihBelum: 0, selisihSelesai: 0 };
+
+    // 1. Ekstrak Tanggal dari GL
+    (databaseData.gl || []).forEach(r => {
+        let d = new Date(String(r[1]).substring(0,10));
+        if(d.getMonth() === month && d.getFullYear() === year) dayData[d.getDate()].gl++;
+    });
+    // 2. Ekstrak Tanggal dari EJ
+    (databaseData.ej || []).forEach(r => {
+        let d = new Date(String(r[1]).substring(0,10));
+        if(d.getMonth() === month && d.getFullYear() === year) dayData[d.getDate()].ej++;
+    });
+    // 3. Ekstrak Tanggal dari Data Selisih
+    (globalSelisihData || []).forEach(r => {
+        let d = new Date(String(r[0]).substring(0,10));
+        if(d.getMonth() === month && d.getFullYear() === year) {
+            if (String(r[5]).toLowerCase() === 'belum') dayData[d.getDate()].selisihBelum++;
+            else dayData[d.getDate()].selisihSelesai++;
+        }
+    });
+
+    const hariHeader = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    let html = '';
+    
+    // Render Judul Hari
+    hariHeader.forEach(h => html += `<div class="calendar-day-header">${h}</div>`);
+    
+    // Render Kotak Kosong Sebelum Tanggal 1
+    for(let i=0; i<firstDay; i++) {
+        html += `<div class="calendar-cell border-0 bg-transparent"></div>`;
+    }
+    
+    // Render Isi Tanggal
+    for(let i=1; i<=daysInMonth; i++) {
+        let d = dayData[i];
+        let hasData = d.gl > 0 || d.ej > 0 || d.selisihBelum > 0 || d.selisihSelesai > 0;
+        let contentHtml = '';
+        
+        if (hasData) {
+            let glBadge = d.gl > 0 ? `<div class="cal-indicator cal-gl"><span>GL</span><span><i class="bi bi-check-lg"></i></span></div>` : '';
+            let ejBadge = d.ej > 0 ? `<div class="cal-indicator cal-ej"><span>EJ</span><span><i class="bi bi-check-lg"></i></span></div>` : '';
+            let selisihBadge = '';
+            
+            if (d.selisihBelum > 0) {
+                // Efek Merah Berkedip Jika Ada Selisih Menggantung!
+                selisihBadge = `<div class="cal-indicator cal-selisih-bad"><span>Gantung</span><span>${d.selisihBelum}</span></div>`;
+            } else if (d.selisihSelesai > 0) {
+                selisihBadge = `<div class="cal-indicator cal-selisih-good"><span>Selesai</span><span><i class="bi bi-shield-check"></i></span></div>`;
+            }
+
+            contentHtml = `${glBadge}${ejBadge}${selisihBadge}`;
+        }
+
+        let cls = hasData ? 'calendar-cell active' : 'calendar-cell';
+        // Fungsi klik cerdas -> Lempar user ke Data Master dan filter otomatis sesuai tanggal kotak yang diklik
+        let tglFormatKlik = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let clickAttr = hasData ? `onclick="changePage('master', 1); document.getElementById('filterStart').value = '${tglFormatKlik}'; renderDataMaster(); showPage('datamaster');"` : '';
+
+        html += `
+            <div class="${cls}" ${clickAttr} title="${hasData ? 'Klik untuk melihat semua transaksi pada tanggal ini' : ''}">
+                <div class="cal-date">${i}</div>
+                ${contentHtml}
+            </div>
+        `;
+    }
+    
+    grid.innerHTML = html;
+}
 
 superApp.printLaporan = function() {
     const style = document.createElement('style');
