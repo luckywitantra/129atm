@@ -204,27 +204,77 @@
             .qr-area img { width: 70px !important; }
             .qr-area p { font-size: 8px !important; }
         }
+        /* ========================================== */
+        /* 9. PREMIUM INTERNATIONAL BANKING HEADER    */
+        /* ========================================== */
+        .navbar-premium {
+            background: rgba(10, 37, 64, 0.98); /* Deep Midnight Navy Blue */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .navbar-brand-text {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            letter-spacing: 1px;
+        }
+        .brand-light { color: #8ec5fc; } /* Aksen biru premium */
+        
+        .premium-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .premium-btn:hover { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
+
+        /* PERBAIKAN UNTUK HP RESOLUSI RENDAH / LAYAR SEMPIT */
+        @media (max-width: 400px) {
+            /* Sembunyikan nama aplikasi, sisakan logonya saja agar tombol kanan muat */
+            .navbar-brand-text { display: none !important; }
+            /* Rapatkan jarak antar tombol */
+            .header-controls { gap: 0.35rem !important; }
+            /* Perkecil lebar kalender */
+            .month-picker-container { padding-left: 10px !important; padding-right: 10px !important; }
+            .month-picker-input { width: 100px !important; font-size: 0.8rem !important; }
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand bg-gradient-playful shadow-sm fixed-top">
-        <div class="container-fluid px-3">
-            <a class="navbar-brand text-white fw-bold d-flex items-center gap-2" href="#">
-                <i class="bi bi-robot fs-4 bouncy-hover"></i> <span class="pt-1">ReconApp</span>
+    <!-- HEADER PREMIUM BANKING -->
+    <nav class="navbar navbar-expand navbar-premium shadow-sm fixed-top">
+        <div class="container-fluid px-2 px-md-3">
+            
+            <!-- Branding Premium -->
+            <a class="navbar-brand text-white fw-bold d-flex align-items-center gap-2" href="#">
+                <div class="rounded p-1 d-flex align-items-center justify-content-center shadow-sm border border-light border-opacity-25" style="width: 32px; height: 32px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+                    <i class="bi bi-shield-lock-fill text-white fs-6"></i>
+                </div>
+                <span class="pt-1 navbar-brand-text" style="font-size: 1.15rem;">RECON<span class="brand-light">PRO</span></span>
             </a>
-            <div class="d-flex gap-2 align-items-center">
+            
+            <!-- Area Kontrol (Dioptimalkan untuk HP) -->
+            <div class="d-flex gap-2 align-items-center header-controls">
+                
                 <!-- MESIN WAKTU (PEMILIH BULAN) -->
-                <div class="d-flex align-items-center bg-white rounded-pill px-3 py-1 shadow-sm border border-light">
-                    <i class="bi bi-calendar-month-fill text-primary me-2"></i>
-                    <input type="month" id="globalPeriod" class="form-control form-control-sm border-0 bg-transparent fw-bolder text-dark p-0" style="width: 110px; cursor: pointer; outline: none;" onchange="superApp.changePeriod()" title="Pilih Bulan Rekonsiliasi">
+                <div class="d-flex align-items-center bg-white rounded-pill px-3 py-1 shadow-sm border border-light month-picker-container">
+                    <!-- Ikon ini disembunyikan di HP sangat kecil agar hemat ruang -->
+                    <i class="bi bi-calendar2-week-fill text-primary me-2 d-none d-sm-block"></i>
+                    <input type="month" id="globalPeriod" class="form-control form-control-sm border-0 bg-transparent fw-bolder text-dark p-0 month-picker-input" style="width: 115px; cursor: pointer; outline: none; box-shadow: none;" onchange="superApp.changePeriod()" title="Pilih Bulan Rekonsiliasi">
                 </div>
                 
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" onclick="new bootstrap.Modal(document.getElementById('modal-system-settings')).show()" style="width: 32px; height: 32px;" title="Pengaturan">
-                    <i class="bi bi-gear-fill text-primary"></i>
+                <!-- Garis Pembatas (Hanya tampil di PC/Tablet) -->
+                <div class="vr bg-white opacity-25 mx-1 d-none d-sm-block" style="width: 2px;"></div>
+
+                <!-- Tombol Pengaturan -->
+                <button class="btn premium-btn btn-sm rounded-circle shadow-sm bouncy-hover d-flex align-items-center justify-content-center" onclick="new bootstrap.Modal(document.getElementById('modal-system-settings')).show()" style="width: 34px; height: 34px;" title="Pengaturan Sistem">
+                    <i class="bi bi-gear-fill"></i>
                 </button>
-                <button class="btn btn-light btn-sm rounded-circle shadow-sm bouncy-hover" id="themeToggle" style="width: 32px; height: 32px;">
-                    <i class="bi bi-moon-stars-fill text-primary"></i>
+                
+                <!-- Tombol Tema (Tidak akan terlempar lagi) -->
+                <button class="btn premium-btn btn-sm rounded-circle shadow-sm bouncy-hover d-flex align-items-center justify-content-center" id="themeToggle" style="width: 34px; height: 34px;" title="Ganti Tema">
+                    <i class="bi bi-moon-stars-fill"></i>
                 </button>
+                
             </div>
         </div>
     </nav>
