@@ -1084,15 +1084,12 @@ function renderOpnameTable() {
         let atm = String(r[2]).trim().toUpperCase();
         let selisih = parseFloat(r[7]) || 0;
         
-        // Desain Badge untuk Hasil Fisik Laci
         let badgeFisik = selisih === 0 ? `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 shadow-sm">BALANCE</span>` :
                          selisih > 0 ? `<span class="badge bg-success rounded-pill px-3 shadow-sm">LEBIH ${formatRp(selisih)}</span>` : 
                                        `<span class="badge bg-danger rounded-pill px-3 shadow-sm">KURANG ${formatRp(Math.abs(selisih))}</span>`;
 
-        // Desain Teks untuk Status Penambalan AI
         let statusAI = selisih === 0 ? `<span class="text-muted small fw-bold">-</span>` : `<span class="small fw-bold text-warning">Tersisa: ${formatRp(Math.abs(selisih))}</span>`;
 
-        // Bungkus data mentah agar bisa dikirim ke fungsi Cetak
         const rawStr = encodeURIComponent(JSON.stringify(r));
 
         return `
@@ -1103,7 +1100,9 @@ function renderOpnameTable() {
                 <td>${statusAI}</td>
                 <td class="text-center pe-3">
                     <div class="d-flex justify-content-center gap-2">
-                        <button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm bouncy-hover px-3" onclick="printRiwayatBAOpname('${rawStr}')" title="Cetak Berita Acara"><i class="bi bi-printer-fill me-1"></i> Cetak</button>
+                        <!-- Tombol Edit Dikembalikan -->
+                        <button class="btn btn-sm btn-primary rounded-pill fw-bold shadow-sm bouncy-hover px-3" onclick="editOpname('${rawStr}')" title="Edit Data"><i class="bi bi-pencil-square me-1"></i> Edit</button>
+                        <button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm bouncy-hover px-3" onclick="printRiwayatBAOpname('${rawStr}')" title="Cetak Berita Acara"><i class="bi bi-printer-fill"></i></button>
                         <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold shadow-sm bouncy-hover px-2" onclick="deleteOpname('${id}')" title="Hapus Data"><i class="bi bi-trash-fill"></i></button>
                     </div>
                 </td>
@@ -1113,12 +1112,41 @@ function renderOpnameTable() {
 
     document.getElementById('paginationOpname').innerHTML = renderPagination(filtered.length, pageState.opname, PAGE_SIZE, 'opname');
 }
+
+// ==========================================
+// FUNGSI EDIT OPNAME (MENGISI FORM OTOMATIS)
+// ==========================================
 function editOpname(rawStr) {
     const row = JSON.parse(decodeURIComponent(rawStr));
-    document.getElementById('opEditId').value = row[0]; document.getElementById('opWaktu').value = row[1]; document.getElementById('opAtmId').value = row[2]; document.getElementById('opSysSebelum').value = row[3]; document.getElementById('opSysTambah').value = row[4]; document.getElementById('opFisik').value = (parseFloat(row[3]) + parseFloat(row[7])); 
+    
+    // Set ID tersembunyi agar sistem tahu ini adalah update, bukan data baru
+    document.getElementById('opEditId').value = row[0];
+    
+    // Format tanggal ke input HTML (YYYY-MM-DDTHH:mm)
+    let rawWaktu = String(row[1]);
+    if (rawWaktu.includes(' ')) rawWaktu = rawWaktu.replace(' ', 'T').substring(0, 16);
+    document.getElementById('opWaktu').value = rawWaktu;
+    
+    document.getElementById('opAtmId').value = row[2];
+    document.getElementById('opSysSebelum').value = row[3] || 0;
+    document.getElementById('opSysTambah').value = row[4] || 0;
+    document.getElementById('opFisik').value = row[6] || 0;
+    
+    // Picu kalkulator visual dan Smart AI
     calcOpname();
-    const tabInput = document.querySelector('[data-bs-target="#op-form-tab"]'); if(tabInput) { const bsTab = new bootstrap.Tab(tabInput); bsTab.show(); }
-    PlayfulAlert.fire({title: 'Mode Edit', icon: 'info', timer: 1500, showConfirmButton: false});
+    if(typeof updateOpnameSmartInfo === 'function') updateOpnameSmartInfo();
+    
+    // Gulir halus ke atas dan Pindah ke Tab Form secara otomatis
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('tab-op-form').click();
+    
+    PlayfulAlert.fire({
+        title: 'Mode Edit Aktif',
+        text: 'Data telah dimuat ke Kalkulator. Silakan ubah angka fisik atau waktu, lalu tekan Simpan.',
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false
+    });
 }
 
 async function deleteOpname(id) {
