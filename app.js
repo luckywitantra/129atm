@@ -871,20 +871,22 @@ function printRiwayatBAOpname(rawStr) {
 }
 
 // ==========================================
-// FUNGSI PRINT PDF ANTI-BLANK & ANTI-FREEZE
+// FUNGSI PRINT PDF AMAN (EVENT LISTENER AFTERPRINT)
 // ==========================================
 function cetakPDF(areaId) {
     const printArea = document.getElementById(areaId);
-    const originalParent = printArea.parentNode; 
-    const originalNextSibling = printArea.nextSibling; // Simpan koordinat/posisi urutan asli
+    if (!printArea) return;
 
-    // 1. Kunci kertasnya
+    const originalParent = printArea.parentNode; 
+    const originalNextSibling = printArea.nextSibling; 
+
+    // 1. Kunci kertas untuk mode cetak
     printArea.classList.add('print-active-area');
 
-    // 2. Kumpulkan elemen body ke dalam Array statis (Mencegah Bug Live Collection yang bikin layar Freeze)
+    // 2. Kumpulkan elemen body ke dalam Array statis
     const bodyChildren = Array.from(document.body.children);
     
-    // 3. Sembunyikan semua UI di latar belakang agar kertas PDF murni putih
+    // 3. Sembunyikan semua UI di latar belakang
     bodyChildren.forEach(el => {
         if (el.id !== areaId && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE' && el.tagName !== 'LINK') {
             el.classList.add('d-none-print-temp');
@@ -895,27 +897,39 @@ function cetakPDF(areaId) {
     // 4. Pindahkan kertas ke luar modal (ke <body> utama) untuk di-print
     document.body.appendChild(printArea);
 
-    // 5. Panggil mesin printer browser
-    window.print();
-
-    // 6. Kembalikan UI dengan presisi tinggi setelah dialog Print ditutup
-    setTimeout(() => {
+    // 5. Buat fungsi pembersih yang aman (Clean-up handler)
+    const restoreUIAfterPrint = () => {
         printArea.classList.remove('print-active-area');
         
-        // Pasang kembali kertas persis di tempat asalnya di dalam Modal
+        // Kembalikan kertas persis ke posisi asalnya di dalam Modal
         if (originalNextSibling) {
             originalParent.insertBefore(printArea, originalNextSibling);
         } else {
             originalParent.appendChild(printArea);
         }
 
-        // Munculkan kembali seluruh UI dan hapus efek gelap/freeze
+        // Munculkan kembali seluruh elemen UI aplikasi
         document.querySelectorAll('.d-none-print-temp').forEach(el => {
             el.classList.remove('d-none-print-temp');
             el.style.display = '';
         });
-        
-    }, 500); // Jeda aman setengah detik
+
+        // Hapus event listener agar tidak menumpuk
+        window.removeEventListener('afterprint', restoreUIAfterPrint);
+    };
+
+    // Daftarkan listener bawaan browser ketika jendela cetak selesai/ditutup
+    window.addEventListener('afterprint', restoreUIAfterPrint);
+
+    // 6. Eksekusi perintah cetak browser
+    window.print();
+
+    // Jaring Pengaman (Fallback): Jika browser tidak memicu afterprint dalam 1,5 detik, pulihkan paksa
+    setTimeout(() => {
+        if (document.body.contains(printArea) && printArea.classList.contains('print-active-area')) {
+            restoreUIAfterPrint();
+        }
+    }, 1500);
 }
 
 // Meng-ekspor isi HTML menjadi file Word (.docx)
