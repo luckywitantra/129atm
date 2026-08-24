@@ -693,29 +693,111 @@
 
                 <!-- DATA MASTER -->
                 <div id="datamaster" class="page-section d-none fade-in">
-                    <h4 class="fw-bold mb-3 mt-2 text-dark">Database GL & EJ</h4>
-                    
-                    <!-- NOTIFIKASI SABUK PENGAMAN -->
-                    <div class="alert bg-info-subtle border-0 text-info py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" style="font-size: 0.75rem;">
+                    <!-- Header & Tombol Aksi -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-2 border-bottom pb-3">
                         <div>
-                            <i class="bi bi-shield-check me-1 fs-6"></i> <strong>Sistem Auto-Limit Aktif.</strong> Menampilkan data maksimal 5.000 transaksi terakhir agar aplikasi tetap ringan & super cepat.
+                            <h4 class="fw-black mb-0 text-dark d-flex align-items-center">
+                                <i class="bi bi-database-fill text-success me-2"></i> Database GL & EJ
+                            </h4>
+                            <p class="text-muted small fw-medium mb-0 mt-1">Pusat seluruh arsip transaksi harian dari Sistem dan Mesin.</p>
+                        </div>
+                        <button class="btn btn-success btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="fetchDatabaseData()">
+                            <i class="bi bi-arrow-repeat me-1"></i> Sinkronisasi
+                        </button>
+                    </div>
+                    
+                    <div class="data-completeness-banner"></div>
+
+                    <!-- KARTU SUMMARY DATA MASTER (Live Widgets) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover overflow-hidden position-relative h-100">
+                                <i class="bi bi-server position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -15px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <span class="badge bg-white text-primary rounded-pill mb-2 fw-bold shadow-sm"><i class="bi bi-file-earmark-text-fill"></i> Data Sistem</span>
+                                    <h2 class="fw-black mb-0 text-white" id="dmTotalGL">0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Total Transaksi GL Tersimpan</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover overflow-hidden position-relative h-100">
+                                <i class="bi bi-receipt position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -15px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <span class="badge bg-white text-success rounded-pill mb-2 fw-bold shadow-sm"><i class="bi bi-printer-fill"></i> Data Mesin</span>
+                                    <h2 class="fw-black mb-0 text-white" id="dmTotalEJ">0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Total Transaksi EJ Tersimpan</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-danger text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover overflow-hidden position-relative h-100">
+                                <i class="bi bi-shield-exclamation position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -15px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <span class="badge bg-white text-danger rounded-pill mb-2 fw-bold shadow-sm"><i class="bi bi-exclamation-triangle-fill"></i> Kasus Selisih</span>
+                                    <h2 class="fw-black mb-0 text-white" id="dmTotalSelisih">0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Total Transaksi Anomali Terdeteksi</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
-                        <!-- ... (kode filter Anda) ... -->
-                        <div class="row g-1 align-items-end">
-                            <div class="col-6 col-md-2"><input type="date" id="filterStart" class="form-control form-control-sm rounded-pill bg-light text-secondary border-0 px-3" onchange="changePage('master', 1); renderDataMaster()"></div>
-                            <div class="col-6 col-md-3"><input type="text" id="filterResiDm" list="dl-resi" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..." oninput="changePage('master', 1); renderDataMaster()"></div>
-                            <div class="col-4 col-md-2"><input type="text" id="filterAtmDm" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..." oninput="changePage('master', 1); renderDataMaster()"></div>
-                            <div class="col-4 col-md-3"><input type="number" id="filterNominalDm" list="dl-nominal" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Nominal Rp..." oninput="changePage('master', 1); renderDataMaster()"></div>
-                            <div class="col-4 col-md-2"><select id="filterStatus" class="form-select form-select-sm rounded-pill bg-light text-secondary border-0 px-3" onchange="changePage('master', 1); renderDataMaster()"><option value="SEMUA">Semua Data</option><option value="SELISIH">Hanya Selisih</option><option value="AMAN">Aman (Cocok)</option></select></div>
+                    <!-- NOTIFIKASI SABUK PENGAMAN -->
+                    <div class="alert bg-dark text-white border-0 py-2 px-4 rounded-pill shadow-sm d-flex align-items-center mb-4 bouncy-hover" style="font-size: 0.75rem;">
+                        <i class="bi bi-shield-lock-fill text-warning fs-5 me-3"></i> 
+                        <span class="fw-medium"><strong>Sistem Auto-Limit Aktif.</strong> Menampilkan data maksimal 5.000 transaksi terbaru agar aplikasi tetap ringan, stabil, dan super cepat.</span>
+                    </div>
+
+                    <!-- TOOLBAR FILTER & PENCARIAN -->
+                    <div class="card bg-white border border-light shadow-sm rounded-pill mb-4 p-2">
+                        <div class="row g-2 align-items-center px-2">
+                            <div class="col-6 col-md-2">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-calendar-date"></i></span>
+                                    <input type="date" id="filterStart" class="form-control bg-light border-0 rounded-pill px-2 fw-bold text-secondary" onchange="changePage('master', 1); renderDataMaster()">
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-receipt"></i></span>
+                                    <input type="text" id="filterResiDm" list="dl-resi" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="Cari Resi..." oninput="changePage('master', 1); renderDataMaster()">
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-hdd-rack"></i></span>
+                                    <input type="text" id="filterAtmDm" list="dl-atm" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="ID Mesin..." oninput="changePage('master', 1); renderDataMaster()">
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-cash"></i></span>
+                                    <input type="number" id="filterNominalDm" list="dl-nominal" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="Rp..." oninput="changePage('master', 1); renderDataMaster()">
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <select id="filterStatus" class="form-select form-select-sm bg-dark text-white border-0 rounded-pill px-3 fw-bold shadow-sm" onchange="changePage('master', 1); renderDataMaster()">
+                                    <option value="SEMUA">Semua Status Transaksi</option>
+                                    <option value="SELISIH">Hanya Data Anomali</option>
+                                    <option value="AMAN">Hanya Data Cocok (Aman)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- TABEL DATA MASTER -->
                     <div class="table-responsive rounded-4 shadow-sm bg-white border">
                         <table class="table align-middle mb-0 text-nowrap table-hover table-sm table-custom-compact">
-                            <thead class="table-light sticky-top shadow-sm"><tr><th>Sumber</th><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Info</th></tr></thead>
+                            <thead class="table-light sticky-top border-bottom">
+                                <tr>
+                                    <th width="10%" class="ps-3">SUMBER</th>
+                                    <th width="15%">TANGGAL TRANSAKSI</th>
+                                    <th width="15%">ID MESIN</th>
+                                    <th width="15%">NOMOR RESI</th>
+                                    <th width="20%">NOMINAL TRANSAKSI</th>
+                                    <th width="25%">KETERANGAN / STATUS</th>
+                                </tr>
+                            </thead>
                             <tbody id="tableBodyDataMaster"></tbody>
                         </table>
                     </div>
