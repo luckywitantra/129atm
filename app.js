@@ -484,6 +484,7 @@ async function fetchSelisihData() {
         populateDatalist('dl-atm', dAtms); populateDatalist('dl-resi', dResis); populateDatalist('dl-nominal', dNoms);
         renderSelisihTablesFiltered();
         renderCalendar();
+        renderDashboard();
     } catch (err) { console.error("Error Fetch Selisih:", err); throw err; }
 }
 
@@ -662,7 +663,7 @@ async function fetchDatabaseData() {
     if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-1"></div><br><small>Menyinkronkan Database...</small></td></tr>`;
     try {
         const result = await apiCall('getDatabase');
-        if(result && result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); renderCalendar();}
+        if(result && result.success) { databaseData = result.data; renderUploadHistory(); renderDataMaster(); updateDataCompletenessBanner(); renderCalendar(); renderDashboard();}
     } catch (err) { console.error("fetchDatabaseData Error:", err); throw err; }
 }
 
@@ -821,7 +822,7 @@ async function fetchOpnameHistory() {
     document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
     try {
         const result = await apiCall('getOpname');
-        if(result && result.success) { globalOpnameData = result.data; renderOpnameTable(); }
+        if(result && result.success) { globalOpnameData = result.data; renderOpnameTable(); renderDashboard(); }
     } catch (err) { console.error(err); }
 }
 
