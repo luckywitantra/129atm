@@ -1052,58 +1052,67 @@ async function fetchOpnameHistory() {
     } catch (err) { console.error(err); }
 }
 
+// ==========================================
+// RENDER TABEL RIWAYAT OPNAME FISIK
+// ==========================================
 function renderOpnameTable() {
     const tbody = document.getElementById('tableBodyOpname');
-    if (globalOpnameData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-inbox fs-4 d-block mb-1"></i> Belum ada riwayat Opname di bulan ini.</td></tr>`;
-        return;
-    }
-    
-    const fAtm = document.getElementById('filterAtmOp') ? document.getElementById('filterAtmOp').value.toLowerCase() : '';
-    const fTgl = document.getElementById('filterTglOp') ? document.getElementById('filterTglOp').value : '';
+    if(!tbody) return;
 
-    let filteredData = globalOpnameData.filter(row => {
+    let raw = globalOpnameData || [];
+    const term = document.getElementById('filterAtmOp') ? document.getElementById('filterAtmOp').value.toLowerCase() : '';
+    const tgl = document.getElementById('filterTglOp') ? document.getElementById('filterTglOp').value : '';
+
+    let filtered = raw.filter(r => {
         let match = true;
-        if(fAtm) match = match && String(row[2]).toLowerCase().includes(fAtm);
-        if(fTgl) match = match && String(row[1]).substring(0,10) === fTgl;
+        if (term) match = match && String(r[2]).toLowerCase().includes(term);
+        if (tgl) match = match && String(r[1]).substring(0, 10) === tgl;
         return match;
     });
-    
-    let baUsageMap = new Map(); let totalFisikSemuaBA = 0; let totalDigunakan = 0;
-    if (globalSelisihData) {
-        let selesaiData = globalSelisihData.filter(r => String(r[5]).toLowerCase() !== 'belum');
-        selesaiData.forEach(r => {
-            let reason = String(r[6] || ''); let nominalTerpakai = parseFloat(r[3]) || 0; let atmTerpakai = String(r[1]).trim();
-            let match = reason.match(/tanggal (\d{4}-\d{2}-\d{2})/);
-            if (match) { let key = `${match[1]}_${atmTerpakai}`; baUsageMap.set(key, (baUsageMap.get(key) || 0) + nominalTerpakai); totalDigunakan += nominalTerpakai; }
-        });
-    }
-    
-    let sortedData = [...filteredData].sort((a,b) => new Date(String(b[1]).replace(' ', 'T')) - new Date(String(a[1]).replace(' ', 'T')));
-    const pageData = sortedData.slice((pageState.opname - 1) * PAGE_SIZE, pageState.opname * PAGE_SIZE);
 
+    const pageData = filtered.slice((pageState.opname - 1) * PAGE_SIZE, pageState.opname * PAGE_SIZE);
+    
     if (pageData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted small"><i class="bi bi-emoji-smile d-block fs-4 mb-1"></i> Tidak ada data Opname yang cocok.</td></tr>`;
-    } else {
-        tbody.innerHTML = pageData.map(row => {
-            let tglBA_str = String(row[1]).substring(0,10); let atmBA = String(row[2]).trim(); let selisihAsli = parseFloat(row[7]);
-            totalFisikSemuaBA += Math.abs(selisihAsli); 
-            let keyBA = `${tglBA_str}_${atmBA}`; let terpakai = baUsageMap.get(keyBA) || 0; let sisa = Math.abs(selisihAsli) - terpakai; let persenPakai = Math.abs(selisihAsli) === 0 ? 0 : (terpakai / Math.abs(selisihAsli)) * 100;
-            let badgeClass = selisihAsli > 0 ? "bg-success" : (selisihAsli < 0 ? "bg-danger" : "bg-secondary"); let badgeText = selisihAsli > 0 ? "LEBIH" : (selisihAsli < 0 ? "KURANG" : "BALANCE");
-            let progressHtml = '';
-            if (Math.abs(selisihAsli) > 0) {
-                let statusTeks = sisa === 0 ? '<span class="text-success"><i class="bi bi-check-all"></i> Selesai (Tuntas)</span>' : `<span class="text-warning">Tersisa: ${formatRp(sisa)}</span>`;
-                progressHtml = `<div class="mt-1" style="width: 130px;"><div class="d-flex justify-content-between text-[0.6rem] mb-1 fw-bold text-muted" style="font-size:0.6rem"><span>${statusTeks}</span></div><div class="progress" style="height: 4px;"><div class="progress-bar ${sisa === 0 ? 'bg-success' : 'bg-info'}" role="progressbar" style="width: ${persenPakai}%"></div></div></div>`;
-            } else { progressHtml = `<span class="text-muted" style="font-size:0.65rem">- Tidak ada selisih -</span>`; }
-            let rowDataStr = encodeURIComponent(JSON.stringify(row));
-            return `<tr><td class="fw-medium text-secondary" style="font-size:0.75rem">${row[1].substring(0,16).replace('T', ' ')}</td><td><span class="badge border border-secondary text-secondary rounded-pill">${atmBA}</span></td><td><span class="badge ${badgeClass} rounded-pill shadow-sm" style="font-size:0.65rem">${badgeText} ${formatRp(Math.abs(selisihAsli))}</span></td><td>${progressHtml}</td><td><button class="btn btn-sm btn-light text-success rounded-circle border shadow-sm bouncy-hover me-1" onclick="printRiwayatBAOpname('${rowDataStr}')" title="Cetak Ulang B/A"><i class="bi bi-printer-fill"></i></button><button class="btn btn-sm btn-light text-primary rounded-circle border shadow-sm bouncy-hover me-1" onclick="editOpname('${rowDataStr}')" title="Edit"><i class="bi bi-pencil-fill"></i></button><button class="btn btn-sm btn-light text-danger rounded-circle border shadow-sm bouncy-hover" onclick="deleteOpname('${row[0]}')" title="Hapus"><i class="bi bi-trash-fill"></i></button></td></tr>`;
-        }).join('');
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-1"></i> Belum ada data Berita Acara Opname.</td></tr>`;
+        document.getElementById('paginationOpname').innerHTML = '';
+        return;
     }
 
-    document.getElementById('op-hierarki-tot').innerText = formatRp(totalFisikSemuaBA); document.getElementById('op-hierarki-pakai').innerText = formatRp(totalDigunakan); document.getElementById('op-hierarki-sisa').innerText = formatRp(totalFisikSemuaBA - totalDigunakan); document.getElementById('op-hierarki-progress').style.width = `${totalFisikSemuaBA === 0 ? 0 : (totalDigunakan / totalFisikSemuaBA) * 100}%`;
-    document.getElementById('paginationOpname').innerHTML = renderPagination(filteredData.length, pageState.opname, PAGE_SIZE, 'opname');
-}
+    tbody.innerHTML = pageData.map(r => {
+        let id = r[0];
+        let waktu = String(r[1]).substring(0, 16);
+        let atm = String(r[2]).trim().toUpperCase();
+        let selisih = parseFloat(r[7]) || 0;
+        
+        // Desain Badge untuk Hasil Fisik Laci
+        let badgeFisik = selisih === 0 ? `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 shadow-sm">BALANCE</span>` :
+                         selisih > 0 ? `<span class="badge bg-success rounded-pill px-3 shadow-sm">LEBIH ${formatRp(selisih)}</span>` : 
+                                       `<span class="badge bg-danger rounded-pill px-3 shadow-sm">KURANG ${formatRp(Math.abs(selisih))}</span>`;
 
+        // Desain Teks untuk Status Penambalan AI
+        let statusAI = selisih === 0 ? `<span class="text-muted small fw-bold">-</span>` : `<span class="small fw-bold text-warning">Tersisa: ${formatRp(Math.abs(selisih))}</span>`;
+
+        // Bungkus data mentah agar bisa dikirim ke fungsi Cetak
+        const rawStr = encodeURIComponent(JSON.stringify(r));
+
+        return `
+            <tr>
+                <td class="fw-medium text-secondary ps-3" style="font-size:0.8rem">${waktu}</td>
+                <td><span class="badge bg-light text-dark border rounded-pill shadow-sm px-3">${atm}</span></td>
+                <td>${badgeFisik}</td>
+                <td>${statusAI}</td>
+                <td class="text-center pe-3">
+                    <div class="d-flex justify-content-center gap-2">
+                        <button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm bouncy-hover px-3" onclick="printRiwayatBAOpname('${rawStr}')" title="Cetak Berita Acara"><i class="bi bi-printer-fill me-1"></i> Cetak</button>
+                        <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold shadow-sm bouncy-hover px-2" onclick="deleteOpname('${id}')" title="Hapus Data"><i class="bi bi-trash-fill"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('paginationOpname').innerHTML = renderPagination(filtered.length, pageState.opname, PAGE_SIZE, 'opname');
+}
 function editOpname(rawStr) {
     const row = JSON.parse(decodeURIComponent(rawStr));
     document.getElementById('opEditId').value = row[0]; document.getElementById('opWaktu').value = row[1]; document.getElementById('opAtmId').value = row[2]; document.getElementById('opSysSebelum').value = row[3]; document.getElementById('opSysTambah').value = row[4]; document.getElementById('opFisik').value = (parseFloat(row[3]) + parseFloat(row[7])); 
