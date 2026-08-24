@@ -237,6 +237,8 @@
             .month-picker-container { padding-left: 10px !important; padding-right: 10px !important; }
             .month-picker-input { width: 100px !important; font-size: 0.8rem !important; }
         }
+        /* TIPOGRAFI FINANSIAL (Membuat angka sejajar vertikal sempurna) */
+        .tabular-nums { font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -991,17 +993,22 @@
 
                 <!-- ARSIP UNIVERSAL -->
                 <div id="arsip" class="page-section d-none fade-in">
-                    <!-- Header & Tombol Aksi -->
-                    <div class="d-flex justify-content-between align-items-center mb-4 mt-2 border-bottom pb-3">
+                    <!-- Header & Tombol Aksi Arsip -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 mt-2 border-bottom pb-3 gap-3">
                         <div>
                             <h4 class="fw-black mb-0 text-dark d-flex align-items-center">
-                                <i class="bi bi-archive-fill text-primary me-2"></i> Arsip Universal
+                                <i class="bi bi-archive-fill text-dark me-2 pulse-animation"></i> Arsip Universal
                             </h4>
                             <p class="text-muted small fw-medium mb-0 mt-1">Pusat rekam jejak (Audit Trail) seluruh kasus selisih dari awal tahun hingga detik ini.</p>
                         </div>
-                        <button class="btn btn-primary btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="superApp.fetchUniversalData()">
-                            <i class="bi bi-cloud-download-fill me-1"></i> Tarik Data Cloud
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-dark btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="bukaGeneratorPipeline()">
+                                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Rekap Pipeline Bulanan
+                            </button>
+                            <button class="btn btn-primary btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="superApp.fetchUniversalData()">
+                                <i class="bi bi-cloud-download-fill me-1"></i> Tarik Data Cloud
+                            </button>
+                        </div>
                     </div>
 
                     <!-- KARTU SUMMARY ARSIP (Live Widgets) -->
@@ -1462,6 +1469,106 @@
   <!-- ========================================================================= -->
     <!-- MODAL CETAK B/A PENYELESAIAN (TABEL KEBAL BADAI - 1 HALAMAN RAPI)         -->
     <!-- ========================================================================= -->
+    <!-- ========================================================================= -->
+    <!-- MODAL GENERATOR LAPORAN PIPELINE BULANAN (LANDSCAPE - PRINT READY)        -->
+    <!-- ========================================================================= -->
+    <div class="modal fade" id="pipelineModal" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+            <div class="modal-content rounded-0 border-0 shadow">
+                <div class="modal-header bg-dark text-white rounded-0 py-2 d-flex align-items-center">
+                    <h6 class="modal-title fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph"></i> Generator Laporan Pipeline</h6>
+                    <div class="ms-auto d-flex align-items-center gap-3">
+                        <label class="small fw-bold mb-0">Pilih Bulan Rekap:</label>
+                        <input type="month" id="inputBulanPipeline" class="form-control form-control-sm rounded-pill border-0 fw-bold px-3" onchange="generatePipelineReport()">
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-3 p-md-4 bg-secondary-subtle d-flex justify-content-center custom-scroll">
+                    
+                    <!-- KERTAS A4 (Di-custom untuk Landscape menggunakan in-line CSS khusus) -->
+                    <div id="printPipelineArea" class="kertas-a4 shadow position-relative" style="max-width: 297mm; width: 100%; min-height: 210mm;">
+                        
+                        <!-- KOP SURAT TABEL KEBAL BADAI -->
+                        <table class="table table-borderless w-100 mb-3 border-bottom border-dark border-2 pb-2">
+                            <tr>
+                                <td width="15%" class="text-start align-middle px-0"><img id="cetakKop_logoKiri3" src="" style="max-height: 50px; max-width: 100%; display: none;"></td>
+                                <td width="70%" class="text-center align-middle px-0" style="line-height: 1.2;">
+                                    <strong style="color: #0070c0; font-size: 14px;">PT BANK PEMBANGUNAN DAERAH KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
+                                    <span id="pipe_cabang" class="fw-bold text-uppercase" style="font-size: 12px;">KANTOR CABANG PEMBANTU BABULU</span>
+                                </td>
+                                <td width="15%" class="text-end align-middle px-0"><img id="cetakKop_logoKanan3" src="" style="max-height: 50px; max-width: 100%; display: none;"></td>
+                            </tr>
+                        </table>
+
+                        <div class="text-center mb-4">
+                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline" style="font-size: 15px;">REKAPITULASI PIPELINE SELISIH ATM</h5>
+                            <h6 class="fw-bolder text-muted mb-0" style="font-size: 12px;">PERIODE BULAN: <span id="pipe_periode_text" class="text-dark">AGUSTUS 2026</span></h6>
+                        </div>
+
+                        <!-- EXECUTIVE SUMMARY DASHBOARD (DI DALAM KERTAS) -->
+                        <table class="table table-bordered border-dark table-sm text-center mb-4 w-100 mx-auto" style="font-size: 12px; background-color: #f8f9fa;">
+                            <tr>
+                                <td width="25%" class="align-middle py-2">
+                                    <span class="d-block text-muted fw-bold" style="font-size: 9px;">TOTAL KASUS ANOMALI</span>
+                                    <span class="fs-5 fw-black text-dark" id="pipe_sum_kasus">0</span>
+                                </td>
+                                <td width="25%" class="align-middle py-2">
+                                    <span class="d-block text-success fw-bold" style="font-size: 9px;">SELESAI DITUTUP (B/A)</span>
+                                    <span class="fs-5 fw-black text-success" id="pipe_sum_selesai">0</span>
+                                </td>
+                                <td width="25%" class="align-middle py-2">
+                                    <span class="d-block text-danger fw-bold" style="font-size: 9px;">KASUS MENGGANTUNG</span>
+                                    <span class="fs-5 fw-black text-danger" id="pipe_sum_gantung">0</span>
+                                </td>
+                                <td width="25%" class="align-middle py-2">
+                                    <span class="d-block text-muted fw-bold" style="font-size: 9px;">POTENSI NOMINAL GANTUNG</span>
+                                    <span class="fs-6 fw-black text-dark tabular-nums" id="pipe_sum_nominal">Rp 0</span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- TABEL DETAIL DATA -->
+                        <table class="table table-bordered border-dark table-sm mb-4" style="font-size: 11px; line-height: 1.3;">
+                            <thead class="text-center align-middle" style="background-color: #e9ecef !important;">
+                                <tr>
+                                    <th width="3%">NO</th>
+                                    <th width="12%">TANGGAL TRX</th>
+                                    <th width="12%">ID MESIN ATM</th>
+                                    <th width="15%">NO. REFERENSI</th>
+                                    <th width="18%">NOMINAL SELISIH</th>
+                                    <th width="12%">STATUS</th>
+                                    <th width="28%">TINDAK LANJUT / B/A</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pipe_tbody">
+                                <!-- Data Di-Generate Otomatis oleh JS -->
+                            </tbody>
+                        </table>
+
+                        <!-- TANDA TANGAN -->
+                        <table class="table table-borderless w-100 mt-4 mb-0 text-center" style="font-size: 12px;">
+                            <tr>
+                                <td width="33%"></td><td width="34%"></td>
+                                <td width="33%" class="pb-2"><span id="pipe_kota"></span>, <span id="pipe_tgl_cetak"></span></td>
+                            </tr>
+                            <tr><td colspan="2" class="fw-bold pb-5">TIM SKO ATM</td><td class="fw-bold pb-5">Mengetahui,</td></tr>
+                            <tr class="align-bottom">
+                                <td class="pt-4"><p class="fw-bold text-decoration-underline mb-0" id="pipe_teller"></p><p class="mb-0">Teller</p></td>
+                                <td class="pt-4"><p class="fw-bold text-decoration-underline mb-0" id="pipe_admin"></p><p class="mb-0">Staff Administrasi Capem</p></td>
+                                <td class="pt-4"><p class="fw-bold text-decoration-underline mb-0" id="pipe_pimpinan"></p><p class="mb-0">Pemimpin</p></td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>
+                <div class="modal-footer rounded-0 py-2">
+                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printPipelineArea', 'Laporan_Pipeline')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
+                    <button class="btn btn-danger fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printPipelineArea')"><i class="bi bi-printer-fill"></i> Cetak A4 Landscape</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
