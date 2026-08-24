@@ -2025,17 +2025,27 @@ function geserBulan(arah) {
 }
 
 // ==========================================
-// INTERACTIVE GUIDED TOUR: OPNAME ATM
+// INTERACTIVE GUIDED TOUR: OPNAME ATM (SPOTLIGHT EDITION)
 // ==========================================
+
+// Fungsi pembersih sorotan
+function clearTourSpotlight() {
+    document.querySelectorAll('.tour-spotlight').forEach(el => {
+        el.classList.remove('tour-spotlight');
+    });
+}
+
 function startOpnameTour() {
-    // Pastikan pengguna berada di tab Form Input saat tour dimulai
+    clearTourSpotlight();
     let tabForm = document.getElementById('tab-op-form');
     if (tabForm) tabForm.click();
 
     Swal.fire({
-        title: '🏦 Selamat Datang di Modul Opname ATM',
-        html: 'Tur profesional ini akan memandu Anda memahami cara menghitung uang fisik laci dan mencetak Berita Acara resmi dengan 4 penanda tangan.',
+        title: '🏦 Selamat Datang di Modul Opname',
+        html: 'Tur profesional ini akan memandu Anda memahami cara menghitung uang fisik laci dan mencetak Berita Acara.',
         icon: 'info',
+        position: 'center',
+        backdrop: 'rgba(10, 37, 64, 0.85)', // Latar belakang biru dongker pekat
         confirmButtonText: 'Mulai Tur (<span id="tour-step">1</span>/4)',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
@@ -2050,52 +2060,62 @@ function startOpnameTour() {
 }
 
 function tourStep2() {
-    // Fokuskan panduan ke kotak Identitas Mesin
-    let el = document.getElementById('opAtmId');
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.focus();
-        el.classList.add('border', 'border-danger', 'shadow');
-        setTimeout(() => el.classList.remove('border', 'border-danger', 'shadow'), 3000);
+    clearTourSpotlight();
+    
+    // Cari elemen input, lalu sorot SELURUH KARTU pembungkusnya
+    let inputEl = document.getElementById('opAtmId');
+    if (inputEl) {
+        let cardEl = inputEl.closest('.card'); // Mencari kartu induknya
+        if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            cardEl.classList.add('tour-spotlight');
+        }
     }
 
     Swal.fire({
         title: '1️⃣ Identitas Mesin & Waktu',
-        html: 'Ketik atau pilih <b>ID Mesin ATM</b> (sistem akan mendeteksi otomatis sugesti mesin). Tentukan juga waktu pelaksanaan opname dan ubah nama <b>Security</b> yang bertugas pada shift tersebut jika diperlukan.',
+        html: 'Ketik atau pilih <b>ID Mesin ATM</b>. Tentukan juga waktu pelaksanaan opname dan ubah nama <b>Security</b> jika diperlukan.',
         icon: 'question',
-        confirmButtonText: 'Selanjutnya (2/4)',
+        position: 'bottom-end', // Pop-up pindah ke pojok kanan bawah agar tidak menutupi sorotan
+        backdrop: 'rgba(10, 37, 64, 0.85)',
+        confirmButtonText: 'Selanjutnya (2/4) <i class="bi bi-arrow-right"></i>',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
         showCancelButton: true,
-        cancelButtonText: 'Kembali',
+        cancelButtonText: 'Batal',
     }).then((result) => {
         if (result.isConfirmed) {
             tourStep3();
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
-            startOpnameTour();
+        } else {
+            clearTourSpotlight();
         }
     });
 }
 
 function tourStep3() {
-    // Fokuskan panduan ke Kalkulator
-    let el = document.getElementById('opFisik');
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.focus();
-        el.classList.add('border', 'border-warning', 'shadow');
-        setTimeout(() => el.classList.remove('border', 'border-warning', 'shadow'), 3000);
+    clearTourSpotlight();
+    
+    // Sorot SELURUH KARTU Kalkulator
+    let inputEl = document.getElementById('opFisik');
+    if (inputEl) {
+        let cardEl = inputEl.closest('.card');
+        if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            cardEl.classList.add('tour-spotlight');
+        }
     }
 
     Swal.fire({
         title: '2️⃣ Kalkulator Rekonsiliasi Kas',
-        html: 'Masukkan saldo sebelum pengisian dan uang yang ditambahkan dari sistem core. Masukkan hasil hitung uang <b>Fisik Laci</b>. Sistem akan otomatis menghitung apakah kas <i>Balance</i>, Lebih, atau Kurang.',
+        html: 'Masukkan saldo sistem dan uang <b>Fisik Laci</b>. Sistem akan otomatis menghitung selisih secara <i>Real-time</i>.',
         icon: 'warning',
-        confirmButtonText: 'Selanjutnya (3/4)',
+        position: 'bottom-start', // Pop-up pindah ke pojok kiri bawah
+        backdrop: 'rgba(10, 37, 64, 0.85)',
+        confirmButtonText: 'Selanjutnya (3/4) <i class="bi bi-arrow-right"></i>',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
         showCancelButton: true,
-        cancelButtonText: 'Sebelumnya',
+        cancelButtonText: 'Kembali',
     }).then((result) => {
         if (result.isConfirmed) {
             tourStep4();
@@ -2106,22 +2126,34 @@ function tourStep3() {
 }
 
 function tourStep4() {
+    clearTourSpotlight();
+    
+    // Sorot area Footer (Tombol Cetak & Simpan)
+    let btnEl = document.querySelector('.card-footer');
+    if (btnEl) {
+        btnEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        btnEl.classList.add('tour-spotlight');
+    }
+
     Swal.fire({
-        title: '3️⃣ Pratinjau & Simpan Berita Acara',
-        html: 'Tekan tombol <b>Pratinjau</b> untuk melihat lembar kerja A4 resmi yang dilengkapi struktur 4 penanda tangan (Teller, Admin, Security, Pemimpin) beserta Barcode e-Document. Jika sudah klop, tekan <b>Simpan ke Database</b>.',
+        title: '3️⃣ Pratinjau & Simpan',
+        html: 'Tekan <b>Pratinjau</b> untuk melihat lembar A4 resmi. Jika sudah klop, tekan <b>Simpan ke Database</b>.',
         icon: 'success',
+        position: 'top', // Pop-up pindah ke atas
+        backdrop: 'rgba(10, 37, 64, 0.85)',
         confirmButtonText: 'Selesai 🚀',
         confirmButtonColor: '#198754',
         allowOutsideClick: false,
         showCancelButton: true,
-        cancelButtonText: 'Sebelumnya',
+        cancelButtonText: 'Kembali',
     }).then((result) => {
+        clearTourSpotlight(); // Bersihkan semua sorotan saat selesai
         if (result.dismiss === Swal.DismissReason.cancel) {
             tourStep3();
         } else {
             Swal.fire({
                 title: '🎉 Tur Selesai!',
-                text: 'Anda sekarang siap menggunakan modul Opname ATM secara profesional.',
+                text: 'Anda sekarang siap menggunakan modul Opname ATM.',
                 icon: 'success',
                 timer: 2000,
                 showConfirmButton: false
