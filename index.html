@@ -33,21 +33,32 @@
         .bg-gradient-playful { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .icon-box-playful { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-size: 1.2rem; }
 
-        /* ATURAN CETAK (PRINT) KERTAS A4 UNTUK BERITA ACARA */
+       /* ========================================== */
+        /* 7. ENGINE CETAK KERTAS A4 & BUKU BESAR     */
+        /* ========================================== */
         @media print {
-            body * { visibility: hidden; }
-            #printBAPenyelesaianArea, #printBAPenyelesaianArea *, #printBAOpnameArea, #printBAOpnameArea * { visibility: visible; }
-            #printBAPenyelesaianArea, #printBAOpnameArea { position: absolute; left: 0; top: 0; width: 210mm !important; margin: 0 !important; padding: 15mm !important; box-shadow: none !important; border: none !important; }
-            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
-        }
+            body * { visibility: hidden !important; }
+            
+            /* Class penyelamat agar div yang diprint melayang di atas segalanya */
+            .print-active-area, .print-active-area * { visibility: visible !important; }
+            .print-active-area {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: white !important;
+                z-index: 999999 !important;
+                overflow: visible !important;
+            }
 
-        @media print {
-            body * { visibility: hidden; }
-            #printBAPenyelesaianArea, #printBAPenyelesaianArea *,
-            #printBAOpnameArea, #printBAOpnameArea *,
-            #printLaporanArea, #printLaporanArea * { visibility: visible; }
-            #printBAPenyelesaianArea, #printBAOpnameArea, #printLaporanArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0 !important; padding: 10mm !important; box-shadow: none !important; border: none !important; }
             .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
+            .btn, .modal-header, .modal-footer, .btn-close { display: none !important; }
+            body { background: white !important; overflow: visible !important; }
         }
         /* CSS KALENDER REKONSILIASI CANGGIH */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
@@ -1118,30 +1129,39 @@
         </div>
     </div>
 
-    <!-- MODAL FORM PENYELESAIAN CERDAS -->
+   <!-- MODAL EKSEKUSI PENYELESAIAN (DIPERBARUI) -->
     <div class="modal fade" id="resolveModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-5 border-0 shadow-lg">
-                <div class="modal-header bg-success text-white border-0 py-3">
-                    <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square"></i> Form Penyelesaian Selisih</h6>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white border-0 py-3 rounded-top-4">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Eksekusi Penyelesaian Selisih</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 bg-light">
-                    <div class="alert bg-warning-subtle border-warning text-dark rounded-4 shadow-sm p-3 mb-4" id="resolveInfoBox"></div>
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">No. Rekening Nasabah</label><input type="text" id="resRekening" class="form-control form-control-sm rounded-pill fw-bold border-secondary-subtle" placeholder="Contoh: 1292009891"></div>
-                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nama Nasabah</label><input type="text" id="resNama" class="form-control form-control-sm rounded-pill text-uppercase fw-bold border-secondary-subtle" placeholder="Contoh: ROHADIYANTO"></div>
-                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Jenis Transaksi</label><select id="resTrx" class="form-select form-select-sm rounded-pill border-secondary-subtle"><option>Tarik Tunai On Us</option><option>Transfer Sesama</option><option>Transfer Antar Bank</option></select></div>
-                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Problem / Kendala</label><input type="text" id="resProblem" class="form-control form-control-sm rounded-pill border-secondary-subtle" placeholder="Contoh: Transaksi terdebet namun uang tidak keluar" value="Transaksi terdebet namun uang tidak keluar"></div>
-                        <div class="col-12"><label class="small fw-bold text-muted mb-1">Keterangan / Jurnal Penyelesaian</label><textarea id="resolveReason" class="form-control form-control-sm rounded-4 border-secondary-subtle" rows="2" placeholder="Jurnal Debet / Kredit..."></textarea></div>
+                    <div id="resolveInfoBox" class="p-3 bg-white border border-success-subtle rounded-4 shadow-sm mb-3"></div>
+                    
+                    <label class="small fw-bold text-muted mb-1">Tanggal Penyelesaian B/A <span class="text-danger">*</span></label>
+                    <input type="date" id="resTanggal" class="form-control rounded-pill border-0 shadow-sm mb-3 fw-bold text-secondary">
+
+                    <label class="small fw-bold text-muted mb-1">Alasan / Jurnal Penutup <span class="text-danger">*</span></label>
+                    <textarea id="resolveReason" class="form-control rounded-4 border-0 shadow-sm mb-3" rows="3" placeholder="Contoh: Telah di jurnal..."></textarea>
+                    
+                    <div class="row g-2">
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Rekening Tujuan</label><input type="text" id="resRekening" class="form-control rounded-pill border-0 shadow-sm" placeholder="Nomor Rekening"></div>
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Nama Nasabah</label><input type="text" id="resNama" class="form-control rounded-pill border-0 shadow-sm" placeholder="Nama Lengkap"></div>
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Jenis Transaksi</label><input type="text" id="resTrx" class="form-control rounded-pill border-0 shadow-sm" value="Tarik Tunai On Us"></div>
+                        <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Problem Mesin</label><input type="text" id="resProblem" class="form-control rounded-pill border-0 shadow-sm" value="Transaksi terdebet namun uang tidak keluar"></div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 bg-white py-3"><button class="btn btn-light btn-sm rounded-pill px-4" data-bs-dismiss="modal">Batal</button><button class="btn btn-success btn-sm rounded-pill fw-bold px-4 shadow-sm bouncy-hover" onclick="submitResolve()"><i class="bi bi-printer"></i> Simpan & Buat B/A</button></div>
+                <div class="modal-footer border-0 bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill fw-bold px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success rounded-pill fw-bold px-4 shadow-sm bouncy-hover" onclick="submitResolve()"><i class="bi bi-save me-1"></i> Simpan Penyelesaian</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CETAK SURAT B/A PENYELESAIAN -->
+    <!-- MODAL CETAK SURAT B/A PENYELESAIAN (DIPERBARUI DENGAN QR & DOCX) -->
     <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
@@ -1152,27 +1172,14 @@
                 <div class="modal-body p-0 bg-secondary-subtle d-flex justify-content-center custom-scroll">
                     <div id="printBAPenyelesaianArea" class="bg-white text-dark shadow my-4" style="width: 210mm; min-height: 297mm; padding: 20mm; font-family: 'Times New Roman', Times, serif;">
                         
-                        <!-- KOP SURAT BA PENYELESAIAN -->
+                        <!-- KOP SURAT -->
                         <div class="d-flex justify-content-between align-items-center border-bottom border-dark border-2 pb-3 mb-4">
-                            <div style="width: 25%; text-align: left;">
-                                <img id="cetakKop_logoKiri1" src="" style="max-height: 60px; max-width: 100%; display: none;">
-                            </div>
-                            <div style="width: 50%; text-align: left; font-size: 12px; line-height: 1.3;">
-                                <strong style="color: #0070c0; font-size: 14px;">PT. BPD Kaltim Kaltara</strong><br>
-                                <span id="cetak_cabang" class="fw-bold">Kantor Cabang...</span><br>
-                                <span id="cetak_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br>
-                                <span>www.bankaltimtara.co.id</span>
-                            </div>
-                            <div style="width: 25%; text-align: right;">
-                                <img id="cetakKop_logoKanan1" src="" style="max-height: 60px; max-width: 100%; display: none;">
-                            </div>
+                            <div style="width: 25%; text-align: left;"><img id="cetakKop_logoKiri1" src="" style="max-height: 60px; max-width: 100%; display: none;"></div>
+                            <div style="width: 50%; text-align: left; font-size: 12px; line-height: 1.3;"><strong style="color: #0070c0; font-size: 14px;">PT. BPD Kaltim Kaltara</strong><br><span id="cetak_cabang" class="fw-bold">Kantor Cabang...</span><br><span id="cetak_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br><span>www.bankaltimtara.co.id</span></div>
+                            <div style="width: 25%; text-align: right;"><img id="cetakKop_logoKanan1" src="" style="max-height: 60px; max-width: 100%; display: none;"></div>
                         </div>
                         
-                        <div class="text-center mb-4">
-                            <h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5>
-                            <h6 class="fw-bolder mb-0">PENYELESAIAN SELISIH ATM</h6>
-                            <h6 class="fw-bolder" id="cetak_atm_judul"></h6>
-                        </div>
+                        <div class="text-center mb-4"><h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5><h6 class="fw-bolder mb-0">PENYELESAIAN SELISIH ATM</h6><h6 class="fw-bolder" id="cetak_atm_judul"></h6></div>
                         
                         <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-3">Pada hari ini <b id="cetak_hari"></b> Tanggal <b id="cetak_tgl"></b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm"></b>, dengan nominal sebesar <b><span id="cetak_nominal"></span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:</p>
                         <table class="table table-borderless table-sm mb-3 ms-3" style="font-size: 15px;"><tr><td width="25%">No. Rekening</td><td width="2%">:</td><td id="cetak_rek" class="fw-bold"></td></tr><tr><td>Nama</td><td>:</td><td id="cetak_nama" class="fw-bold"></td></tr><tr><td>No. Referensi</td><td>:</td><td id="cetak_resi" class="fw-bold"></td></tr><tr><td>Transaksi</td><td>:</td><td id="cetak_trx"></td></tr><tr><td>Problem</td><td>:</td><td id="cetak_problem"></td></tr></table>
@@ -1180,15 +1187,34 @@
                         <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-2 mt-4"><b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:</p>
                         <table class="table table-bordered table-sm text-center border-dark mb-4" style="font-size: 14px;"><thead class="fw-bold align-middle"><tr><th>Debet</th><th>Kredit</th><th>Nominal</th><th>Keterangan</th></tr></thead><tbody class="align-middle"><tr><td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td><td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td><td class="fw-bold" id="cetak_jurnal_nom"></td><td id="cetak_jurnal_ket"></td></tr></tbody></table>
                         <p style="text-align: justify; line-height: 1.6; font-size: 15px;" class="mb-5">Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait.<br>Atas perhatian dan kerjasamanya disampaikan terima kasih.</p>
-                        <div class="row text-center" style="font-size: 15px;"><div class="col-12 text-end mb-4"><span id="cetak_kota"></span>, <span id="cetak_tgl_ttd"></span></div><div class="col-8"><p class="mb-5 pb-3">TIM SKO ATM</p><div class="row"><div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_teller"></p><p>Teller</p></div><div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_admin"></p><p>Staff Administrasi Capem</p></div></div></div><div class="col-4"><p class="mb-5 pb-3">Mengetahui,</p><p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan"></p><p>Pemimpin</p></div></div>
+                        
+                        <div class="row text-center" style="font-size: 15px;">
+                            <div class="col-12 text-end mb-4"><span id="cetak_kota"></span>, <span id="cetak_tgl_ttd"></span></div>
+                            <div class="col-8">
+                                <p class="mb-5 pb-3">TIM SKO ATM</p>
+                                <div class="row"><div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_teller"></p><p>Teller</p></div><div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_admin"></p><p>Staff Administrasi Capem</p></div></div>
+                            </div>
+                            <div class="col-4">
+                                <p class="mb-5 pb-3">Mengetahui,</p>
+                                <p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan"></p><p>Pemimpin</p>
+                            </div>
+                            <!-- QR CODE VERIFIKASI -->
+                            <div class="col-12 text-start mt-4">
+                                <img id="qrBAPenyelesaian" src="" width="85" class="border p-1 rounded-2 shadow-sm">
+                                <p class="small text-muted mt-1 mb-0" style="font-size:10px;">Scan untuk verifikasi e-Document</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer rounded-0 py-2"><button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Berita Acara</button></div>
+                <div class="modal-footer rounded-0 py-2">
+                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printBAPenyelesaianArea', 'BA_Penyelesaian_Selisih')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printBAPenyelesaianArea')"><i class="bi bi-printer-fill"></i> Cetak A4 / PDF</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CETAK BA OPNAME FISIK -->
+    <!-- MODAL CETAK BA OPNAME FISIK (DIPERBARUI DENGAN QR & DOCX) -->
     <div class="modal fade" id="baOpnameModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
@@ -1199,33 +1225,32 @@
                 <div class="modal-body p-0 bg-light d-flex justify-content-center">
                     <div id="printBAOpnameArea" class="bg-white text-dark shadow-sm my-4" style="width: 210mm; min-height: 297mm; padding: 25mm 20mm; font-family: 'Times New Roman', serif;">
                         
-                        <!-- KOP SURAT BA OPNAME -->
+                        <!-- KOP SURAT -->
                         <div class="d-flex justify-content-between align-items-center border-bottom border-dark border-2 pb-3 mb-4">
-                            <div style="width: 25%; text-align: left;">
-                                <img id="cetakKop_logoKiri2" src="" style="max-height: 60px; max-width: 100%; display: none;">
-                            </div>
-                            <div style="width: 50%; text-align: left; font-size: 12px; line-height: 1.3;">
-                                <strong style="color: #0070c0; font-size: 14px;">PT. BPD Kaltim Kaltara</strong><br>
-                                <span id="cetakOp_cabang_text" class="fw-bold">Kantor Cabang...</span><br>
-                                <span id="cetakOp_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br>
-                                <span>www.bankaltimtara.co.id</span>
-                            </div>
-                            <div style="width: 25%; text-align: right;">
-                                <img id="cetakKop_logoKanan2" src="" style="max-height: 60px; max-width: 100%; display: none;">
-                            </div>
+                            <div style="width: 25%; text-align: left;"><img id="cetakKop_logoKiri2" src="" style="max-height: 60px; max-width: 100%; display: none;"></div>
+                            <div style="width: 50%; text-align: left; font-size: 12px; line-height: 1.3;"><strong style="color: #0070c0; font-size: 14px;">PT. BPD Kaltim Kaltara</strong><br><span id="cetakOp_cabang_text" class="fw-bold">Kantor Cabang...</span><br><span id="cetakOp_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br><span>www.bankaltimtara.co.id</span></div>
+                            <div style="width: 25%; text-align: right;"><img id="cetakKop_logoKanan2" src="" style="max-height: 60px; max-width: 100%; display: none;"></div>
                         </div>
 
-                        <div class="text-center mb-5">
-                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5>
-                            <p class="fw-bold" id="cetakOp_cabang"></p>
-                        </div>
-                        
-                        <p style="text-align: justify; line-height: 1.8; font-size: 14px;" class="mb-4">Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text"></span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:</p>
+                        <div class="text-center mb-5"><h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5><p class="fw-bold" id="cetakOp_cabang"></p></div>
+                        <p style="text-align: justify; line-height: 1.8; font-size: 14px;" class="mb-4">Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin ATM PT. Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text2"></span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut:</p>
                         <table class="table table-borderless table-sm w-100 ms-3" style="line-height: 1.8; font-size: 14px;"><tr><td width="55%">1. Saldo Kas Sebelum Pengisian (System Core)</td><td width="5%">: Rp</td><td id="cetakSysSebelum" class="text-end pe-5">0</td></tr><tr><td>2. Saldo Kas Yang Ditambahkan (System Core)</td><td>: Rp</td><td id="cetakSysTambah" class="text-end pe-5">0</td></tr><tr><td>3. Saldo Kas Setelah Penambahan (System Core)</td><td>: Rp</td><td id="cetakSysTotal" class="text-end pe-5 fw-bold">0</td></tr><tr><td>4. Saldo Kas Menurut Jumlah Fisik</td><td>: Rp</td><td id="cetakFisik" class="text-end pe-5 fw-bold">0</td></tr><tr><td>5. Selisih Kurang Saldo Kas</td><td>: Rp</td><td id="cetakKurang" class="text-end pe-5">0</td></tr><tr><td>6. Selisih Lebih</td><td>: Rp</td><td id="cetakLebih" class="text-end pe-5">0</td></tr></table>
-                        <div class="row text-center mt-5 pt-5" style="font-size: 14px;"><div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas1"></p></div><div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas2"></p></div></div>
+                        
+                        <div class="row text-center mt-5 pt-5" style="font-size: 14px;">
+                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 1,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas1"></p></div>
+                            <div class="col-6"><p class="mb-5 pb-4">Petugas Pengisian 2,</p><p class="fw-bold text-decoration-underline mb-0" id="cetakOp_petugas2"></p></div>
+                            <!-- QR CODE VERIFIKASI -->
+                            <div class="col-12 text-start mt-4">
+                                <img id="qrBAOpname" src="" width="85" class="border p-1 rounded-2 shadow-sm">
+                                <p class="small text-muted mt-1 mb-0" style="font-size:10px;">Scan untuk verifikasi e-Document</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer rounded-0 py-2"><button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak A4 / Simpan PDF</button></div>
+                <div class="modal-footer rounded-0 py-2">
+                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printBAOpnameArea', 'BA_Opname_Fisik_ATM')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printBAOpnameArea')"><i class="bi bi-printer-fill"></i> Cetak A4 / PDF</button>
+                </div>
             </div>
         </div>
     </div>
