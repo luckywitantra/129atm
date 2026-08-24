@@ -1,256 +1,130 @@
-body {
-    transition: background-color 0.3s, color 0.3s;
-}
-.sidebar {
-    border-right: 1px solid rgba(0,0,0,0.1);
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-}
-.nav-link {
-    color: var(--bs-body-color);
-    margin-bottom: 0.5rem;
-    border-radius: 0.25rem;
-}
-.nav-link:hover, .nav-link.active {
-    background-color: var(--bs-primary);
-    color: white;
-}
-[data-bs-theme="dark"] .sidebar {
-    border-right: 1px solid rgba(255,255,255,0.1);
-}
-
-:root {
-    --primary-color: #4e73df;
-    --primary-gradient: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-    --bg-light: #f8f9fc;
-}
-
-body {
-    background-color: var(--bg-light);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    padding-top: 60px; /* Spacer for fixed top header */
-}
-
-/* Gradient Header */
-.bg-gradient-primary {
-    background: var(--primary-gradient) !important;
-}
-
-/* Glassmorphism Cards */
-.glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
-}
-
-/* Icon Box */
-.icon-box {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    font-size: 1.5rem;
-}
-
-/* Animations */
-.fade-in {
-    animation: fadeIn 0.4s ease-in-out;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Modern Tab Navigation */
-.nav-pills .nav-link {
-    color: #6c757d;
-    transition: all 0.3s ease;
-}
-.nav-pills .nav-link.active {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 10px rgba(78, 115, 223, 0.3);
-}
-
-/* Mobile Bottom Navigation */
-.bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom);
-}
-.bottom-nav .nav-item {
-    flex: 1;
-    color: #6c757d;
-    transition: color 0.3s;
-}
-.bottom-nav .active-bottom {
-    color: var(--primary-color) !important;
-    font-weight: 700;
-}
-.bottom-nav .active-bottom i {
-    transform: scale(1.1);
-    transition: transform 0.2s;
-}
-
-/* Sidebar styling */
-.sidebar {
-    background: white;
-    z-index: 1000;
-}
-.sidebar .nav-link.active {
-    background-color: #eef2ff;
-    color: var(--primary-color);
-    font-weight: 600;
-    border-right: 4px solid var(--primary-color);
-    border-radius: 0 8px 8px 0;
-}
 /* ========================================== */
-/* ESTETIKA BANKING THEME (PREVIEW MODAL)     */
-/* ========================================== */
+        /* 1. ROOT VARIABLES & BASE TYPOGRAPHY        */
+        /* ========================================== */
+        :root {
+            --primary-color: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            --banking-gradient: linear-gradient(135deg, #0a2540 0%, #1a4373 100%);
+            --bg-light: #f8faff;
+        }
 
-/* Navy Blue Gradient khas Bank */
-.bg-gradient-banking {
-    background: linear-gradient(135deg, #0a2540 0%, #1a4373 100%);
-}
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding-top: 60px; /* Spacer untuk fixed top header */
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
 
-/* Tombol Aksen Emas/Gold */
-.banking-btn {
-    background-color: #f6c23e;
-    color: #0a2540;
-    border: none;
-    transition: all 0.3s ease;
-}
-.banking-btn:hover {
-    background-color: #e3b030;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(246, 194, 62, 0.4) !important;
-}
+        /* CUSTOM SCROLLBAR ALA MACOS */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; overflow-x: auto; }
 
-/* Kustomisasi Header Tabel Preview */
-.preview-table th {
-    background-color: #f8f9fc !important;
-    color: #1a4373;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e3e6f0;
-}
-.preview-table td {
-    font-size: 0.85rem;
-}
+        /* ========================================== */
+        /* 2. KARTU & EFEK GLASSMORPHISM              */
+        /* ========================================== */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+        }
+        
+        .shadow-inner {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06) !important;
+        }
 
-/* ========================================== */
-/* UI DATA MASTER & POPUP DETAIL SELISIH      */
-/* ========================================== */
+        /* ========================================== */
+        /* 3. ANIMASI INTERAKTIF (UX ENHANCEMENTS)    */
+        /* ========================================== */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Efek Hover untuk Baris Tabel yang Bisa Diklik */
-.table-clickable tbody tr {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.table-clickable tbody tr:hover {
-    background-color: #f1f5f9 !important;
-    transform: scale(1.005);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
+        .bouncy-hover { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease; }
+        .bouncy-hover:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 8px 15px rgba(0,0,0,0.08) !important; }
 
-/* Penanda Baris Selisih di Data Master */
-.row-selisih {
-    border-left: 5px solid #dc3545 !important;
-    background-color: #fffafa !important;
-}
-.row-aman {
-    border-left: 5px solid #198754 !important;
-}
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+        @keyframes pulse-primary { 0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); } 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); } }
+        
+        .pulse-animation { animation: pulse-primary 2s infinite; }
+        .pulse-red-animation { animation: pulse-red 2s infinite; }
 
-/* Kotak Informasi Modern pada Popup */
-.info-box {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 15px;
-    border: 1px solid #e9ecef;
-    height: 100%;
-}
-.info-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #6c757d;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
-    display: block;
-}
-.info-value {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #2b3a4a;
-    margin: 0;
-}
+        /* ========================================== */
+        /* 4. NAVIGASI (SIDEBAR & BOTTOM MOBILE)      */
+        /* ========================================== */
+        .sidebar {
+            border-right: 1px solid rgba(0,0,0,0.05);
+            background: #ffffff;
+            z-index: 1000;
+        }
+        .sidebar .nav-link { color: #6c757d; font-weight: 500; }
+        .sidebar .nav-link:hover { background-color: #f8faff; transform: translateX(4px); color: var(--primary-color); }
+        .sidebar .nav-link.active {
+            background-color: #eef2ff;
+            color: var(--primary-color) !important;
+            font-weight: 800;
+            border-right: 4px solid var(--primary-color);
+        }
 
-/* ========================================== */
-/* PRINT BERITA ACARA STYLES                  */
-/* ========================================== */
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #beritaAcaraPrintArea, #beritaAcaraPrintArea * {
-        visibility: visible;
-    }
-    #beritaAcaraPrintArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        color: #000;
-        padding: 20px;
-    }
-    .modal {
-        position: absolute;
-        left: 0;
-        top: 0;
-        margin: 0;
-        padding: 0;
-        min-height: 550px;
-    }
-    .btn, .modal-header .btn-close, .modal-footer {
-        display: none !important;
-    }
-}
+        .floating-bottom-nav { z-index: 1050; padding-bottom: env(safe-area-inset-bottom); background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); }
+        .bottom-nav .nav-item { flex: 1; color: #6c757d; transition: color 0.3s; }
+        .active-bottom { color: var(--primary-color) !important; font-weight: 800; }
+        .active-bottom i { transform: scale(1.15); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-.summary-card {
-    border-left: 5px solid;
-    transition: transform 0.2s;
-}
-.summary-card:hover {
-    transform: translateY(-3px);
-}
-.summary-lebih { border-left-color: #198754; background: #f8fff9; }
-.summary-kurang { border-left-color: #dc3545; background: #fff8f8; }
+        /* ========================================== */
+        /* 5. TABEL DAN KONTEN SPESIFIK               */
+        /* ========================================== */
+        .table-custom-compact th, .table-custom-compact td { padding: 0.6rem 0.5rem; vertical-align: middle; font-size: 0.8rem; }
+        .table-custom-compact thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; border-bottom: 2px solid #e9ecef; }
+        
+        /* Baris Tabel yang Bisa Diklik */
+        .table-clickable tbody tr { cursor: pointer; transition: all 0.2s; }
+        .table-clickable tbody tr:hover { background-color: #f8faff !important; transform: scale(1.002); box-shadow: 0 4px 6px rgba(0,0,0,0.03); }
 
-/* Dark Mode Adjustments */
-[data-bs-theme="dark"] body { background-color: #121212; }
-[data-bs-theme="dark"] .glass-card, 
-[data-bs-theme="dark"] .bottom-nav,
-[data-bs-theme="dark"] .sidebar { background: #1e1e1e !important; border-color: #2d2d2d !important;}
-[data-bs-theme="dark"] .nav-pills { background: #1e1e1e !important; }
+        /* Penanda Baris Data Master */
+        .row-selisih { border-left: 4px solid #dc3545 !important; background-color: #fffafb !important; }
+        .row-aman { border-left: 4px solid #198754 !important; }
 
-/* Aturan Cetak Kertas A4 */
-@media print {
-    body * { visibility: hidden; }
-    #printBAOpnameArea, #printBAOpnameArea * { visibility: visible; }
-    #printBAOpnameArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 210mm !important;
-        margin: 0 !important;
-        padding: 15mm !important;
-        box-shadow: none !important;
-    }
-    .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; }
-}
+        /* ========================================== */
+        /* 6. DARK MODE ADJUSTMENTS                   */
+        /* ========================================== */
+        [data-bs-theme="dark"] body { background-color: #121212; color: #e0e0e0; }
+        [data-bs-theme="dark"] .glass-card, 
+        [data-bs-theme="dark"] .sidebar, 
+        [data-bs-theme="dark"] .floating-bottom-nav,
+        [data-bs-theme="dark"] .card { background: #1e1e1e !important; border-color: #2d2d2d !important; }
+        [data-bs-theme="dark"] .sidebar { border-right: 1px solid rgba(255,255,255,0.05); }
+        [data-bs-theme="dark"] .table-light, [data-bs-theme="dark"] .bg-light { background-color: #2d2d2d !important; color: #e0e0e0 !important;}
+
+        /* ========================================== */
+        /* 7. ENGINE CETAK KERTAS A4 & BUKU BESAR     */
+        /* ========================================== */
+        @media print {
+            body * { visibility: hidden !important; }
+            
+            /* Tampilkan hanya area kertas dan seluruh isinya */
+            #printBAPenyelesaianArea, #printBAPenyelesaianArea *,
+            #printBAOpnameArea, #printBAOpnameArea *,
+            #printLaporanArea, #printLaporanArea * { visibility: visible !important; }
+            
+            #printBAPenyelesaianArea, #printBAOpnameArea, #printLaporanArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+
+            /* Bersihkan sisa UI Modal Bootstrap */
+            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
+            .btn, .modal-header, .modal-footer, .btn-close { display: none !important; }
+            body { background: white !important; }
+        }
