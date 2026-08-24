@@ -381,19 +381,71 @@
                     </div>
                 </div>
 
-                <!-- KALENDER -->
+                <!-- KALENDER REKONSILIASI PINTAR -->
                 <div id="kalender" class="page-section d-none fade-in">
-                    <h4 class="fw-bold mb-3 mt-2 text-dark">Kalender Rekonsiliasi</h4>
-                    <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover">
-                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-                            <h5 class="fw-black text-primary mb-0" id="calendarMonthLabel">Bulan...</h5>
-                            <div class="d-flex gap-2">
-                                <span class="badge bg-danger-subtle text-danger"><i class="bi bi-circle-fill"></i> Selisih</span>
-                                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i> Aman</span>
-                            </div>
+                    
+                    <!-- 1. Header Section yang Elegan -->
+                    <div class="d-flex justify-content-between align-items-end mb-4 mt-2 border-bottom border-2 pb-3">
+                        <div>
+                            <h4 class="fw-black mb-0 text-dark d-flex align-items-center">
+                                <i class="bi bi-calendar-range-fill text-primary me-2 pulse-animation"></i> Kalender Rekonsiliasi
+                            </h4>
+                            <p class="text-muted small fw-medium mb-0 mt-1">Pemantauan visual 360° untuk status transaksi dan anomali harian.</p>
                         </div>
-                        <div class="calendar-grid" id="calendarGrid">
-                            <!-- JS akan membangun otomatis kotak-kotak kalender di sini -->
+                        <button class="btn btn-outline-primary btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3" onclick="superApp.fetchUniversalData()">
+                            <i class="bi bi-arrow-repeat me-1"></i> Segarkan Data
+                        </button>
+                    </div>
+
+                    <!-- 2. Kartu Kalender Utama -->
+                    <div class="card bg-white border border-light shadow-sm rounded-4 p-4 overflow-hidden position-relative">
+                        <!-- Ornamen Latar Belakang -->
+                        <i class="bi bi-calendar-check position-absolute top-0 end-0 opacity-10" style="font-size: 15rem; margin-top: -50px; margin-right: -40px; pointer-events: none;"></i>
+                        
+                        <div class="position-relative z-1">
+                            <!-- 3. Toolbar Kalender (Navigasi & Legenda) -->
+                            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-center mb-4 gap-3 bg-light p-3 rounded-4 border border-secondary-subtle shadow-inner">
+                                
+                                <!-- Kontrol Navigasi Bulan -->
+                                <div class="d-flex align-items-center gap-3 bg-white p-2 rounded-pill shadow-sm border">
+                                    <button class="btn btn-sm btn-light rounded-circle bouncy-hover d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" onclick="geserBulan(-1)" title="Bulan Sebelumnya">
+                                        <i class="bi bi-chevron-left text-primary fw-bold"></i>
+                                    </button>
+                                    <h5 class="fw-black text-primary mb-0 text-uppercase text-center" id="calendarMonthLabel" style="letter-spacing: 1px; min-width: 140px;">Bulan...</h5>
+                                    <button class="btn btn-sm btn-light rounded-circle bouncy-hover d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" onclick="geserBulan(1)" title="Bulan Selanjutnya">
+                                        <i class="bi bi-chevron-right text-primary fw-bold"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Legenda Status Modern -->
+                                <div class="d-flex flex-wrap justify-content-center gap-2">
+                                    <span class="badge bg-white border border-primary-subtle text-primary shadow-sm px-3 py-2 rounded-pill fw-bold"><i class="bi bi-cloud-arrow-down-fill me-1"></i> GL Masuk</span>
+                                    <span class="badge bg-white border border-success-subtle text-success shadow-sm px-3 py-2 rounded-pill fw-bold"><i class="bi bi-receipt me-1"></i> EJ Masuk</span>
+                                    <span class="badge bg-danger text-white shadow-sm px-3 py-2 rounded-pill fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Ada Selisih</span>
+                                    <span class="badge bg-info text-dark shadow-sm px-3 py-2 rounded-pill fw-bold"><i class="bi bi-shield-fill-check me-1"></i> Aman (Klop)</span>
+                                </div>
+                            </div>
+
+                            <!-- 4. Header Hari (Senin - Minggu) -->
+                            <div class="calendar-grid mb-2 px-1">
+                                <div class="calendar-day-header text-danger">MGG</div>
+                                <div class="calendar-day-header">SEN</div>
+                                <div class="calendar-day-header">SEL</div>
+                                <div class="calendar-day-header">RAB</div>
+                                <div class="calendar-day-header">KAM</div>
+                                <div class="calendar-day-header">JUM</div>
+                                <div class="calendar-day-header text-primary">SAB</div>
+                            </div>
+
+                            <!-- 5. Wadah Grid Kalender -->
+                            <div class="calendar-grid px-1" id="calendarGrid" style="min-height: 400px;">
+                                <!-- State Loading Elegan (Akan ditimpa oleh JS setelah data dimuat) -->
+                                <div class="d-flex flex-column align-items-center justify-content-center w-100" style="grid-column: span 7; height: 300px;">
+                                    <div class="spinner-grow text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                                    <h6 class="fw-bold text-muted">Menyusun Mesin Waktu...</h6>
+                                    <p class="small text-muted">Menganalisa ribuan data transaksi GL & EJ</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
