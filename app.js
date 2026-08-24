@@ -1391,3 +1391,53 @@ function renderDashboard() {
     
     document.getElementById('dashAiText').innerHTML = aiText;
 }
+
+// ==========================================
+// NOTIFIKASI MENU NAVIGASI (LIVE BADGES)
+// ==========================================
+function updateNavigationBadges() {
+    // 1. Lencana Menu Analisa (Kasus Selisih Gantung)
+    let totalGantung = 0;
+    (globalSelisihData || []).forEach(r => {
+        if (String(r[5]).toLowerCase() === 'belum') totalGantung++;
+    });
+
+    const badgeAn = document.getElementById('navBadgeAnalisa');
+    const badgeAnMob = document.getElementById('navBadgeAnalisaMobile');
+    if (totalGantung > 0) {
+        if(badgeAn) { badgeAn.innerText = totalGantung; badgeAn.classList.remove('d-none'); badgeAn.classList.add('pulse-animation'); }
+        if(badgeAnMob) { badgeAnMob.innerText = totalGantung; badgeAnMob.classList.remove('d-none'); }
+    } else {
+        if(badgeAn) { badgeAn.classList.add('d-none'); badgeAn.classList.remove('pulse-animation'); }
+        if(badgeAnMob) badgeAnMob.classList.add('d-none');
+    }
+
+    // 2. Lencana Menu Data Master (Total Baris Data)
+    let totalTrx = (databaseData.gl ? databaseData.gl.length : 0) + (databaseData.ej ? databaseData.ej.length : 0);
+    const badgeDm = document.getElementById('navBadgeMaster');
+    if(badgeDm) {
+        if(totalTrx > 0) {
+            // Format angka ribuan (cth: 1500 jadi 1.5k)
+            badgeDm.innerText = totalTrx >= 1000 ? (totalTrx / 1000).toFixed(1) + 'k' : totalTrx;
+            badgeDm.classList.remove('d-none');
+        } else {
+            badgeDm.classList.add('d-none');
+        }
+    }
+
+    // 3. Lencana Menu Upload (Peringatan Jika EJ/GL Belum Seimbang)
+    // Mengecek apakah fungsi Asisten Rekomendasi memunculkan banner peringatan
+    setTimeout(() => {
+        const badgeUp = document.getElementById('navBadgeUpload');
+        const badgeUpMob = document.getElementById('navBadgeUploadMobile');
+        let isWarning = document.querySelectorAll('.data-completeness-banner .alert').length > 0;
+        
+        if (isWarning) {
+            if(badgeUp) badgeUp.classList.remove('d-none');
+            if(badgeUpMob) badgeUpMob.classList.remove('d-none');
+        } else {
+            if(badgeUp) badgeUp.classList.add('d-none');
+            if(badgeUpMob) badgeUpMob.classList.add('d-none');
+        }
+    }, 500); // Tunggu sebentar agar banner completeness selesai di-render
+}
