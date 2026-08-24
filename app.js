@@ -1390,6 +1390,7 @@ function renderDashboard() {
     else if (rate === 100 && totalKasus > 0) aiText = `Luar Biasa! <b class="text-success">100% kasus anomali</b> telah berhasil Anda selesaikan dan tutup. Laporan siap dicetak.`;
     
     document.getElementById('dashAiText').innerHTML = aiText;
+    updateNavigationBadges();
 }
 
 // ==========================================
