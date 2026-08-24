@@ -257,17 +257,58 @@ superApp.saveBAConfig = async function() {
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 };
 
+// ==========================================
+// SMART ROUTER (PENCEGAH LAYAR BLANK PUTIH)
+// ==========================================
 function showPage(pageId) {
-    document.querySelectorAll('.page-section').forEach(el => el.classList.add('d-none'));
-    const targetPage = document.getElementById(pageId); if (targetPage) targetPage.classList.remove('d-none');
-    document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.bottom-nav .nav-item').forEach(el => { el.classList.remove('active-bottom'); el.classList.remove('text-primary'); el.classList.add('text-secondary'); });
-    if (event && event.currentTarget) {
-        if(event.currentTarget.classList.contains('nav-link')) event.currentTarget.classList.add('active'); 
-        else { event.currentTarget.classList.add('active-bottom'); event.currentTarget.classList.remove('text-secondary'); event.currentTarget.classList.add('text-primary'); }
+    // 1. Pemetaan Otomatis (Legacy Mapping) untuk ID yang sudah digabung
+    const legacyMap = {
+        'kalender': 'dashboard',
+        'datamaster': 'pusatdata',
+        'upload': 'pusatdata'
+    };
+    
+    // Tentukan ID target (Gunakan pemetaan baru jika itu adalah ID lama)
+    let targetId = legacyMap[pageId] || pageId;
+    let targetSection = document.getElementById(targetId);
+    
+    // 2. Safety Net: Jika halaman tidak ada, hentikan fungsi agar tidak Blank Putih
+    if (!targetSection) {
+        console.warn("Smart Router: Mengabaikan navigasi karena ID tidak ditemukan ->", targetId);
+        return; 
     }
-    if(pageId === 'analisa') fetchSelisihData();
-    if(pageId === 'datamaster') fetchDatabaseData(); 
+
+    // 3. Sembunyikan semua section utama (Sapu bersih layar)
+    document.querySelectorAll('.page-section').forEach(el => {
+        el.classList.add('d-none');
+        el.classList.remove('fade-in');
+    });
+
+    // 4. Munculkan section yang dituju
+    targetSection.classList.remove('d-none');
+    
+    // Beri sedikit delay untuk memicu animasi masuk (fade-in) yang mulus
+    setTimeout(() => {
+        targetSection.classList.add('fade-in');
+    }, 10);
+
+    // 5. Auto-Klik Tab yang Sesuai (Keajaiban Transisi)
+    // Jika sistem mendeteksi panggilan ke ID lama, router akan memindahkannya ke Tab yang tepat
+    if (pageId === 'kalender') {
+        let tab = document.getElementById('tab-dash-calendar');
+        if (tab) tab.click();
+    } 
+    else if (pageId === 'datamaster') {
+        let tab = document.getElementById('tab-data-master');
+        if (tab) tab.click();
+    } 
+    else if (pageId === 'upload') {
+        let tab = document.getElementById('tab-data-upload');
+        if (tab) tab.click();
+    }
+
+    // 6. Gulir layar kembali ke atas dengan halus
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 document.getElementById('themeToggle').addEventListener('click', () => {
