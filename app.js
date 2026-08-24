@@ -1925,3 +1925,36 @@ document.addEventListener("DOMContentLoaded", () => {
         opAtmInput.addEventListener('click', populateAtmSuggestions);
     }
 });
+
+// ==========================================
+// FUNGSI NAVIGASI GESER BULAN (KALENDER)
+// ==========================================
+function geserBulan(arah) {
+    const inputPeriod = document.getElementById('globalPeriod');
+    if (!inputPeriod || !inputPeriod.value) return;
+
+    // Ambil tahun dan bulan saat ini dari input (Format input type="month" adalah YYYY-MM)
+    let [year, month] = inputPeriod.value.split('-');
+    year = parseInt(year, 10);
+    month = parseInt(month, 10);
+
+    // Tambah / Kurangi bulan berdasarkan arah tombol (-1 atau +1)
+    month += arah;
+
+    // Logika jika menyeberang tahun (Desember ke Januari atau sebaliknya)
+    if (month > 12) {
+        month = 1;
+        year += 1;
+    } else if (month < 1) {
+        month = 12;
+        year -= 1;
+    }
+
+    // Format kembali ke YYYY-MM (Pastikan angka bulan selalu 2 digit, misal: 08)
+    let newMonth = month < 10 ? '0' + month : month;
+    inputPeriod.value = `${year}-${newMonth}`;
+
+    // Membangkitkan "Trigger" seolah-olah pengguna mengklik langsung input bulan
+    // Ini akan otomatis memanggil fungsi superApp.changePeriod() milik Anda
+    inputPeriod.dispatchEvent(new Event('change'));
+}
