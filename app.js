@@ -722,8 +722,10 @@ function generateBA(rawStr) {
     document.getElementById('cetak_jurnal_ket').innerText = detail.problem; document.getElementById('cetak_keterangan').innerText = reasonText;
     document.getElementById('cetak_kredit_rek').innerText = detail.rek; document.getElementById('cetak_kredit_nama').innerText = detail.nama; document.getElementById('cetak_jurnal_nom').innerText = nominalRaw;
     
-   // Set QR Code Verifikasi B/A Penyelesaian
-    let qrData = encodeURIComponent(`${WEB_APP_URL}?verify=ba&resi=${resi}&atm=${atmId}`);
+  // --- GANTI BAGIAN INI ---
+    // Set QR Code Verifikasi B/A Penyelesaian mengarah ke Frontend (GitHub)
+    let frontendUrl = window.location.origin + window.location.pathname;
+    let qrData = encodeURIComponent(`${frontendUrl}?verify=ba&resi=${resi}&atm=${atmId}`);
     document.getElementById('qrBAPenyelesaian').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
     new bootstrap.Modal(document.getElementById('beritaAcaraModal')).show();
@@ -745,12 +747,13 @@ function previewBAOpname() {
     document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
     document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
     
-    // Set QR Code Dinamis ke Aplikasi Ini
-    let baseUrl = window.location.href.split('?')[0];
-    let tglTrx = String(waktuInput).substring(0,10);
-    let qrData = encodeURIComponent(`${baseUrl}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
+    // --- GANTI BAGIAN INI ---
+    // Set QR Code Verifikasi B/A Opname mengarah ke Frontend (GitHub)
+    let frontendUrl = window.location.origin + window.location.pathname;
+    let tglTrx = typeof waktuInput !== 'undefined' ? String(waktuInput).substring(0,10) : String(document.getElementById('opWaktu').value).substring(0,10);
+    let qrData = encodeURIComponent(`${frontendUrl}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
     document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
-    
+
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
 
@@ -765,9 +768,11 @@ function printRiwayatBAOpname(rawStr) {
     document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`; document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
     document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
     
-   // Set QR Code Verifikasi B/A Opname Fisik
+   // --- GANTI BAGIAN INI ---
+    // Set QR Code Verifikasi B/A Opname mengarah ke Frontend (GitHub)
+    let frontendUrl = window.location.origin + window.location.pathname;
     let tglTrx = typeof waktuInput !== 'undefined' ? String(waktuInput).substring(0,10) : String(document.getElementById('opWaktu').value).substring(0,10);
-    let qrData = encodeURIComponent(`${WEB_APP_URL}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
+    let qrData = encodeURIComponent(`${frontendUrl}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
     document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
