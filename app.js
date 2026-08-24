@@ -1,3 +1,5 @@
+// TAMBAHKAN INI DI BARIS PALING ATAS APP.JS
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzawSNj45jOqdyEFKhF79w6-uW_MJansgX5c-nEoQ-aimJWCbxkH7lRNBYTVFAEp4VI/exec";
 const API_URL = 'https://script.google.com/macros/s/AKfycbzawSNj45jOqdyEFKhF79w6-uW_MJansgX5c-nEoQ-aimJWCbxkH7lRNBYTVFAEp4VI/exec';
 
 // ==========================================
@@ -720,9 +722,8 @@ function generateBA(rawStr) {
     document.getElementById('cetak_jurnal_ket').innerText = detail.problem; document.getElementById('cetak_keterangan').innerText = reasonText;
     document.getElementById('cetak_kredit_rek').innerText = detail.rek; document.getElementById('cetak_kredit_nama').innerText = detail.nama; document.getElementById('cetak_jurnal_nom').innerText = nominalRaw;
     
-   // Set QR Code Dinamis ke Aplikasi Ini
-    let baseUrl = window.location.href.split('?')[0];
-    let qrData = encodeURIComponent(`${baseUrl}?verify=ba&resi=${resi}&atm=${atmId}`);
+   // Set QR Code Verifikasi B/A Penyelesaian
+    let qrData = encodeURIComponent(`${WEB_APP_URL}?verify=ba&resi=${resi}&atm=${atmId}`);
     document.getElementById('qrBAPenyelesaian').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
     new bootstrap.Modal(document.getElementById('beritaAcaraModal')).show();
@@ -764,10 +765,9 @@ function printRiwayatBAOpname(rawStr) {
     document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`; document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
     document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
     
-    // Set QR Code Dinamis ke Aplikasi Ini
-    let baseUrl = window.location.href.split('?')[0];
-    let tglTrx = String(waktuInput).substring(0,10);
-    let qrData = encodeURIComponent(`${baseUrl}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
+   // Set QR Code Verifikasi B/A Opname Fisik
+    let tglTrx = typeof waktuInput !== 'undefined' ? String(waktuInput).substring(0,10) : String(document.getElementById('opWaktu').value).substring(0,10);
+    let qrData = encodeURIComponent(`${WEB_APP_URL}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
     document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
@@ -1694,73 +1694,61 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// E-DOCUMENT VERIFIER (MODE SCAN AUDITOR)
+// E-DOCUMENT VERIFIER (MODE SCAN AUDITOR GAS)
 // ==========================================
-async function runEDocumentVerifier() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const verifyMode = urlParams.get('verify');
-    if (!verifyMode) return; // Jika buka normal, abaikan fungsi ini
+function runEDocumentVerifier() {
+    // Gunakan API bawaan Google Apps Script untuk membaca URL Induk
+    google.script.url.getLocation(async function(location) {
+        const verifyMode = location.parameter.verify;
+        if (!verifyMode) return; // Jika tidak ada parameter verify, abaikan (buka aplikasi normal)
 
-    // 1. Sembunyikan Seluruh Elemen UI Aplikasi (Navigasi, Sidebar, dll)
-    let sidebar = document.querySelector('.sidebar'); if(sidebar) sidebar.classList.replace('d-md-block', 'd-none');
-    let botNav = document.querySelector('.floating-bottom-nav'); if(botNav) botNav.classList.add('d-none');
-    let topHeader = document.querySelector('.bg-gradient-playful'); if(topHeader) topHeader.classList.add('d-none');
-    let mainContent = document.querySelector('.main-content'); 
-    if(mainContent) { mainContent.classList.remove('col-md-9', 'ms-sm-auto', 'col-lg-10', 'px-md-4'); mainContent.classList.add('col-12', 'px-2'); }
-    document.body.style.paddingTop = '0';
-    document.body.style.backgroundColor = '#f8f9fa';
+        // 1. Sembunyikan Seluruh Elemen UI Aplikasi untuk Mode Auditor
+        let sidebar = document.querySelector('.sidebar'); if(sidebar) sidebar.classList.replace('d-md-block', 'd-none');
+        let botNav = document.querySelector('.floating-bottom-nav'); if(botNav) botNav.classList.add('d-none');
+        let topHeader = document.querySelector('.bg-gradient-playful'); if(topHeader) topHeader.classList.add('d-none');
+        let mainContent = document.querySelector('.main-content'); 
+        if(mainContent) { mainContent.classList.remove('col-md-9', 'ms-sm-auto', 'col-lg-10', 'px-md-4'); mainContent.classList.add('col-12', 'px-2'); }
+        document.body.style.paddingTop = '0';
+        document.body.style.backgroundColor = '#f8f9fa';
 
-    PlayfulAlert.fire({
-        title: 'Memverifikasi Dokumen', 
-        html: 'Menghubungkan ke Database Cloud Bankaltimtara...', 
-        allowOutsideClick: false 
-    }); 
-    PlayfulAlert.showLoading();
+        PlayfulAlert.fire({ title: 'Memverifikasi Dokumen', html: 'Menghubungkan ke Database Cloud Bankaltimtara...', allowOutsideClick: false }); 
+        PlayfulAlert.showLoading();
 
-    try {
-        // 2. Tarik Konfigurasi (Untuk Kop Surat) & Data Universal
-        await fetchConfig();
-        const result = await apiCall('getUniversal');
-        
-        if(result && result.success) {
-            Swal.close();
-            let uniData = result.data;
+        try {
+            await fetchConfig();
+            const result = await apiCall('getUniversal');
             
-            // 3A. Logika Verifikasi BA Penyelesaian
-            if (verifyMode === 'ba') {
-                let resi = urlParams.get('resi'); let atm = urlParams.get('atm');
-                let rowData = uniData.selisih.find(r => String(r[1]).trim() === atm && String(r[2]).trim() === resi);
+            if(result && result.success) {
+                Swal.close();
+                let uniData = result.data;
                 
-                if (rowData) {
-                    generateBA(encodeURIComponent(JSON.stringify(rowData)));
-                    // Ubah tombol di Modal menjadi lencana "Terverifikasi" untuk Auditor
-                    document.querySelector('#beritaAcaraModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi Database Sistem</div>`;
-                } else {
-                    PlayfulAlert.fire('Dokumen Tidak Ditemukan', 'QR Code tidak valid atau dokumen telah dihapus dari database.', 'error');
-                }
-            } 
-            // 3B. Logika Verifikasi BA Opname
-            else if (verifyMode === 'opname') {
-                let atm = urlParams.get('atm'); let tgl = urlParams.get('tgl');
-                let rowData = uniData.opname.find(r => String(r[2]).trim() === atm && String(r[1]).substring(0,10) === tgl);
-                
-                if (rowData) {
-                    printRiwayatBAOpname(encodeURIComponent(JSON.stringify(rowData)));
-                    document.querySelector('#baOpnameModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi Database Sistem</div>`;
-                } else {
-                    PlayfulAlert.fire('Dokumen Tidak Ditemukan', 'QR Code B/A Opname tidak valid.', 'error');
+                // 3A. Logika Verifikasi BA Penyelesaian
+                if (verifyMode === 'ba') {
+                    let resi = location.parameter.resi; let atm = location.parameter.atm;
+                    let rowData = uniData.selisih.find(r => String(r[1]).trim() === atm && String(r[2]).trim() === resi);
+                    
+                    if (rowData) {
+                        generateBA(encodeURIComponent(JSON.stringify(rowData)));
+                        document.querySelector('#beritaAcaraModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi</div>`;
+                    } else PlayfulAlert.fire('Tidak Ditemukan', 'QR Code tidak valid atau dokumen telah dihapus dari database.', 'error');
+                } 
+                // 3B. Logika Verifikasi BA Opname
+                else if (verifyMode === 'opname') {
+                    let atm = location.parameter.atm; let tgl = location.parameter.tgl;
+                    let rowData = uniData.opname.find(r => String(r[2]).trim() === atm && String(r[1]).substring(0,10) === tgl);
+                    
+                    if (rowData) {
+                        printRiwayatBAOpname(encodeURIComponent(JSON.stringify(rowData)));
+                        document.querySelector('#baOpnameModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi</div>`;
+                    } else PlayfulAlert.fire('Tidak Ditemukan', 'QR Code B/A Opname tidak valid.', 'error');
                 }
             }
-        }
-    } catch (e) {
-        PlayfulAlert.fire('Error Koneksi', 'Gagal memverifikasi dokumen.', 'error');
-    }
+        } catch (e) { PlayfulAlert.fire('Error', 'Gagal memverifikasi dokumen.', 'error'); }
+    });
 }
 
-// Memicu Mode Verifikasi Otomatis saat aplikasi dimuat
+// Memicu pengecekan otomatis saat aplikasi selesai dimuat
 document.addEventListener("DOMContentLoaded", () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('verify')) {
-        runEDocumentVerifier();
-    }
+    runEDocumentVerifier();
 });
+
