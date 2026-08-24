@@ -76,6 +76,13 @@
         .timeline-item { position: relative; margin-bottom: 2rem; }
         .timeline-icon { position: absolute; left: -46px; top: 0; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; border: 4px solid #fff; box-shadow: 0 0 0 2px #dee2e6; z-index: 1; }
         .timeline-content { background: #f8f9fa; padding: 18px; border-radius: 12px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        /* CSS DRAG & DROP DAN PROGRESS BAR */
+        .drop-zone { border: 2px dashed #a5b4fc; background-color: #f8faff; transition: all 0.3s ease; cursor: pointer; position: relative; }
+        .drop-zone:hover, .drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; transform: scale(1.01); }
+        .drop-zone input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        .file-count-badge { font-size: 0.75rem; position: absolute; top: 10px; right: 10px; }
+        .progress-swal { height: 18px; border-radius: 10px; background-color: #e9ecef; box-shadow: inset 0 1px 2px rgba(0,0,0,.1); }
+        .progress-swal .progress-bar { font-size: 0.7rem; font-weight: bold; line-height: 18px; transition: width 0.4s ease; }
     </style>
 </head>
 <body>
@@ -154,36 +161,37 @@
                     </div>
                 </div>
 
-                <!-- UPLOAD -->
+               <!-- UPLOAD -->
                 <div id="upload" class="page-section d-none fade-in">
-                    <h4 class="fw-bold mb-3 mt-2 text-dark">Upload File</h4>
+                    <h4 class="fw-bold mb-3 mt-2 text-dark">Upload File Rekonsiliasi</h4>
                     <div class="data-completeness-banner"></div>
-                    <div class="row g-2 mb-4">
+
+                    <div class="row g-3 mb-4">
+                        <!-- Drop Zone GL -->
                         <div class="col-md-6">
-                            <div class="card glass-card shadow-sm h-100 bouncy-hover">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="icon-box-playful bg-primary-subtle text-primary me-2"><i class="bi bi-file-earmark-text-fill"></i></div>
-                                        <h6 class="card-title fw-bold mb-0 text-dark">GL ATM (.txt)</h6>
-                                    </div>
-                                    <input class="form-control form-control-sm rounded-pill mb-2 border-primary-subtle bg-light" type="file" id="glFile" accept=".txt">
-                                    <button class="btn btn-primary btn-sm rounded-pill w-100 fw-bold shadow-sm" onclick="processGL()"><i class="bi bi-cloud-upload"></i> Proses Data</button>
-                                </div>
+                            <div class="drop-zone rounded-4 p-4 text-center shadow-sm h-100" id="dzGL">
+                                <span class="badge bg-primary rounded-pill file-count-badge d-none" id="countGL">0 File</span>
+                                <i class="bi bi-file-earmark-text-fill text-primary mb-2 d-block" style="font-size: 3rem;"></i>
+                                <h6 class="fw-bold text-dark mb-1">Upload Data GL (Sistem)</h6>
+                                <p class="small text-muted mb-0">Tarik & Lepas file di sini, atau klik untuk memilih.<br><b>(Bisa lebih dari 1 file)</b></p>
+                                <input type="file" id="glFile" multiple accept=".txt,.csv,.xls,.xlsx">
                             </div>
+                            <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm mt-2 bouncy-hover" onclick="processGL()"><i class="bi bi-gear-fill"></i> Proses GL</button>
                         </div>
+                        
+                        <!-- Drop Zone EJ -->
                         <div class="col-md-6">
-                            <div class="card glass-card shadow-sm h-100 bouncy-hover">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="icon-box-playful bg-success-subtle text-success me-2"><i class="bi bi-receipt"></i></div>
-                                        <h6 class="card-title fw-bold mb-0 text-dark">EJ ATM (.jrn)</h6>
-                                    </div>
-                                    <input class="form-control form-control-sm rounded-pill mb-2 border-success-subtle bg-light" type="file" id="ejFile" accept=".jrn,.txt">
-                                    <button class="btn btn-success btn-sm rounded-pill w-100 fw-bold shadow-sm" onclick="processEJ()"><i class="bi bi-cloud-upload"></i> Proses Data</button>
-                                </div>
+                            <div class="drop-zone rounded-4 p-4 text-center shadow-sm h-100" id="dzEJ">
+                                <span class="badge bg-success rounded-pill file-count-badge d-none" id="countEJ">0 File</span>
+                                <i class="bi bi-receipt text-success mb-2 d-block" style="font-size: 3rem;"></i>
+                                <h6 class="fw-bold text-dark mb-1">Upload Data EJ (Mesin)</h6>
+                                <p class="small text-muted mb-0">Tarik & Lepas file Jurnal (.jrn) di sini, atau klik.<br><b>(Bisa lebih dari 1 file)</b></p>
+                                <input type="file" id="ejFile" multiple accept=".txt,.jrn,.csv">
                             </div>
+                            <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm mt-2 bouncy-hover" onclick="processEJ()"><i class="bi bi-gear-fill"></i> Proses EJ</button>
                         </div>
                     </div>
+                </div>
 
                     <!-- TABEL RIWAYAT UPLOAD -->
                     <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover">
