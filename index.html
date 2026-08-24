@@ -168,27 +168,27 @@
 
                     <div class="row g-3 mb-4">
                         <!-- Drop Zone GL -->
-                        <div class="col-md-6">
-                            <div class="drop-zone rounded-4 p-4 text-center shadow-sm h-100" id="dzGL">
+                        <div class="col-md-6 d-flex flex-column">
+                            <div class="drop-zone rounded-4 p-4 text-center shadow-sm flex-fill d-flex flex-column justify-content-center align-items-center" id="dzGL">
                                 <span class="badge bg-primary rounded-pill file-count-badge d-none" id="countGL">0 File</span>
                                 <i class="bi bi-file-earmark-text-fill text-primary mb-2 d-block" style="font-size: 3rem;"></i>
                                 <h6 class="fw-bold text-dark mb-1">Upload Data GL (Sistem)</h6>
                                 <p class="small text-muted mb-0">Tarik & Lepas file di sini, atau klik untuk memilih.<br><b>(Bisa lebih dari 1 file)</b></p>
                                 <input type="file" id="glFile" multiple accept=".txt,.csv,.xls,.xlsx">
                             </div>
-                            <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm mt-2 bouncy-hover" onclick="processGL()"><i class="bi bi-gear-fill"></i> Proses GL</button>
+                            <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm mt-3 bouncy-hover" onclick="processGL()"><i class="bi bi-gear-fill"></i> Proses GL</button>
                         </div>
                         
                         <!-- Drop Zone EJ -->
-                        <div class="col-md-6">
-                            <div class="drop-zone rounded-4 p-4 text-center shadow-sm h-100" id="dzEJ">
+                        <div class="col-md-6 d-flex flex-column">
+                            <div class="drop-zone rounded-4 p-4 text-center shadow-sm flex-fill d-flex flex-column justify-content-center align-items-center" id="dzEJ">
                                 <span class="badge bg-success rounded-pill file-count-badge d-none" id="countEJ">0 File</span>
                                 <i class="bi bi-receipt text-success mb-2 d-block" style="font-size: 3rem;"></i>
                                 <h6 class="fw-bold text-dark mb-1">Upload Data EJ (Mesin)</h6>
                                 <p class="small text-muted mb-0">Tarik & Lepas file Jurnal (.jrn) di sini, atau klik.<br><b>(Bisa lebih dari 1 file)</b></p>
                                 <input type="file" id="ejFile" multiple accept=".txt,.jrn,.csv">
                             </div>
-                            <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm mt-2 bouncy-hover" onclick="processEJ()"><i class="bi bi-gear-fill"></i> Proses EJ</button>
+                            <button class="btn btn-success w-100 rounded-pill fw-bold shadow-sm mt-3 bouncy-hover" onclick="processEJ()"><i class="bi bi-gear-fill"></i> Proses EJ</button>
                         </div>
                     </div>
 
