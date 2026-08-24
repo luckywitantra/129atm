@@ -827,47 +827,52 @@ function printRiwayatBAOpname(rawStr) {
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
 
-// ---------------------------------------------------------
-// FUNGSI PRINT PDF ANTI-BLANK & DOWNLOAD DOCX
-// ---------------------------------------------------------
-
 // ==========================================
-// FUNGSI PRINT PDF ANTI-BLANK (BYPASS MODAL)
+// FUNGSI PRINT PDF ANTI-BLANK & ANTI-FREEZE
 // ==========================================
 function cetakPDF(areaId) {
     const printArea = document.getElementById(areaId);
-    const originalParent = printArea.parentNode; // Mengingat posisi asli kertas
+    const originalParent = printArea.parentNode; 
+    const originalNextSibling = printArea.nextSibling; // Simpan koordinat/posisi urutan asli
 
-    // 1. Tambahkan class pelindung
+    // 1. Kunci kertasnya
     printArea.classList.add('print-active-area');
 
-    // 2. Pindahkan kertas langsung ke dalam <body> agar terlepas dari jeratan Modal Bootstrap
+    // 2. Kumpulkan elemen body ke dalam Array statis (Mencegah Bug Live Collection yang bikin layar Freeze)
+    const bodyChildren = Array.from(document.body.children);
+    
+    // 3. Sembunyikan semua UI di latar belakang agar kertas PDF murni putih
+    bodyChildren.forEach(el => {
+        if (el.id !== areaId && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE' && el.tagName !== 'LINK') {
+            el.classList.add('d-none-print-temp');
+            el.style.display = 'none';
+        }
+    });
+
+    // 4. Pindahkan kertas ke luar modal (ke <body> utama) untuk di-print
     document.body.appendChild(printArea);
 
-    // 3. Sembunyikan elemen UI lainnya di <body> agar tidak ikut tercetak
-    const allBodyChildren = document.body.children;
-    for (let i = 0; i < allBodyChildren.length; i++) {
-        if (allBodyChildren[i].id !== areaId && allBodyChildren[i].tagName !== 'SCRIPT') {
-            allBodyChildren[i].classList.add('d-none-print-temp');
-            allBodyChildren[i].style.display = 'none';
-        }
-    }
-
-    // 4. Eksekusi Print
+    // 5. Panggil mesin printer browser
     window.print();
 
-    // 5. Kembalikan semuanya ke kondisi normal secara diam-diam setelah 1 detik
+    // 6. Kembalikan UI dengan presisi tinggi setelah dialog Print ditutup
     setTimeout(() => {
         printArea.classList.remove('print-active-area');
-        originalParent.appendChild(printArea); // Kembalikan ke dalam modal
         
-        for (let i = 0; i < allBodyChildren.length; i++) {
-            if (allBodyChildren[i].classList.contains('d-none-print-temp')) {
-                allBodyChildren[i].classList.remove('d-none-print-temp');
-                allBodyChildren[i].style.display = '';
-            }
+        // Pasang kembali kertas persis di tempat asalnya di dalam Modal
+        if (originalNextSibling) {
+            originalParent.insertBefore(printArea, originalNextSibling);
+        } else {
+            originalParent.appendChild(printArea);
         }
-    }, 1000);
+
+        // Munculkan kembali seluruh UI dan hapus efek gelap/freeze
+        document.querySelectorAll('.d-none-print-temp').forEach(el => {
+            el.classList.remove('d-none-print-temp');
+            el.style.display = '';
+        });
+        
+    }, 500); // Jeda aman setengah detik
 }
 
 // Meng-ekspor isi HTML menjadi file Word (.docx)
