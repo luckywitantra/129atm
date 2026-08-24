@@ -1321,3 +1321,72 @@ function formatDateIndo(dateObj) {
     const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     return `${hariArr[dateObj.getDay()]}, ${String(dateObj.getDate()).padStart(2,'0')} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
 }
+
+// ==========================================
+// DASBOR EXECUTIVE (LIVE METRICS)
+// ==========================================
+function renderDashboard() {
+    if (!document.getElementById('dashTotalTrx')) return; // Pengaman jika elemen belum siap
+
+    // 1. Update Teks Bulan
+    const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    let period = getActivePeriod();
+    let y = period.substring(2,6); let m = parseInt(period.substring(0,2)) - 1;
+    document.getElementById('dashBulan').innerText = `Periode Aktif: ${bulanArr[m]} ${y}`;
+
+    // 2. Hitung Data Master (Trx)
+    let glCount = databaseData.gl ? databaseData.gl.length : 0;
+    let ejCount = databaseData.ej ? databaseData.ej.length : 0;
+    document.getElementById('dashTotalTrx').innerText = formatNum(glCount + ejCount);
+    document.getElementById('dashSubTrx').innerText = `GL: ${formatNum(glCount)} | EJ: ${formatNum(ejCount)}`;
+
+    // 3. Hitung Analisa (Selisih)
+    let selisihLebih = 0, selisihKurang = 0, selisihSelesai = 0;
+    let nomLebih = 0, nomKurang = 0, nomSelesai = 0;
+
+    (globalSelisihData || []).forEach(r => {
+        let stat = String(r[5]).toLowerCase();
+        let nom = Math.abs(parseFloat(r[3]) || 0);
+        if(stat === 'belum') {
+            if(r[4] === 'SELISIH LEBIH') { selisihLebih++; nomLebih += nom; }
+            else { selisihKurang++; nomKurang += nom; }
+        } else {
+            selisihSelesai++; nomSelesai += nom;
+        }
+    });
+
+    let totalGantung = selisihLebih + selisihKurang;
+    let totalKasus = totalGantung + selisihSelesai;
+    let rate = totalKasus === 0 ? 100 : Math.round((selisihSelesai / totalKasus) * 100);
+
+    document.getElementById('dashTotalGantung').innerText = formatNum(totalGantung);
+    document.getElementById('dashSubGantung').innerText = `Lebih: ${selisihLebih} | Kurang: ${selisihKurang}`;
+    document.getElementById('dashTotalSelesai').innerText = formatNum(selisihSelesai);
+    
+    document.getElementById('dashNomLebih').innerText = formatRp(nomLebih);
+    document.getElementById('dashNomKurang').innerText = formatRp(nomKurang);
+    document.getElementById('dashNomSelesai').innerText = formatRp(nomSelesai);
+    
+    document.getElementById('dashRateTxt').innerText = rate + "%";
+    document.getElementById('dashRateBar').style.width = rate + "%";
+    // Ganti warna bar sesuai persentase
+    let bar = document.getElementById('dashRateBar');
+    bar.className = rate === 100 ? "progress-bar bg-success progress-bar-striped progress-bar-animated" : 
+                    rate > 50 ? "progress-bar bg-primary progress-bar-striped progress-bar-animated" : 
+                    "progress-bar bg-danger progress-bar-striped progress-bar-animated";
+
+    // 4. Hitung Opname (Semua Waktu)
+    let opnameCount = globalOpnameData ? globalOpnameData.length : 0;
+    let totSelisihOpname = 0;
+    (globalOpnameData || []).forEach(r => { totSelisihOpname += Math.abs(parseFloat(r[7]) || 0); });
+    document.getElementById('dashTotalOpname').innerText = formatNum(opnameCount);
+    document.getElementById('dashSubOpname').innerText = `Penyelesaian Fisik: ${formatRp(totSelisihOpname)}`;
+
+    // 5. Kesimpulan Teks AI
+    let aiText = "Semua mesin terpantau aman dan berimbang. Kinerja rekonsiliasi yang sangat baik!";
+    if (glCount === 0 && ejCount === 0) aiText = "Database kosong. Silakan upload data GL dan EJ terbaru untuk memulai hari ini.";
+    else if (totalGantung > 0) aiText = `Terdapat <b class="text-warning">${totalGantung} anomali</b> (selisih) senilai <b class="text-danger">${formatRp(nomLebih + nomKurang)}</b> yang belum diselesaikan. Segera cek menu Analisa!`;
+    else if (rate === 100 && totalKasus > 0) aiText = `Luar Biasa! <b class="text-success">100% kasus anomali</b> telah berhasil Anda selesaikan dan tutup. Laporan siap dicetak.`;
+    
+    document.getElementById('dashAiText').innerHTML = aiText;
+}
