@@ -95,6 +95,26 @@ async function fetchConfig() {
             document.getElementById('cfgAlamat').value = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
             document.getElementById('cfgPimpinan').value = globalConfig.cfgPimpinan || 'ENDY PRATAMA';
             document.getElementById('cfgAdmin').value = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
+            
+            // Terapkan Logo Jika Ada
+            if(globalConfig.cfgLogoKiri) {
+                document.getElementById('previewLogoKiri').src = globalConfig.cfgLogoKiri;
+                document.getElementById('previewLogoKiri').style.display = 'block';
+                document.getElementById('textLogoKiri').style.display = 'none';
+                document.getElementById('cetakKop_logoKiri1').src = globalConfig.cfgLogoKiri;
+                document.getElementById('cetakKop_logoKiri1').style.display = 'inline-block';
+                document.getElementById('cetakKop_logoKiri2').src = globalConfig.cfgLogoKiri;
+                document.getElementById('cetakKop_logoKiri2').style.display = 'inline-block';
+            }
+            if(globalConfig.cfgLogoKanan) {
+                document.getElementById('previewLogoKanan').src = globalConfig.cfgLogoKanan;
+                document.getElementById('previewLogoKanan').style.display = 'block';
+                document.getElementById('textLogoKanan').style.display = 'none';
+                document.getElementById('cetakKop_logoKanan1').src = globalConfig.cfgLogoKanan;
+                document.getElementById('cetakKop_logoKanan1').style.display = 'inline-block';
+                document.getElementById('cetakKop_logoKanan2').src = globalConfig.cfgLogoKanan;
+                document.getElementById('cetakKop_logoKanan2').style.display = 'inline-block';
+            }
         }
     } catch (e) { console.error("Gagal memuat konfigurasi cloud", e); }
 }
@@ -181,15 +201,54 @@ function renderTellerConfig() {
     container.innerHTML = html + '</div>';
 }
 
+// Fungsi mengecilkan gambar agar tidak memberatkan Database (Max 300px)
+function compressImageToBase64(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 300; 
+                let width = img.width; let height = img.height;
+                if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/png', 0.8));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 superApp.saveBAConfig = async function() {
-    let payload = { cfgCabang: document.getElementById('cfgCabang').value, cfgAlamat: document.getElementById('cfgAlamat').value, cfgPimpinan: document.getElementById('cfgPimpinan').value, cfgAdmin: document.getElementById('cfgAdmin').value };
+    let payload = { 
+        cfgCabang: document.getElementById('cfgCabang').value, 
+        cfgAlamat: document.getElementById('cfgAlamat').value, 
+        cfgPimpinan: document.getElementById('cfgPimpinan').value, 
+        cfgAdmin: document.getElementById('cfgAdmin').value,
+        cfgLogoKiri: globalConfig.cfgLogoKiri || '',
+        cfgLogoKanan: globalConfig.cfgLogoKanan || ''
+    };
     document.querySelectorAll('.cfg-teller-input').forEach(input => { payload['cfgTeller_' + input.getAttribute('data-atm')] = input.value.toUpperCase(); });
-    PlayfulAlert.fire({ title: 'Menyimpan ke Cloud...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    
+    PlayfulAlert.fire({ title: 'Menyimpan & Memproses Gambar...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    
     try {
+        // Proses Logo Kiri
+        const fileKiri = document.getElementById('uploadLogoKiri').files[0];
+        if(fileKiri) payload.cfgLogoKiri = await compressImageToBase64(fileKiri);
+        // Proses Logo Kanan
+        const fileKanan = document.getElementById('uploadLogoKanan').files[0];
+        if(fileKanan) payload.cfgLogoKanan = await compressImageToBase64(fileKanan);
+
         const result = await apiCall('saveConfig', payload);
         if(result && result.success) {
             globalConfig = payload; 
-            PlayfulAlert.fire('Berhasil!', 'Konfigurasi Surat & Teller berhasil disimpan ke Database Cloud.', 'success');
+            fetchConfig(); // Reload view
+            PlayfulAlert.fire('Berhasil!', 'Konfigurasi Surat & Logo berhasil disimpan ke Database Cloud.', 'success');
         } else PlayfulAlert.fire('Gagal', result.message, 'error');
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 };
@@ -808,6 +867,10 @@ function previewBAOpname() {
     
     let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let admin = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
     document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase(); document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
+    
+    // --- BARIS INI DITAMBAHKAN UNTUK KOP SURAT ---
+    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    
     document.getElementById('cetakOp_petugas1').innerText = `( ${globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF'} )`; document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
     document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
     document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
@@ -820,6 +883,10 @@ function printRiwayatBAOpname(rawStr) {
     let dateObj = new Date(waktuInput.replace(' ', 'T')); let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]; let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
     let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let admin = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
     document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase(); document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
+    
+    // --- BARIS INI DITAMBAHKAN UNTUK KOP SURAT ---
+    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    
     document.getElementById('cetakOp_petugas1').innerText = `( ${globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF'} )`; document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
     document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`; document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
     document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
