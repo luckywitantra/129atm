@@ -575,14 +575,92 @@ function renderDataMaster() {
 // 7. ENGINE OPNAME FISIK ATM & A4 PDF
 // ==========================================
 function calcOpname() {
-    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0; let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0; let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
+    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0; 
+    let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0; 
+    let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
+    
     document.getElementById('opSysTotal').innerText = formatRp(sSblm + sTmbh);
+    
     let selisih = fisik - sSblm; 
-    let textSelisih = document.getElementById('opSelisihText'); let badgeSelisih = document.getElementById('opSelisihBadge');
+    let textSelisih = document.getElementById('opSelisihText'); 
+    let badgeSelisih = document.getElementById('opSelisihBadge');
+    let boxSelisih = document.getElementById('opSelisihBox');
+    
     textSelisih.innerText = formatRp(Math.abs(selisih));
-    if (selisih > 0) { textSelisih.className = "fw-black mb-0 text-success"; badgeSelisih.className = "badge bg-success rounded-pill mt-2 px-3"; badgeSelisih.innerText = "Selisih LEBIH (Uang Sisa)"; } 
-    else if (selisih < 0) { textSelisih.className = "fw-black mb-0 text-danger"; badgeSelisih.className = "badge bg-danger rounded-pill mt-2 px-3"; badgeSelisih.innerText = "Selisih KURANG (Uang Hilang)"; } 
-    else { textSelisih.className = "fw-black mb-0 text-secondary"; badgeSelisih.className = "badge bg-secondary rounded-pill mt-2 px-3"; badgeSelisih.innerText = "Balance / Seimbang"; }
+    
+    if (selisih > 0) { 
+        textSelisih.className = "fw-black mb-0 text-success"; 
+        badgeSelisih.className = "badge bg-success rounded-pill mt-2 px-3 py-2 shadow-sm"; 
+        badgeSelisih.innerHTML = "<i class='bi bi-arrow-up-circle-fill'></i> Selisih LEBIH (Uang Sisa)"; 
+        boxSelisih.className = "p-3 rounded-4 text-center border mt-auto transition-all bg-success-subtle border-success-subtle";
+    } 
+    else if (selisih < 0) { 
+        textSelisih.className = "fw-black mb-0 text-danger"; 
+        badgeSelisih.className = "badge bg-danger rounded-pill mt-2 px-3 py-2 shadow-sm"; 
+        badgeSelisih.innerHTML = "<i class='bi bi-arrow-down-circle-fill'></i> Selisih KURANG (Uang Hilang)"; 
+        boxSelisih.className = "p-3 rounded-4 text-center border mt-auto transition-all bg-danger-subtle border-danger-subtle";
+    } 
+    else { 
+        textSelisih.className = "fw-black mb-0 text-dark"; 
+        badgeSelisih.className = "badge bg-secondary rounded-pill mt-2 px-3 py-2 shadow-sm"; 
+        badgeSelisih.innerHTML = "<i class='bi bi-check-circle-fill'></i> Balance / Seimbang"; 
+        boxSelisih.className = "p-3 rounded-4 text-center border mt-auto transition-all bg-secondary-subtle";
+    }
+}
+// ==========================================
+// INTERAKTIVITAS MENU OPNAME ATM
+// ==========================================
+
+// Fungsi memunculkan Insight Cerdas saat ATM diketik
+function updateOpnameSmartInfo() {
+    let atmInput = document.getElementById('opAtmId');
+    let atm = atmInput.value.toUpperCase().replace(/\s/g, '');
+    
+    // Auto-format KTM (opsional)
+    if (/^\d/.test(atm) && atm.length > 0) {
+        atm = 'KTM' + atm;
+        atmInput.value = atm;
+    }
+
+    let infoPanel = document.getElementById('opSmartInfoPanel');
+    if(!atm || atm.length < 5) {
+        infoPanel.classList.add('d-none');
+        return;
+    }
+
+    // Cari selisih belum selesai untuk ATM ini di database globalSelisihData
+    let pending = (globalSelisihData || []).filter(r => String(r[1]).toUpperCase() === atm && String(r[5]).toLowerCase() === 'belum');
+    let totLebih = 0, totKurang = 0;
+    
+    pending.forEach(r => {
+        if(r[4] === 'SELISIH LEBIH') totLebih += parseFloat(r[3]);
+        else totKurang += parseFloat(r[3]);
+    });
+
+    let contentHtml = '';
+    if(totLebih === 0 && totKurang === 0) {
+        infoPanel.className = "card bg-success-subtle border-0 rounded-4 shadow-sm bouncy-hover transition-all";
+        contentHtml = `
+            <div class="text-success fw-bold d-flex align-items-center mb-1"><i class="bi bi-shield-check fs-5 me-2"></i> Mesin Bersih!</div>
+            <p class="text-muted small mb-0" style="font-size:0.75rem; line-height:1.2;">Bagus! Saat ini tidak ada catatan selisih sistem yang menggantung pada mesin <b>${atm}</b> di bulan ini.</p>
+        `;
+    } else {
+        infoPanel.className = "card bg-danger-subtle border-0 rounded-4 shadow-sm bouncy-hover transition-all";
+        contentHtml = `
+            <div class="text-danger fw-bold d-flex align-items-center mb-2 pb-2 border-bottom border-danger-subtle"><i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i> Ada Kasus Menggantung!</div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-muted fw-bold" style="font-size:0.7rem">POTENSI UANG SISA (LEBIH)</span>
+                <span class="text-success fw-black">${formatRp(totLebih)}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-muted fw-bold" style="font-size:0.7rem">POTENSI UANG HILANG (KURANG)</span>
+                <span class="text-danger fw-black">${formatRp(totKurang)}</span>
+            </div>
+        `;
+    }
+    
+    document.getElementById('opSmartContent').innerHTML = contentHtml;
+    infoPanel.classList.remove('d-none');
 }
 
 function previewBAOpname() {
@@ -704,6 +782,9 @@ async function saveOpnameData() {
 // ==========================================
 // 8. ASISTEN REKOMENDASI UPLOAD
 // ==========================================
+// ==========================================
+// 8. ASISTEN REKOMENDASI UPLOAD
+// ==========================================
 function updateDataCompletenessBanner() {
     if (!databaseData || (!databaseData.gl && !databaseData.ej)) return;
 
@@ -712,7 +793,10 @@ function updateDataCompletenessBanner() {
         let atm = String(r[2]).trim().toUpperCase();
         if (atm && atm !== 'ATM') {
             let d = new Date(String(r[1]).substring(0,10) + "T00:00:00").getTime();
-            if (!glMap.has(atm) || d > glMap.get(atm)) glMap.set(atm, d);
+            // Pengaman ekstra: Pastikan tanggal valid (bukan baris kosong/NaN)
+            if (!isNaN(d)) {
+                if (!glMap.has(atm) || d > glMap.get(atm)) glMap.set(atm, d);
+            }
         }
     });
     
@@ -721,41 +805,57 @@ function updateDataCompletenessBanner() {
         let atm = String(r[2]).trim().toUpperCase();
         if (atm && atm !== 'ATM') {
             let d = new Date(String(r[1]).substring(0,10) + "T00:00:00").getTime();
-            if (!ejMap.has(atm) || d > ejMap.get(atm)) ejMap.set(atm, d);
+            if (!isNaN(d)) {
+                if (!ejMap.has(atm) || d > ejMap.get(atm)) ejMap.set(atm, d);
+            }
         }
     });
 
     let missingEJ = [], missingGL = [], laggingEJ = [], laggingGL = [];
 
+    // Evaluasi Ketertinggalan Data EJ
     for (let [atm, glDate] of glMap.entries()) {
-        if (!ejMap.has(atm)) { missingEJ.push(atm); } 
-        else { let ejDate = ejMap.get(atm); let diffDays = Math.round((glDate - ejDate) / (1000*60*60*24)); if (diffDays > 1) laggingEJ.push(`${atm} (Tertinggal ${diffDays} Hari)`); }
+        if (!ejMap.has(atm)) { 
+            missingEJ.push(atm); 
+        } else { 
+            let ejDate = ejMap.get(atm); 
+            let diffDays = Math.round((glDate - ejDate) / (1000*60*60*24)); 
+            if (diffDays > 1) laggingEJ.push(`${atm} (Tertinggal ${diffDays} Hari)`); 
+        }
     }
 
+    // Evaluasi Ketertinggalan Data GL
     for (let [atm, ejDate] of ejMap.entries()) {
-        if (!glMap.has(atm)) { missingGL.push(atm); } 
-        else { let glDate = glMap.get(atm); let diffDays = Math.round((ejDate - glDate) / (1000*60*60*24)); if (diffDays > 1) laggingGL.push(`${atm} (Tertinggal ${diffDays} Hari)`); }
+        if (!glMap.has(atm)) { 
+            missingGL.push(atm); 
+        } else { 
+            let glDate = glMap.get(atm); 
+            let diffDays = Math.round((ejDate - glDate) / (1000*60*60*24)); 
+            if (diffDays > 1) laggingGL.push(`${atm} (Tertinggal ${diffDays} Hari)`); 
+        }
     }
 
     let bannerHtml = '';
     if (missingEJ.length > 0 || missingGL.length > 0 || laggingEJ.length > 0 || laggingGL.length > 0) {
         bannerHtml = `
             <div class="alert bg-warning-subtle border-0 text-dark py-3 px-4 rounded-4 shadow-sm mb-3 bouncy-hover">
-                <div class="d-flex align-items-center mb-2"><i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i><h6 class="fw-bold text-dark mb-0">Asisten Rekomendasi Upload</h6></div>
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i>
+                    <h6 class="fw-bold text-dark mb-0">Asisten Rekomendasi Upload</h6>
+                </div>
                 <p class="mb-2 small">Sistem mendeteksi ketidakseimbangan data pada database bulan ini. Agar analisa selisih maksimal, mohon lengkapi:</p>
                 <ul class="mb-0 small fw-bold text-danger">`;
+                
         if (missingEJ.length > 0) bannerHtml += `<li>Belum ada data <span class="badge bg-success rounded-pill px-2">EJ</span> sama sekali untuk mesin: <b>${missingEJ.join(', ')}</b></li>`;
         if (missingGL.length > 0) bannerHtml += `<li class="mt-1">Belum ada data <span class="badge bg-primary rounded-pill px-2">GL</span> sama sekali untuk mesin: <b>${missingGL.join(', ')}</b></li>`;
         if (laggingEJ.length > 0) bannerHtml += `<li class="mt-1">Data <span class="badge bg-success rounded-pill px-2">EJ</span> butuh diupdate untuk mesin: <span class="text-dark fw-medium">${laggingEJ.join(', ')}</span></li>`;
         if (laggingGL.length > 0) bannerHtml += `<li class="mt-1">Data <span class="badge bg-primary rounded-pill px-2">GL</span> butuh diupdate untuk mesin: <span class="text-dark fw-medium">${laggingGL.join(', ')}</span></li>`;
         bannerHtml += `</ul></div>`;
     }
+    
     document.querySelectorAll('.data-completeness-banner').forEach(el => el.innerHTML = bannerHtml);
 }
 
-document.getElementById('opAtmId').addEventListener('input', function() {
-    let val = this.value.toUpperCase().replace(/\s/g, ''); if (/^\d/.test(val) && val.length > 0) this.value = 'KTM' + val; else this.value = val;
-});
 
 // ==========================================
 // 9. ENGINE BUKU BESAR (LAPORAN REKENING GANTUNG)
