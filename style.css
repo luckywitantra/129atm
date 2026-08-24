@@ -101,30 +101,4 @@
         [data-bs-theme="dark"] .sidebar { border-right: 1px solid rgba(255,255,255,0.05); }
         [data-bs-theme="dark"] .table-light, [data-bs-theme="dark"] .bg-light { background-color: #2d2d2d !important; color: #e0e0e0 !important;}
 
-        /* ========================================== */
-        /* 7. ENGINE CETAK KERTAS A4 & BUKU BESAR     */
-        /* ========================================== */
-        @media print {
-            body * { visibility: hidden !important; }
-            
-            /* Tampilkan hanya area kertas dan seluruh isinya */
-            #printBAPenyelesaianArea, #printBAPenyelesaianArea *,
-            #printBAOpnameArea, #printBAOpnameArea *,
-            #printLaporanArea, #printLaporanArea * { visibility: visible !important; }
-            
-            #printBAPenyelesaianArea, #printBAOpnameArea, #printLaporanArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 10mm !important;
-                box-shadow: none !important;
-                border: none !important;
-            }
-
-            /* Bersihkan sisa UI Modal Bootstrap */
-            .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
-            .btn, .modal-header, .modal-footer, .btn-close { display: none !important; }
-            body { background: white !important; }
-        }
+       
