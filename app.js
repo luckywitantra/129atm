@@ -1694,61 +1694,66 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// E-DOCUMENT VERIFIER (MODE SCAN AUDITOR GAS)
+// E-DOCUMENT VERIFIER (MODE SCAN AUDITOR VANILLA JS)
 // ==========================================
-function runEDocumentVerifier() {
-    // Gunakan API bawaan Google Apps Script untuk membaca URL Induk
-    google.script.url.getLocation(async function(location) {
-        const verifyMode = location.parameter.verify;
-        if (!verifyMode) return; // Jika tidak ada parameter verify, abaikan (buka aplikasi normal)
+async function runEDocumentVerifier() {
+    // Membaca URL Parameter langsung dari Browser
+    const urlParams = new URLSearchParams(window.location.search);
+    const verifyMode = urlParams.get('verify');
+    
+    // Jika tidak ada parameter verify di URL (berarti buka web normal), abaikan dan jangan lakukan apa-apa
+    if (!verifyMode) return; 
 
-        // 1. Sembunyikan Seluruh Elemen UI Aplikasi untuk Mode Auditor
-        let sidebar = document.querySelector('.sidebar'); if(sidebar) sidebar.classList.replace('d-md-block', 'd-none');
-        let botNav = document.querySelector('.floating-bottom-nav'); if(botNav) botNav.classList.add('d-none');
-        let topHeader = document.querySelector('.bg-gradient-playful'); if(topHeader) topHeader.classList.add('d-none');
-        let mainContent = document.querySelector('.main-content'); 
-        if(mainContent) { mainContent.classList.remove('col-md-9', 'ms-sm-auto', 'col-lg-10', 'px-md-4'); mainContent.classList.add('col-12', 'px-2'); }
-        document.body.style.paddingTop = '0';
-        document.body.style.backgroundColor = '#f8f9fa';
+    // 1. Sembunyikan Seluruh Elemen UI Aplikasi untuk Mode Auditor
+    let sidebar = document.querySelector('.sidebar'); if(sidebar) sidebar.classList.replace('d-md-block', 'd-none');
+    let botNav = document.querySelector('.floating-bottom-nav'); if(botNav) botNav.classList.add('d-none');
+    let topHeader = document.querySelector('.bg-gradient-playful'); if(topHeader) topHeader.classList.add('d-none');
+    let mainContent = document.querySelector('.main-content'); 
+    if(mainContent) { mainContent.classList.remove('col-md-9', 'ms-sm-auto', 'col-lg-10', 'px-md-4'); mainContent.classList.add('col-12', 'px-2'); }
+    document.body.style.paddingTop = '0';
+    document.body.style.backgroundColor = '#f8f9fa';
 
-        PlayfulAlert.fire({ title: 'Memverifikasi Dokumen', html: 'Menghubungkan ke Database Cloud Bankaltimtara...', allowOutsideClick: false }); 
-        PlayfulAlert.showLoading();
+    PlayfulAlert.fire({ title: 'Memverifikasi Dokumen', html: 'Menghubungkan ke Database Cloud Bankaltimtara...', allowOutsideClick: false }); 
+    PlayfulAlert.showLoading();
 
-        try {
-            await fetchConfig();
-            const result = await apiCall('getUniversal');
+    try {
+        await fetchConfig();
+        const result = await apiCall('getUniversal');
+        
+        if(result && result.success) {
+            Swal.close();
+            let uniData = result.data;
             
-            if(result && result.success) {
-                Swal.close();
-                let uniData = result.data;
+            // 3A. Logika Verifikasi BA Penyelesaian
+            if (verifyMode === 'ba') {
+                let resi = urlParams.get('resi'); let atm = urlParams.get('atm');
+                let rowData = uniData.selisih.find(r => String(r[1]).trim() === atm && String(r[2]).trim() === resi);
                 
-                // 3A. Logika Verifikasi BA Penyelesaian
-                if (verifyMode === 'ba') {
-                    let resi = location.parameter.resi; let atm = location.parameter.atm;
-                    let rowData = uniData.selisih.find(r => String(r[1]).trim() === atm && String(r[2]).trim() === resi);
-                    
-                    if (rowData) {
-                        generateBA(encodeURIComponent(JSON.stringify(rowData)));
-                        document.querySelector('#beritaAcaraModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi</div>`;
-                    } else PlayfulAlert.fire('Tidak Ditemukan', 'QR Code tidak valid atau dokumen telah dihapus dari database.', 'error');
-                } 
-                // 3B. Logika Verifikasi BA Opname
-                else if (verifyMode === 'opname') {
-                    let atm = location.parameter.atm; let tgl = location.parameter.tgl;
-                    let rowData = uniData.opname.find(r => String(r[2]).trim() === atm && String(r[1]).substring(0,10) === tgl);
-                    
-                    if (rowData) {
-                        printRiwayatBAOpname(encodeURIComponent(JSON.stringify(rowData)));
-                        document.querySelector('#baOpnameModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi</div>`;
-                    } else PlayfulAlert.fire('Tidak Ditemukan', 'QR Code B/A Opname tidak valid.', 'error');
+                if (rowData) {
+                    generateBA(encodeURIComponent(JSON.stringify(rowData)));
+                    // Ubah tombol Modal agar sesuai dengan tampilan Verifikator
+                    document.querySelector('#beritaAcaraModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi Database Sistem</div>`;
+                } else {
+                    PlayfulAlert.fire('Tidak Ditemukan', 'QR Code tidak valid atau dokumen telah dihapus dari database.', 'error');
+                }
+            } 
+            // 3B. Logika Verifikasi BA Opname
+            else if (verifyMode === 'opname') {
+                let atm = urlParams.get('atm'); let tgl = urlParams.get('tgl');
+                let rowData = uniData.opname.find(r => String(r[2]).trim() === atm && String(r[1]).substring(0,10) === tgl);
+                
+                if (rowData) {
+                    printRiwayatBAOpname(encodeURIComponent(JSON.stringify(rowData)));
+                    document.querySelector('#baOpnameModal .modal-footer').innerHTML = `<div class="alert alert-success w-100 text-center mb-0 fw-bold border-0 shadow-sm" style="font-size: 1.1rem;"><i class="bi bi-shield-fill-check fs-4 d-block mb-1"></i> E-Document Valid & Terverifikasi Database Sistem</div>`;
+                } else {
+                    PlayfulAlert.fire('Tidak Ditemukan', 'QR Code B/A Opname tidak valid.', 'error');
                 }
             }
-        } catch (e) { PlayfulAlert.fire('Error', 'Gagal memverifikasi dokumen.', 'error'); }
-    });
+        }
+    } catch (e) { PlayfulAlert.fire('Error', 'Gagal memverifikasi dokumen dari server.', 'error'); }
 }
 
 // Memicu pengecekan otomatis saat aplikasi selesai dimuat
 document.addEventListener("DOMContentLoaded", () => {
     runEDocumentVerifier();
 });
-
