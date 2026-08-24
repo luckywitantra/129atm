@@ -91,6 +91,10 @@
         /* Desain Switch Tab Baru */
         #pills-tab .btn.active { background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #212529 !important; border: 1px solid #dee2e6; }
         #pills-tab .btn { color: #6c757d; border: 1px solid transparent; }
+        /* CSS Animasi Menu Navigasi */
+        .sidebar .nav-link:hover { background-color: #f8f9fa; transform: translateX(3px); }
+        .sidebar .nav-link.active { background-color: #e0e7ff; color: #4f46e5 !important; font-weight: 900; border-right: 4px solid #4f46e5; }
+        .floating-bottom-nav { z-index: 1050; padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body>
@@ -118,16 +122,48 @@
 
     <div class="container-fluid main-wrapper mt-5 pt-3">
         <div class="row">
+            <!-- DESKTOP SIDEBAR -->
             <nav class="col-md-3 col-lg-2 d-none d-md-block sidebar shadow-sm h-100 position-fixed bg-white border-end">
                 <div class="pt-4">
-                    <ul class="nav flex-column gap-1 p-3">
-                        <li class="nav-item"><a class="nav-link active menu-btn py-2" href="#" onclick="showPage('dashboard')"><i class="bi bi-grid-1x2-fill me-2 text-primary"></i> Beranda</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('kalender')"><i class="bi bi-calendar-month-fill me-2 text-primary"></i> Kalender</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill me-2 text-info"></i> Upload</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('analisa')"><i class="bi bi-search me-2 text-warning"></i> Analisa</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('datamaster')"><i class="bi bi-database-fill me-2 text-success"></i> Data Master</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('opname')"><i class="bi bi-safe me-2 text-danger"></i> Opname ATM</a></li>
-                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('arsip'); superApp.fetchUniversalData();"><i class="bi bi-archive-fill me-2 text-primary"></i> Arsip Universal</a></li>
+                    <ul class="nav flex-column gap-2 p-3">
+                        <li class="nav-item">
+                            <a class="nav-link active menu-btn py-2 d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('dashboard')">
+                                <span><i class="bi bi-grid-1x2-fill me-2 text-primary"></i> Beranda</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('kalender')">
+                                <span><i class="bi bi-calendar-month-fill me-2 text-primary"></i> Kalender</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('upload')">
+                                <span><i class="bi bi-cloud-arrow-up-fill me-2 text-info"></i> Upload</span>
+                                <span class="badge bg-warning text-dark rounded-pill shadow-sm d-none pulse-animation" id="navBadgeUpload"><i class="bi bi-exclamation-circle-fill"></i></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('analisa')">
+                                <span><i class="bi bi-search me-2 text-warning"></i> Analisa</span>
+                                <span class="badge bg-danger rounded-pill shadow-sm d-none" id="navBadgeAnalisa">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('datamaster')">
+                                <span><i class="bi bi-database-fill me-2 text-success"></i> Data Master</span>
+                                <span class="badge bg-light text-secondary border rounded-pill shadow-sm d-none" id="navBadgeMaster" style="font-size: 0.65rem;">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('opname')">
+                                <span><i class="bi bi-safe me-2 text-danger"></i> Opname ATM</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('arsip'); superApp.fetchUniversalData();">
+                                <span><i class="bi bi-archive-fill me-2 text-primary"></i> Arsip Universal</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -690,18 +726,36 @@
         </div>
     </div>
 
-    <!-- FLOATING BOTTOM NAV (Mobile Only) -->
-    <nav class="d-md-none fixed-bottom floating-bottom-nav">
-        <div class="d-flex justify-content-around p-1">
-            <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')"><i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Home</span></a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('kalender')"><i class="bi bi-calendar-month-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Kalender</span></a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')"><i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Opname</span></a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Upload</span></a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('analisa')"><i class="bi bi-search fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Analisa</span></a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('datamaster')"><i class="bi bi-database-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Data</span></a>
-            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('arsip'); superApp.fetchUniversalData();"><i class="bi bi-archive-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Arsip</span></a>
-        </div>
-    </nav>
+   <!-- FLOATING BOTTOM NAV (Mobile Only) -->
+            <nav class="d-md-none fixed-bottom floating-bottom-nav bg-white shadow-lg border-top">
+                <div class="d-flex justify-content-around p-1 flex-nowrap overflow-auto hide-scrollbar">
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')">
+                        <i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Home</span>
+                    </a>
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('kalender')">
+                        <i class="bi bi-calendar-month-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Kalender</span>
+                    </a>
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')">
+                        <i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i>
+                        <span class="position-absolute top-0 start-50 translate-middle badge rounded-circle bg-warning border border-2 border-white p-1 d-none pulse-animation" id="navBadgeUploadMobile" style="margin-left: 8px; margin-top: 5px;"><span class="visually-hidden">Alert</span></span>
+                        <span style="font-size: 0.6rem;" class="fw-bold">Upload</span>
+                    </a>
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('analisa')">
+                        <i class="bi bi-search fs-5 d-block bouncy-hover"></i>
+                        <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger border border-2 border-white d-none" id="navBadgeAnalisaMobile" style="font-size: 0.5rem; margin-left: 10px; margin-top: 5px; padding: 2px 4px;">0</span>
+                        <span style="font-size: 0.6rem;" class="fw-bold">Analisa</span>
+                    </a>
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('datamaster')">
+                        <i class="bi bi-database-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Data</span>
+                    </a>
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')">
+                        <i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Opname</span>
+                    </a>
+                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('arsip'); superApp.fetchUniversalData();">
+                        <i class="bi bi-archive-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Arsip</span>
+                    </a>
+                </div>
+            </nav>
 
     <!-- ALL MODALS -->
     <!-- MODAL PENGATURAN (SYSTEM SETTINGS) -->
