@@ -239,18 +239,28 @@
         }
         /* TIPOGRAFI FINANSIAL (Membuat angka sejajar vertikal sempurna) */
         .tabular-nums { font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
-        /* ========================================== */
+       /* ========================================== */
         /* EFEK SPOTLIGHT UNTUK GUIDED TOUR           */
         /* ========================================== */
         .tour-spotlight {
             position: relative !important;
-            z-index: 10000 !important; /* Angka super besar agar berada di atas SweetAlert */
+            z-index: 1050 !important; 
             background-color: #ffffff !important;
             border-radius: 16px;
-            box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.8), 0 0 30px rgba(79, 70, 229, 0.6) !important;
-            pointer-events: none; /* Mencegah user mengklik elemen saat tour berjalan */
+            /* TRICK RAHASIA: Shadow ke-3 (9999px) menciptakan backdrop palsu anti-tembus! */
+            box-shadow: 
+                0 0 0 5px rgba(255, 255, 255, 1), 
+                0 0 30px rgba(79, 70, 229, 0.8),
+                0 0 0 9999px rgba(10, 37, 64, 0.85) !important;
+            pointer-events: none;
             transition: all 0.4s ease-in-out;
-            animation: pulse-primary 2s infinite; /* Efek detak jantung */
+            animation: pulse-tour 2s infinite;
+        }
+
+        @keyframes pulse-tour {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
