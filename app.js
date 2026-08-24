@@ -871,7 +871,7 @@ function printRiwayatBAOpname(rawStr) {
 }
 
 // ==========================================
-// FUNGSI PRINT PDF AMAN (EVENT LISTENER AFTERPRINT)
+// FUNGSI PRINT PDF INSTAN (ZERO-DELAY FIX)
 // ==========================================
 function cetakPDF(areaId) {
     const printArea = document.getElementById(areaId);
@@ -897,8 +897,13 @@ function cetakPDF(areaId) {
     // 4. Pindahkan kertas ke luar modal (ke <body> utama) untuk di-print
     document.body.appendChild(printArea);
 
-    // 5. Buat fungsi pembersih yang aman (Clean-up handler)
-    const restoreUIAfterPrint = () => {
+    let isRestored = false;
+
+    // 5. Fungsi pemulihan instan (Dipanggil secepat kilat begitu dialog cetak ditutup)
+    const restoreUI = () => {
+        if (isRestored) return;
+        isRestored = true;
+
         printArea.classList.remove('print-active-area');
         
         // Kembalikan kertas persis ke posisi asalnya di dalam Modal
@@ -908,28 +913,33 @@ function cetakPDF(areaId) {
             originalParent.appendChild(printArea);
         }
 
-        // Munculkan kembali seluruh elemen UI aplikasi
+        // Munculkan kembali seluruh elemen UI aplikasi dengan paksa
         document.querySelectorAll('.d-none-print-temp').forEach(el => {
             el.classList.remove('d-none-print-temp');
             el.style.display = '';
         });
 
-        // Hapus event listener agar tidak menumpuk
-        window.removeEventListener('afterprint', restoreUIAfterPrint);
+        // Hapus event listener
+        window.removeEventListener('afterprint', restoreUI);
+        
+        // Paksa browser merender ulang layar secara instan (Menghilangkan efek freeze)
+        window.requestAnimationFrame(() => {
+            document.body.style.display = 'none';
+            document.body.offsetHeight; // Trigger reflow
+            document.body.style.display = '';
+        });
     };
 
-    // Daftarkan listener bawaan browser ketika jendela cetak selesai/ditutup
-    window.addEventListener('afterprint', restoreUIAfterPrint);
+    // Daftarkan event afterprint
+    window.addEventListener('afterprint', restoreUI);
 
     // 6. Eksekusi perintah cetak browser
     window.print();
 
-    // Jaring Pengaman (Fallback): Jika browser tidak memicu afterprint dalam 1,5 detik, pulihkan paksa
+    // Jaring pengaman darurat (Fallback 300ms setelah jendela print ditutup/dibatalkan)
     setTimeout(() => {
-        if (document.body.contains(printArea) && printArea.classList.contains('print-active-area')) {
-            restoreUIAfterPrint();
-        }
-    }, 1500);
+        restoreUI();
+    }, 400); 
 }
 
 // Meng-ekspor isi HTML menjadi file Word (.docx)
