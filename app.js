@@ -2129,3 +2129,100 @@ function tourStep4() {
         }
     });
 }
+
+// ==========================================
+// GENERATOR LAPORAN REKAPITULASI (MONTHLY PIPELINE)
+// ==========================================
+function bukaGeneratorPipeline() {
+    // Set default input bulan ke bulan yang sedang aktif di Dasbor
+    const globalPeriod = document.getElementById('globalPeriod').value;
+    const inputBulan = document.getElementById('inputBulanPipeline');
+    if(inputBulan && globalPeriod) {
+        inputBulan.value = globalPeriod;
+    }
+    
+    // Tampilkan modal
+    new bootstrap.Modal(document.getElementById('pipelineModal')).show();
+    
+    // Langsung generate data untuk pertama kali dibuka
+    generatePipelineReport();
+}
+
+function generatePipelineReport() {
+    const bulanDipilih = document.getElementById('inputBulanPipeline').value; // format YYYY-MM
+    if (!bulanDipilih) return;
+
+    const [year, month] = bulanDipilih.split('-');
+    const namaBulan = new Date(year, month - 1, 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+    
+    // Set Header Kertas
+    document.getElementById('pipe_periode_text').textContent = namaBulan.toUpperCase();
+    document.getElementById('pipe_cabang').textContent = (globalConfig.cfgCabang || 'KANTOR CABANG...').toUpperCase();
+    document.getElementById('pipe_kota').textContent = (globalConfig.cfgCabang || 'Kota').split(' ')[0] || 'Kota';
+    
+    // Set Tanda Tangan
+    document.getElementById('pipe_teller').textContent = 'TELLER BERTUGAS'; // Bisa disesuaikan
+    document.getElementById('pipe_admin').textContent = globalConfig.cfgAdmin || 'ADMIN';
+    document.getElementById('pipe_pimpinan').textContent = globalConfig.cfgPimpinan || 'PIMPINAN';
+    
+    // Tanggal Cetak (Hari ini)
+    const today = new Date().toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    document.getElementById('pipe_tgl_cetak').textContent = today;
+
+    // --- PROSES PERHITUNGAN DATA ---
+    // (Asumsi data arsip ada di variabel global, kita filter berdasarkan YYYY-MM)
+    let rawData = typeof globalArchiveData !== 'undefined' ? globalArchiveData : [];
+    
+    let filteredData = rawData.filter(r => String(r.tanggal).startsWith(bulanDipilih));
+    
+    let totKasus = 0;
+    let totSelesai = 0;
+    let totGantung = 0;
+    let nominalGantung = 0;
+    
+    let trHTML = '';
+
+    if (filteredData.length === 0) {
+        trHTML = `<tr><td colspan="7" class="text-center py-4 fw-bold text-muted">TIDAK ADA KASUS SELISIH PADA BULAN INI.</td></tr>`;
+    } else {
+        filteredData.forEach((row, index) => {
+            totKasus++;
+            
+            let statusBadge = '';
+            let nominalStr = parseFloat(row.nominal) || 0;
+            
+            if (String(row.status).toLowerCase() === 'selesai') {
+                totSelesai++;
+                statusBadge = 'SELESAI';
+            } else {
+                totGantung++;
+                nominalGantung += Math.abs(nominalStr);
+                statusBadge = 'MENGGANTUNG';
+            }
+
+            // Tanda kurung untuk nominal minus (Kurang), tanpa kurung untuk Lebih
+            let formatNominal = nominalStr < 0 ? `( Rp ${formatRp(Math.abs(nominalStr))} )` : `Rp ${formatRp(nominalStr)}`;
+
+            trHTML += `
+                <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td class="text-center">${String(row.tanggal).substring(0, 10)}</td>
+                    <td class="text-center fw-bold">${row.atmId}</td>
+                    <td class="text-center tabular-nums">${row.resi}</td>
+                    <td class="text-end pe-2 tabular-nums fw-bold">${formatNominal}</td>
+                    <td class="text-center fw-bold ${statusBadge === 'SELESAI' ? 'text-success' : 'text-danger'}">${statusBadge}</td>
+                    <td><span class="small">${row.keterangan || '-'}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    // Isi Summary Dashboard
+    document.getElementById('pipe_sum_kasus').textContent = totKasus;
+    document.getElementById('pipe_sum_selesai').textContent = totSelesai;
+    document.getElementById('pipe_sum_gantung').textContent = totGantung;
+    document.getElementById('pipe_sum_nominal').textContent = `Rp ${formatRp(nominalGantung)}`;
+    
+    // Isi Tabel Detail
+    document.getElementById('pipe_tbody').innerHTML = trHTML;
+}
