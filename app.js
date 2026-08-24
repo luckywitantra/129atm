@@ -831,12 +831,43 @@ function printRiwayatBAOpname(rawStr) {
 // FUNGSI PRINT PDF ANTI-BLANK & DOWNLOAD DOCX
 // ---------------------------------------------------------
 
-// Mengatasi PDF Blank Putih dengan mengubah class target
+// ==========================================
+// FUNGSI PRINT PDF ANTI-BLANK (BYPASS MODAL)
+// ==========================================
 function cetakPDF(areaId) {
-    const area = document.getElementById(areaId);
-    area.classList.add('print-active-area'); // Memberi kelas pelindung
+    const printArea = document.getElementById(areaId);
+    const originalParent = printArea.parentNode; // Mengingat posisi asli kertas
+
+    // 1. Tambahkan class pelindung
+    printArea.classList.add('print-active-area');
+
+    // 2. Pindahkan kertas langsung ke dalam <body> agar terlepas dari jeratan Modal Bootstrap
+    document.body.appendChild(printArea);
+
+    // 3. Sembunyikan elemen UI lainnya di <body> agar tidak ikut tercetak
+    const allBodyChildren = document.body.children;
+    for (let i = 0; i < allBodyChildren.length; i++) {
+        if (allBodyChildren[i].id !== areaId && allBodyChildren[i].tagName !== 'SCRIPT') {
+            allBodyChildren[i].classList.add('d-none-print-temp');
+            allBodyChildren[i].style.display = 'none';
+        }
+    }
+
+    // 4. Eksekusi Print
     window.print();
-    setTimeout(() => { area.classList.remove('print-active-area'); }, 1000); // Mencabut kelas setelah print selesai
+
+    // 5. Kembalikan semuanya ke kondisi normal secara diam-diam setelah 1 detik
+    setTimeout(() => {
+        printArea.classList.remove('print-active-area');
+        originalParent.appendChild(printArea); // Kembalikan ke dalam modal
+        
+        for (let i = 0; i < allBodyChildren.length; i++) {
+            if (allBodyChildren[i].classList.contains('d-none-print-temp')) {
+                allBodyChildren[i].classList.remove('d-none-print-temp');
+                allBodyChildren[i].style.display = '';
+            }
+        }
+    }, 1000);
 }
 
 // Meng-ekspor isi HTML menjadi file Word (.docx)
