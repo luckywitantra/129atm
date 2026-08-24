@@ -743,36 +743,41 @@ function previewBAOpname() {
     let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; 
     let upperCabang = namaCabang.toUpperCase();
     
-    document.getElementById('cetakOp_cabang_header').innerText = upperCabang;
-    document.getElementById('cetakOp_cabang_sub').innerText = upperCabang;
-    document.getElementById('cetakOp_cabang').innerText = upperCabang; 
-    document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
-    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    // Helper aman dari error null
+    function safeSet(id, val) { let el = document.getElementById(id); if (el) el.innerText = val; }
+
+    safeSet('cetakOp_cabang_header', upperCabang);
+    safeSet('cetakOp_cabang_sub', upperCabang);
+    safeSet('cetakOp_cabang', upperCabang); 
+    safeSet('cetakOp_cabang_text', namaCabang);
+    safeSet('cetakOp_cabang_text2', namaCabang);
+    safeSet('cetakOp_alamat', globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02');
     
     // 4 Penanda Tangan Resmi
-    document.getElementById('cetakOp_petugasTellerName').innerText = globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'SUCI AINUL FITRI';
-    document.getElementById('cetakOp_petugasAdminName').innerText = globalConfig.cfgAdmin || 'FISTRI ARIANDINI';
-    document.getElementById('cetakOp_petugasSecurityName').innerText = globalConfig.cfgSecurity || 'DADAN';
-    document.getElementById('cetakOp_pimpinanName').innerText = globalConfig.cfgPimpinan || 'ENDY PRATAMA';
-    document.getElementById('cetakOp_pimpinanJabatan').innerText = `Pemimpin ${namaCabang}`;
+    safeSet('cetakOp_petugasTellerName', globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'SUCI AINUL FITRI');
+    safeSet('cetakOp_petugasAdminName', globalConfig.cfgAdmin || 'FISTRI ARIANDINI');
+    safeSet('cetakOp_petugasSecurityName', globalConfig.cfgSecurity || 'DADAN');
+    safeSet('cetakOp_pimpinanName', globalConfig.cfgPimpinan || 'ENDY PRATAMA');
+    safeSet('cetakOp_pimpinanJabatan', `Pemimpin ${namaCabang}`);
 
-    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; 
-    document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-    document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5); 
-    document.getElementById('cetakAtm').innerText = `${atmId.toUpperCase()} (${namaCabang})`;
+    safeSet('cetakHari', hariArr[dateObj.getDay()]); 
+    safeSet('cetakTgl', `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`);
+    safeSet('cetakJam', dateObj.toTimeString().substring(0,5)); 
+    safeSet('cetakAtm', `${atmId.toUpperCase()} (${namaCabang})`);
     
-    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); 
-    document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); 
-    document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); 
-    document.getElementById('cetakFisik').innerText = formatNum(fisik); 
-    document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); 
-    document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
+    safeSet('cetakSysSebelum', formatNum(sSblm)); 
+    safeSet('cetakSysTambah', formatNum(sTmbh)); 
+    safeSet('cetakSysTotal', formatNum(sSblm + sTmbh)); 
+    safeSet('cetakFisik', formatNum(fisik)); 
+    safeSet('cetakKurang', formatNum(selisih < 0 ? Math.abs(selisih) : 0)); 
+    safeSet('cetakLebih', formatNum(selisih > 0 ? selisih : 0));
     
     // Set QR Code Dinamis
     let frontendUrl = window.location.origin + window.location.pathname;
     let tglTrx = String(waktuInput).substring(0,10);
     let qrData = encodeURIComponent(`${frontendUrl}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
-    document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+    let qrEl = document.getElementById('qrBAOpname');
+    if (qrEl) qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
@@ -784,36 +789,40 @@ function printRiwayatBAOpname(rawStr) {
     let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; 
     let upperCabang = namaCabang.toUpperCase();
     
-    document.getElementById('cetakOp_cabang_header').innerText = upperCabang;
-    document.getElementById('cetakOp_cabang_sub').innerText = upperCabang;
-    document.getElementById('cetakOp_cabang').innerText = upperCabang; 
-    document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
-    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    function safeSet(id, val) { let el = document.getElementById(id); if (el) el.innerText = val; }
+
+    safeSet('cetakOp_cabang_header', upperCabang);
+    safeSet('cetakOp_cabang_sub', upperCabang);
+    safeSet('cetakOp_cabang', upperCabang); 
+    safeSet('cetakOp_cabang_text', namaCabang);
+    safeSet('cetakOp_cabang_text2', namaCabang);
+    safeSet('cetakOp_alamat', globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02');
     
     // 4 Penanda Tangan Resmi
-    document.getElementById('cetakOp_petugasTellerName').innerText = globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'SUCI AINUL FITRI';
-    document.getElementById('cetakOp_petugasAdminName').innerText = globalConfig.cfgAdmin || 'FISTRI ARIANDINI';
-    document.getElementById('cetakOp_petugasSecurityName').innerText = globalConfig.cfgSecurity || 'DADAN';
-    document.getElementById('cetakOp_pimpinanName').innerText = globalConfig.cfgPimpinan || 'ENDY PRATAMA';
-    document.getElementById('cetakOp_pimpinanJabatan').innerText = `Pemimpin ${namaCabang}`;
+    safeSet('cetakOp_petugasTellerName', globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'SUCI AINUL FITRI');
+    safeSet('cetakOp_petugasAdminName', globalConfig.cfgAdmin || 'FISTRI ARIANDINI');
+    safeSet('cetakOp_petugasSecurityName', globalConfig.cfgSecurity || 'DADAN');
+    safeSet('cetakOp_pimpinanName', globalConfig.cfgPimpinan || 'ENDY PRATAMA');
+    safeSet('cetakOp_pimpinanJabatan', `Pemimpin ${namaCabang}`);
 
-    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; 
-    document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`; 
-    document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5); 
-    document.getElementById('cetakAtm').innerText = `${atmId.toUpperCase()} (${namaCabang})`;
+    safeSet('cetakHari', hariArr[dateObj.getDay()]); 
+    safeSet('cetakTgl', `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`); 
+    safeSet('cetakJam', String(dateObj.toTimeString()).substring(0,5)); 
+    safeSet('cetakAtm', `${atmId.toUpperCase()} (${namaCabang})`);
     
-    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); 
-    document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); 
-    document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); 
-    document.getElementById('cetakFisik').innerText = formatNum(fisik); 
-    document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); 
-    document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
+    safeSet('cetakSysSebelum', formatNum(sSblm)); 
+    safeSet('cetakSysTambah', formatNum(sTmbh)); 
+    safeSet('cetakSysTotal', formatNum(sSblm + sTmbh)); 
+    safeSet('cetakFisik', formatNum(fisik)); 
+    safeSet('cetakKurang', formatNum(selisih < 0 ? Math.abs(selisih) : 0)); 
+    safeSet('cetakLebih', formatNum(selisih > 0 ? selisih : 0));
     
     // Set QR Code Dinamis
     let frontendUrl = window.location.origin + window.location.pathname;
     let tglTrx = String(waktuInput).substring(0,10);
     let qrData = encodeURIComponent(`${frontendUrl}?verify=opname&atm=${atmId}&tgl=${tglTrx}`);
-    document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+    let qrEl = document.getElementById('qrBAOpname');
+    if (qrEl) qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
 
     new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
 }
