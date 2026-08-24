@@ -49,6 +49,28 @@
             #printBAPenyelesaianArea, #printBAOpnameArea, #printLaporanArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0 !important; padding: 10mm !important; box-shadow: none !important; border: none !important; }
             .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible!important; background: transparent !important; }
         }
+        /* CSS KALENDER REKONSILIASI CANGGIH */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-day-header { text-align: center; font-weight: 900; font-size: 0.8rem; color: #6c757d; padding-bottom: 5px; }
+        .calendar-cell { background: #f8f9fa; border-radius: 12px; padding: 8px; min-height: 95px; border: 1px solid #e9ecef; display: flex; flex-direction: column; overflow: hidden; }
+        .calendar-cell.active { background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-color: #dee2e6; cursor: pointer; transition: all 0.2s; }
+        .calendar-cell.active:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); border-color: #667eea; }
+        .cal-date { font-weight: 800; font-size: 1.1rem; color: #343a40; margin-bottom: 5px; line-height: 1; }
+        .cal-indicator { font-size: 0.65rem; font-weight: 700; padding: 3px 6px; border-radius: 4px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
+        .cal-gl { background: #cfe2ff; color: #084298; }
+        .cal-ej { background: #d1e7dd; color: #0f5132; }
+        .cal-selisih-bad { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; animation: pulse-red 2s infinite; }
+        .cal-selisih-good { background: #cff4fc; color: #055160; }
+        
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 70% { box-shadow: 0 0 0 4px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+
+        @media (max-width: 768px) {
+            .calendar-grid { gap: 4px; }
+            .calendar-cell { padding: 4px; min-height: 75px; border-radius: 8px; }
+            .cal-date { font-size: 0.95rem; }
+            .cal-indicator { font-size: 0.55rem; padding: 2px 4px; flex-direction: column; align-items: flex-start; }
+            .cal-indicator span:last-child { display: none; } /* Sembunyikan ikon di HP agar muat */
+        }
     </style>
 </head>
 <body>
@@ -80,6 +102,7 @@
                 <div class="pt-4">
                     <ul class="nav flex-column gap-1 p-3">
                         <li class="nav-item"><a class="nav-link active menu-btn py-2" href="#" onclick="showPage('dashboard')"><i class="bi bi-grid-1x2-fill me-2 text-primary"></i> Beranda</a></li>
+                        <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('kalender')"><i class="bi bi-calendar-month-fill me-2 text-primary"></i> Kalender</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill me-2 text-info"></i> Upload</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('analisa')"><i class="bi bi-search me-2 text-warning"></i> Analisa</a></li>
                         <li class="nav-item"><a class="nav-link menu-btn py-2 text-secondary" href="#" onclick="showPage('datamaster')"><i class="bi bi-database-fill me-2 text-success"></i> Data Master</a></li>
@@ -104,6 +127,23 @@
                             <h5 class="fw-bold text-dark">Aplikasi Rekonsiliasi Pintar</h5>
                             <p class="text-muted small mb-3">Sistem otomatis menyeleksi duplikat & menyorot selisih secara akurat.</p>
                             <button class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" onclick="showPage('upload')"><i class="bi bi-rocket-takeoff-fill me-1"></i> Mulai Upload</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KALENDER -->
+                <div id="kalender" class="page-section d-none fade-in">
+                    <h4 class="fw-bold mb-3 mt-2 text-dark">Kalender Rekonsiliasi</h4>
+                    <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fw-black text-primary mb-0" id="calendarMonthLabel">Bulan...</h5>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-danger-subtle text-danger"><i class="bi bi-circle-fill"></i> Selisih</span>
+                                <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i> Aman</span>
+                            </div>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- JS akan membangun otomatis kotak-kotak kalender di sini -->
                         </div>
                     </div>
                 </div>
@@ -305,6 +345,7 @@
     <nav class="d-md-none fixed-bottom floating-bottom-nav">
         <div class="d-flex justify-content-around p-1">
             <a href="#" class="nav-item text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')"><i class="bi bi-house-door-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Home</span></a>
+            <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('kalender')"><i class="bi bi-calendar-month-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Kalender</span></a>
             <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')"><i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Opname</span></a>
             <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('upload')"><i class="bi bi-cloud-arrow-up-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Upload</span></a>
             <a href="#" class="nav-item text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('analisa')"><i class="bi bi-search fs-5 d-block bouncy-hover"></i><span style="font-size: 0.65rem;" class="fw-bold">Analisa</span></a>
