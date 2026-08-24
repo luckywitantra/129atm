@@ -262,6 +262,16 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
+        /* ========================================== */
+        /* FIX: TENGGELAMKAN SIDEBAR & HEADER SAAT TOUR */
+        /* ========================================== */
+        body.tour-active .sidebar,
+        body.tour-active .navbar,
+        body.tour-active .floating-bottom-nav {
+            z-index: 1 !important; /* Turunkan drastis agar tertutup bayangan */
+            pointer-events: none; /* Mencegah user mengklik menu saat tour */
+            transition: z-index 0.2s ease;
+        }
     </style>
 </head>
 <body>
