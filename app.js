@@ -1999,3 +1999,109 @@ function geserBulan(arah) {
     // Ini akan otomatis memanggil fungsi superApp.changePeriod() milik Anda
     inputPeriod.dispatchEvent(new Event('change'));
 }
+
+// ==========================================
+// INTERACTIVE GUIDED TOUR: OPNAME ATM
+// ==========================================
+function startOpnameTour() {
+    // Pastikan pengguna berada di tab Form Input saat tour dimulai
+    let tabForm = document.getElementById('tab-op-form');
+    if (tabForm) tabForm.click();
+
+    Swal.fire({
+        title: '🏦 Selamat Datang di Modul Opname ATM',
+        html: 'Tur profesional ini akan memandu Anda memahami cara menghitung uang fisik laci dan mencetak Berita Acara resmi dengan 4 penanda tangan.',
+        icon: 'info',
+        confirmButtonText: 'Mulai Tur (<span id="tour-step">1</span>/4)',
+        confirmButtonColor: '#4f46e5',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Lewati',
+        customClass: { popup: 'rounded-4 shadow-lg' }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            tourStep2();
+        }
+    });
+}
+
+function tourStep2() {
+    // Fokuskan panduan ke kotak Identitas Mesin
+    let el = document.getElementById('opAtmId');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+        el.classList.add('border', 'border-danger', 'shadow');
+        setTimeout(() => el.classList.remove('border', 'border-danger', 'shadow'), 3000);
+    }
+
+    Swal.fire({
+        title: '1️⃣ Identitas Mesin & Waktu',
+        html: 'Ketik atau pilih <b>ID Mesin ATM</b> (sistem akan mendeteksi otomatis sugesti mesin). Tentukan juga waktu pelaksanaan opname dan ubah nama <b>Security</b> yang bertugas pada shift tersebut jika diperlukan.',
+        icon: 'question',
+        confirmButtonText: 'Selanjutnya (2/4)',
+        confirmButtonColor: '#4f46e5',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Kembali',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            tourStep3();
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            startOpnameTour();
+        }
+    });
+}
+
+function tourStep3() {
+    // Fokuskan panduan ke Kalkulator
+    let el = document.getElementById('opFisik');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+        el.classList.add('border', 'border-warning', 'shadow');
+        setTimeout(() => el.classList.remove('border', 'border-warning', 'shadow'), 3000);
+    }
+
+    Swal.fire({
+        title: '2️⃣ Kalkulator Rekonsiliasi Kas',
+        html: 'Masukkan saldo sebelum pengisian dan uang yang ditambahkan dari sistem core. Masukkan hasil hitung uang <b>Fisik Laci</b>. Sistem akan otomatis menghitung apakah kas <i>Balance</i>, Lebih, atau Kurang.',
+        icon: 'warning',
+        confirmButtonText: 'Selanjutnya (3/4)',
+        confirmButtonColor: '#4f46e5',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Sebelumnya',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            tourStep4();
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            tourStep2();
+        }
+    });
+}
+
+function tourStep4() {
+    Swal.fire({
+        title: '3️⃣ Pratinjau & Simpan Berita Acara',
+        html: 'Tekan tombol <b>Pratinjau</b> untuk melihat lembar kerja A4 resmi yang dilengkapi struktur 4 penanda tangan (Teller, Admin, Security, Pemimpin) beserta Barcode e-Document. Jika sudah klop, tekan <b>Simpan ke Database</b>.',
+        icon: 'success',
+        confirmButtonText: 'Selesai 🚀',
+        confirmButtonColor: '#198754',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Sebelumnya',
+    }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            tourStep3();
+        } else {
+            Swal.fire({
+                title: '🎉 Tur Selesai!',
+                text: 'Anda sekarang siap menggunakan modul Opname ATM secara profesional.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    });
+}
