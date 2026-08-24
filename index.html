@@ -1260,8 +1260,8 @@
         </div>
     </div>
 
-   <!-- ========================================================================= -->
-    <!-- MODAL CETAK B/A PENYELESAIAN (1 HALAMAN RAPI - RESPONSIVE & PRINT READY)  -->
+  <!-- ========================================================================= -->
+    <!-- MODAL CETAK B/A PENYELESAIAN (TABEL KEBAL BADAI - 1 HALAMAN RAPI)         -->
     <!-- ========================================================================= -->
     <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -1270,28 +1270,28 @@
                     <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau BA Penyelesaian</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <!-- Background abu-abu agar kertas terlihat jelas -->
                 <div class="modal-body p-3 p-md-4 bg-secondary-subtle d-flex justify-content-center custom-scroll">
                     
-                    <!-- KERTAS A4 -->
-                    <div id="printBAPenyelesaianArea" class="kertas-a4 shadow">
+                    <div id="printBAPenyelesaianArea" class="kertas-a4 shadow position-relative">
                         
-                        <!-- KOP SURAT (DENGAN FLEXBOX PENGUNCI) -->
-                        <div class="d-flex justify-content-between align-items-center border-bottom border-dark border-2 pb-2 mb-3">
-                            <div class="kop-kiri d-flex align-items-center justify-content-start">
-                                <img id="cetakKop_logoKiri1" src="" class="kop-logo" style="display: none;">
-                            </div>
-                            <div class="kop-tengah text-center flex-fill px-2" style="line-height: 1.2;">
-                                <strong style="color: #0070c0;">PT BANK PEMBANGUNAN DAERAH</strong><br>
-                                <strong style="color: #0070c0;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
-                                <span id="cetak_cabang" class="fw-bold">KANTOR CABANG...</span><br>
-                                <span id="cetak_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br>
-                                <span>www.bankaltimtara.co.id</span>
-                            </div>
-                            <div class="kop-kanan d-flex align-items-center justify-content-end">
-                                <img id="cetakKop_logoKanan1" src="" class="kop-logo" style="display: none;">
-                            </div>
-                        </div>
+                        <!-- KOP SURAT (MENGGUNAKAN TABEL) -->
+                        <table class="table table-borderless w-100 mb-3 border-bottom border-dark border-2 pb-2">
+                            <tr>
+                                <td width="20%" class="text-start align-middle px-0">
+                                    <img id="cetakKop_logoKiri1" src="" style="max-height: 55px; max-width: 100%; display: none;">
+                                </td>
+                                <td width="60%" class="text-center align-middle px-0" style="line-height: 1.2;">
+                                    <strong style="color: #0070c0; font-size: 13px;">PT BANK PEMBANGUNAN DAERAH</strong><br>
+                                    <strong style="color: #0070c0; font-size: 13px;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
+                                    <span id="cetak_cabang" class="fw-bold" style="font-size: 12px;">KANTOR CABANG...</span><br>
+                                    <span id="cetak_alamat" style="font-size: 11px; white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br>
+                                    <span style="font-size: 11px;">www.bankaltimtara.co.id</span>
+                                </td>
+                                <td width="20%" class="text-end align-middle px-0">
+                                    <img id="cetakKop_logoKanan1" src="" style="max-height: 55px; max-width: 100%; display: none;">
+                                </td>
+                            </tr>
+                        </table>
                         
                         <div class="text-center mb-3">
                             <h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5>
@@ -1299,51 +1299,58 @@
                             <h6 class="fw-bolder" id="cetak_atm_judul"></h6>
                         </div>
                         
-                        <p style="text-align: justify;" class="mb-2">Pada hari ini <b id="cetak_hari"></b> Tanggal <b id="cetak_tgl"></b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm"></b>, dengan nominal sebesar <b><span id="cetak_nominal"></span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:</p>
+                        <p style="text-align: justify; font-size: 13.5px; line-height: 1.4;" class="mb-2">Pada hari ini <b id="cetak_hari"></b> Tanggal <b id="cetak_tgl"></b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm"></b>, dengan nominal sebesar <b><span id="cetak_nominal"></span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:</p>
                         
-                        <!-- TABEL DETAIL ANTI-LIPAT -->
-                        <table class="table table-borderless table-sm mb-2 ms-md-2 w-auto">
-                            <tr><td class="py-1 pe-2">No. Rekening</td><td class="py-1 px-1 text-center">:</td><td id="cetak_rek" class="fw-bold py-1 ps-2"></td></tr>
-                            <tr><td class="py-1 pe-2">Nama</td><td class="py-1 px-1 text-center">:</td><td id="cetak_nama" class="fw-bold py-1 ps-2"></td></tr>
-                            <tr><td class="py-1 pe-2">No. Referensi</td><td class="py-1 px-1 text-center">:</td><td id="cetak_resi" class="fw-bold py-1 ps-2"></td></tr>
-                            <tr><td class="py-1 pe-2">Transaksi</td><td class="py-1 px-1 text-center">:</td><td id="cetak_trx" class="py-1 ps-2"></td></tr>
-                            <tr><td class="py-1 pe-2">Problem</td><td class="py-1 px-1 text-center">:</td><td id="cetak_problem" class="py-1 ps-2"></td></tr>
+                        <table class="table table-borderless table-sm mb-2 ms-2 w-75" style="font-size: 13.5px; line-height: 1.2;">
+                            <tr><td width="25%" class="py-1">No. Rekening</td><td width="1%" class="py-1 text-center">:</td><td id="cetak_rek" class="fw-bold py-1 ps-2"></td></tr>
+                            <tr><td class="py-1">Nama</td><td class="py-1 text-center">:</td><td id="cetak_nama" class="fw-bold py-1 ps-2"></td></tr>
+                            <tr><td class="py-1">No. Referensi</td><td class="py-1 text-center">:</td><td id="cetak_resi" class="fw-bold py-1 ps-2"></td></tr>
+                            <tr><td class="py-1">Transaksi</td><td class="py-1 text-center">:</td><td id="cetak_trx" class="py-1 ps-2"></td></tr>
+                            <tr><td class="py-1">Problem</td><td class="py-1 text-center">:</td><td id="cetak_problem" class="py-1 ps-2"></td></tr>
                         </table>
                         
-                        <p style="text-align: justify;" class="mb-2"><b>Keterangan:</b> <span id="cetak_keterangan"></span></p>
-                        <p style="text-align: justify;" class="mb-2 mt-2"><b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:</p>
+                        <p style="text-align: justify; font-size: 13.5px;" class="mb-2"><b>Keterangan:</b> <span id="cetak_keterangan"></span></p>
+                        <p style="text-align: justify; font-size: 13.5px;" class="mb-2 mt-2"><b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:</p>
                         
-                        <!-- TABEL JURNAL -->
-                        <table class="table table-bordered table-sm text-center border-dark mb-2 align-middle">
-                            <thead class="fw-bold"><tr><th>Debet</th><th>Kredit</th><th class="text-nowrap">Nominal</th><th>Keterangan</th></tr></thead>
+                        <table class="table table-bordered table-sm text-center border-dark mb-2 align-middle" style="font-size: 12.5px;">
+                            <thead class="fw-bold"><tr><th>Debet</th><th>Kredit</th><th class="text-nowrap" width="20%">Nominal</th><th>Keterangan</th></tr></thead>
                             <tbody><tr><td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td><td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td><td class="fw-bold text-nowrap" id="cetak_jurnal_nom"></td><td id="cetak_jurnal_ket"></td></tr></tbody>
                         </table>
                         
-                        <p style="text-align: justify;" class="mb-4">Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait. Atas perhatian dan kerjasamanya disampaikan terima kasih.</p>
+                        <p style="text-align: justify; font-size: 13.5px;" class="mb-3">Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait. Atas perhatian dan kerjasamanya disampaikan terima kasih.</p>
                         
-                        <!-- AREA TANDA TANGAN -->
-                        <div class="row text-center ttd-area">
-                            <div class="col-12 text-end mb-3"><span id="cetak_kota"></span>, <span id="cetak_tgl_ttd"></span></div>
-                            
-                            <div class="col-8">
-                                <p class="mb-5 pb-3 fw-bold">TIM SKO ATM</p>
-                                <div class="row">
-                                    <div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_teller"></p><p class="mb-0">Teller</p></div>
-                                    <div class="col-6"><p class="fw-bold text-decoration-underline mb-0" id="cetak_admin"></p><p class="mb-0">Staff Administrasi Capem</p></div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <p class="mb-5 pb-3 fw-bold">Mengetahui,</p>
-                                <p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan"></p><p class="mb-0">Pemimpin</p>
-                            </div>
-                            
-                            <!-- QR CODE (Absolute Bottom Left) -->
-                            <div class="position-absolute qr-area text-start">
-                                <img id="qrBAPenyelesaian" src="" class="border p-1 rounded-2 shadow-sm bg-white">
-                                <p class="text-muted mt-1 mb-0 fw-bold">Scan e-Document</p>
-                            </div>
+                        <!-- AREA TANDA TANGAN (MENGGUNAKAN TABEL) -->
+                        <table class="table table-borderless w-100 mt-3 mb-0 text-center" style="font-size: 13px;">
+                            <tr>
+                                <td width="33%"></td>
+                                <td width="34%"></td>
+                                <td width="33%" class="pb-2"><span id="cetak_kota"></span>, <span id="cetak_tgl_ttd"></span></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="fw-bold pb-5">TIM SKO ATM</td>
+                                <td class="fw-bold pb-5">Mengetahui,</td>
+                            </tr>
+                            <tr class="align-bottom">
+                                <td class="pt-4">
+                                    <p class="fw-bold text-decoration-underline mb-0" id="cetak_teller"></p>
+                                    <p class="mb-0">Teller</p>
+                                </td>
+                                <td class="pt-4">
+                                    <p class="fw-bold text-decoration-underline mb-0" id="cetak_admin"></p>
+                                    <p class="mb-0">Staff Administrasi Capem</p>
+                                </td>
+                                <td class="pt-4">
+                                    <p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan"></p>
+                                    <p class="mb-0">Pemimpin</p>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- QR CODE Absolute -->
+                        <div class="position-absolute" style="bottom: 15mm; left: 20mm; text-align: left;">
+                            <img id="qrBAPenyelesaian" src="" width="65" class="border p-1 rounded-2 shadow-sm bg-white">
+                            <p class="text-muted mt-1 mb-0 fw-bold" style="font-size: 9px;">Scan e-Document</p>
                         </div>
-
                     </div>
                 </div>
                 <div class="modal-footer rounded-0 py-2">
@@ -1355,7 +1362,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODAL CETAK B/A OPNAME FISIK (1 HALAMAN RAPI - RESPONSIVE & PRINT READY)  -->
+    <!-- MODAL CETAK B/A OPNAME FISIK (TABEL KEBAL BADAI - 1 HALAMAN RAPI)         -->
     <!-- ========================================================================= -->
     <div class="modal fade" id="baOpnameModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1364,117 +1371,120 @@
                     <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau BA Opname Fisik</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <!-- Background abu-abu agar kertas terlihat jelas -->
                 <div class="modal-body p-3 p-md-4 bg-secondary-subtle d-flex justify-content-center custom-scroll">
                     
-                    <!-- KERTAS A4 -->
-                    <div id="printBAOpnameArea" class="kertas-a4 shadow">
+                    <div id="printBAOpnameArea" class="kertas-a4 shadow position-relative">
                         
-                        <!-- KOP SURAT (DENGAN FLEXBOX PENGUNCI) -->
-                        <div class="d-flex justify-content-between align-items-center border-bottom border-dark border-2 pb-2 mb-3">
-                            <div class="kop-kiri d-flex align-items-center justify-content-start">
-                                <img id="cetakKop_logoKiri2" src="" class="kop-logo" style="display: none;">
-                            </div>
-                            <div class="kop-tengah text-center flex-fill px-2" style="line-height: 1.2;">
-                                <strong style="color: #0070c0;">PT BANK PEMBANGUNAN DAERAH</strong><br>
-                                <strong style="color: #0070c0;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
-                                <span id="cetakOp_cabang_header" class="fw-bold">KANTOR CABANG PEMBANTU BABULU</span>
-                            </div>
-                            <div class="kop-kanan d-flex align-items-center justify-content-end">
-                                <img id="cetakKop_logoKanan2" src="" class="kop-logo" style="display: none;">
-                            </div>
-                        </div>
+                        <!-- KOP SURAT -->
+                        <table class="table table-borderless w-100 mb-3 border-bottom border-dark border-2 pb-2">
+                            <tr>
+                                <td width="20%" class="text-start align-middle px-0">
+                                    <img id="cetakKop_logoKiri2" src="" style="max-height: 55px; max-width: 100%; display: none;">
+                                </td>
+                                <td width="60%" class="text-center align-middle px-0" style="line-height: 1.2;">
+                                    <strong style="color: #0070c0; font-size: 13px;">PT BANK PEMBANGUNAN DAERAH</strong><br>
+                                    <strong style="color: #0070c0; font-size: 13px;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
+                                    <span id="cetakOp_cabang_header" class="fw-bold" style="font-size: 12px;">KANTOR CABANG PEMBANTU BABULU</span>
+                                </td>
+                                <td width="20%" class="text-end align-middle px-0">
+                                    <img id="cetakKop_logoKanan2" src="" style="max-height: 55px; max-width: 100%; display: none;">
+                                </td>
+                            </tr>
+                        </table>
 
                         <div class="text-center mb-3">
-                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5>
+                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline" style="font-size: 14px;">BERITA ACARA PENGISIAN ATM</h5>
                         </div>
                         
-                        <!-- PARAGRAF PEMBUKA -->
-                        <p style="text-align: justify;" class="mb-2">Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin atm PT Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text">...</span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut :</p>
+                        <p style="text-align: justify; font-size: 13px;" class="mb-2">Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin atm PT Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text">...</span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut :</p>
 
-                        <!-- TABEL RINCIAN ANTI-LIPAT (Menggunakan text-nowrap pada ": Rp") -->
-                        <table class="table table-borderless table-sm w-100 mb-2">
+                        <!-- TABEL RINCIAN ANTI-LIPAT -->
+                        <table class="table table-borderless table-sm w-100 mb-2" style="font-size: 13px; line-height: 1.3;">
                             <tr>
                                 <td width="3%" class="pe-1 py-1">1.</td>
-                                <td width="55%" class="px-1 py-1">Saldo Kas Sebelum Pengisian (System Core)</td>
-                                <td width="5%" class="px-1 py-1 text-nowrap text-end">: Rp</td>
-                                <td id="cetakSysSebelum" class="text-end ps-1 py-1 fw-bold">0</td>
+                                <td class="px-1 py-1">Saldo Kas Sebelum Pengisian (System Core)</td>
+                                <td style="width: 1%; white-space: nowrap;" class="px-1 py-1 text-end">: Rp</td>
+                                <td style="width: 25%; white-space: nowrap;" id="cetakSysSebelum" class="text-end ps-1 py-1 fw-bold">0</td>
                             </tr>
                             <tr>
                                 <td class="pe-1 py-1">2.</td>
                                 <td class="px-1 py-1">Saldo Kas Yang Ditambahkan (System Core)</td>
-                                <td class="px-1 py-1 text-nowrap text-end">: Rp</td>
-                                <td id="cetakSysTambah" class="text-end ps-1 py-1 fw-bold">0</td>
+                                <td style="width: 1%; white-space: nowrap;" class="px-1 py-1 text-end">: Rp</td>
+                                <td style="width: 25%; white-space: nowrap;" id="cetakSysTambah" class="text-end ps-1 py-1 fw-bold">0</td>
                             </tr>
                             <tr>
                                 <td class="pe-1 py-1">3.</td>
                                 <td class="px-1 py-1">Saldo Kas Setelah Penambahan (System Core)</td>
-                                <td class="px-1 py-1 text-nowrap text-end">: Rp</td>
-                                <td id="cetakSysTotal" class="text-end ps-1 py-1 fw-bold">0</td>
+                                <td style="width: 1%; white-space: nowrap;" class="px-1 py-1 text-end">: Rp</td>
+                                <td style="width: 25%; white-space: nowrap;" id="cetakSysTotal" class="text-end ps-1 py-1 fw-bold">0</td>
                             </tr>
                             <tr>
                                 <td class="pe-1 py-1">4.</td>
                                 <td class="px-1 py-1">Saldo Kas Menurut Jumlah Fisik</td>
-                                <td class="px-1 py-1 text-nowrap text-end">: Rp</td>
-                                <td id="cetakFisik" class="text-end ps-1 py-1 fw-bold">0</td>
+                                <td style="width: 1%; white-space: nowrap;" class="px-1 py-1 text-end">: Rp</td>
+                                <td style="width: 25%; white-space: nowrap;" id="cetakFisik" class="text-end ps-1 py-1 fw-bold">0</td>
                             </tr>
                             <tr>
                                 <td class="pe-1 py-1">5.</td>
                                 <td class="px-1 py-1">Selisih Kurang Saldo Kas</td>
-                                <td class="px-1 py-1 text-nowrap text-end">: Rp</td>
-                                <td id="cetakKurang" class="text-end ps-1 py-1 fw-bold">0</td>
+                                <td style="width: 1%; white-space: nowrap;" class="px-1 py-1 text-end">: Rp</td>
+                                <td style="width: 25%; white-space: nowrap;" id="cetakKurang" class="text-end ps-1 py-1 fw-bold">0</td>
                             </tr>
                             <tr>
                                 <td class="pe-1 py-1">6.</td>
                                 <td class="px-1 py-1">Selisih Lebih</td>
-                                <td class="px-1 py-1 text-nowrap text-end">: Rp</td>
-                                <td id="cetakLebih" class="text-end ps-1 py-1 fw-bold">0</td>
+                                <td style="width: 1%; white-space: nowrap;" class="px-1 py-1 text-end">: Rp</td>
+                                <td style="width: 25%; white-space: nowrap;" id="cetakLebih" class="text-end ps-1 py-1 fw-bold">0</td>
                             </tr>
                         </table>
 
-                        <!-- PARAGRAF PENUTUP -->
-                        <p style="text-align: justify;" class="mb-1">Sebagai lampiran kami sampaikan struk jurnal mesin atm sebelum dan setelah dilakukan pengisian selain itu kami telah melakukan pemeriksaan terhadap mesin atm tersebut, dimana <b>TIDAK TERDAPAT ATM yang tertahan</b>.</p>
-                        <p style="text-align: justify;" class="mb-3">Demikian berita acara ini dibuat sesuai dengan keadaan yang sebenarnya.</p>
+                        <p style="text-align: justify; font-size: 13px;" class="mb-1">Sebagai lampiran kami sampaikan struk jurnal mesin atm sebelum dan setelah dilakukan pengisian selain itu kami telah melakukan pemeriksaan terhadap mesin atm tersebut, dimana <b>TIDAK TERDAPAT ATM yang tertahan</b>.</p>
+                        <p style="text-align: justify; font-size: 13px;" class="mb-3">Demikian berita acara ini dibuat sesuai dengan keadaan yang sebenarnya.</p>
 
                         <!-- KOP PENGANTAR TANDA TANGAN -->
-                        <div class="text-center mb-3 kop-tengah" style="line-height: 1.2;">
+                        <div class="text-center mb-3" style="font-size: 12px; line-height: 1.2;">
                             <strong style="color: #0070c0;">PT BANK PEMBANGUNAN DAERAH</strong><br>
                             <strong style="color: #0070c0;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
                             <span id="cetakOp_cabang_sub" class="fw-bold">KANTOR CABANG PEMBANTU BABULU</span>
                         </div>
 
-                        <p class="fw-bold mb-2 ttd-area">Petugas Pelaksana :</p>
+                        <p class="fw-bold mb-0" style="font-size: 12px;">Petugas Pelaksana :</p>
 
-                        <!-- STRUKTUR 4 TANDA TANGAN BERJENJANG -->
-                        <div class="row ttd-area" style="line-height: 1.4;">
-                            <div class="col-6 mb-3">
-                                <p class="mb-0 fw-bold">1. <span id="cetakOp_petugasTellerName">SUCI AINUL FITRI</span></p>
-                                <p class="mb-4 text-uppercase text-muted" style="font-size: 85%;">JABATAN : TELLER</p>
-                                <p class="mb-0 text-secondary border-bottom border-dark border-1 d-inline-block" style="width: 85%;">Tanda Tangan</p>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <p class="mb-0 fw-bold">2. <span id="cetakOp_petugasAdminName">FISTRI ARIANDINI</span></p>
-                                <p class="mb-4 text-uppercase text-muted" style="font-size: 85%;">JABATAN : STAF ADMINISTRASI CABANG</p>
-                                <p class="mb-0 text-secondary border-bottom border-dark border-1 d-inline-block" style="width: 85%;">Tanda Tangan</p>
-                            </div>
-                            <div class="col-6 mb-2">
-                                <p class="mb-0 fw-bold">3. <span id="cetakOp_petugasSecurityName">DADAN</span></p>
-                                <p class="mb-4 text-uppercase text-muted" style="font-size: 85%;">JABATAN : SECURITY</p>
-                                <p class="mb-0 text-secondary border-bottom border-dark border-1 d-inline-block" style="width: 85%;">Tanda Tangan</p>
-                            </div>
-                            
-                            <!-- Spasi Luas untuk Tanda Tangan Pemimpin -->
-                            <div class="col-12 text-center mt-2 mb-5"><p class="mb-0 fw-bold">Mengetahui,</p></div>
-                            <div class="col-12 text-center mt-5 pt-3">
-                                <p class="fw-bold text-decoration-underline mb-0" id="cetakOp_pimpinanName">ENDY PRATAMA</p>
-                                <p class="mb-0" id="cetakOp_pimpinanJabatan">Pemimpin Capem</p>
-                            </div>
-                            
-                            <!-- QR Code diposisikan Absolute Bottom Left -->
-                            <div class="position-absolute qr-area text-start">
-                                <img id="qrBAOpname" src="" class="border p-1 rounded-2 shadow-sm bg-white">
-                                <p class="text-muted mt-1 mb-0 fw-bold">Scan e-Document</p>
-                            </div>
+                        <!-- TANDA TANGAN BERJENJANG (MENGGUNAKAN TABEL) -->
+                        <table class="table table-borderless w-100 mt-2 mb-0" style="font-size: 12px; line-height: 1.4;">
+                            <tr>
+                                <td width="50%" class="pb-3 px-0">
+                                    <p class="mb-0 fw-bold">1. <span id="cetakOp_petugasTellerName">SUCI AINUL FITRI</span></p>
+                                    <p class="mb-4 text-uppercase text-muted" style="font-size: 85%;">JABATAN : TELLER</p>
+                                    <p class="mb-0 text-secondary border-bottom border-dark border-1 d-inline-block" style="width: 85%;">Tanda Tangan</p>
+                                </td>
+                                <td width="50%" class="pb-3 px-0">
+                                    <p class="mb-0 fw-bold">2. <span id="cetakOp_petugasAdminName">FISTRI ARIANDINI</span></p>
+                                    <p class="mb-4 text-uppercase text-muted" style="font-size: 85%;">JABATAN : STAF ADMINISTRASI CABANG</p>
+                                    <p class="mb-0 text-secondary border-bottom border-dark border-1 d-inline-block" style="width: 85%;">Tanda Tangan</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="pb-3 px-0">
+                                    <p class="mb-0 fw-bold">3. <span id="cetakOp_petugasSecurityName">DADAN</span></p>
+                                    <p class="mb-4 text-uppercase text-muted" style="font-size: 85%;">JABATAN : SECURITY</p>
+                                    <p class="mb-0 text-secondary border-bottom border-dark border-1 d-inline-block" style="width: 85%;">Tanda Tangan</p>
+                                </td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="text-center pt-2 pb-2 px-0">
+                                    <p class="mb-5 pb-4 fw-bold">Mengetahui,</p>
+                                    <p class="fw-bold text-decoration-underline mb-0" id="cetakOp_pimpinanName">ENDY PRATAMA</p>
+                                    <p class="mb-0" id="cetakOp_pimpinanJabatan">Pemimpin Capem</p>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- QR Code Absolute -->
+                        <div class="position-absolute" style="bottom: 15mm; left: 20mm; text-align: left;">
+                            <img id="qrBAOpname" src="" width="65" class="border p-1 rounded-2 shadow-sm bg-white">
+                            <p class="text-muted mt-1 mb-0 fw-bold" style="font-size: 9px;">Scan e-Document</p>
                         </div>
                     </div>
                 </div>
