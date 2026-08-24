@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ATM Recon SuperApp</title>
+    
     <!-- Google Fonts: Quicksand for a Playful Look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +34,7 @@
         .bg-gradient-playful { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .icon-box-playful { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 14px; font-size: 1.2rem; }
 
-       /* ========================================== */
+        /* ========================================== */
         /* 7. ENGINE CETAK KERTAS A4 (FIT TO 1 PAGE)  */
         /* ========================================== */
         @page {
@@ -69,7 +70,7 @@
             .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: hidden !important; background: transparent !important; }
             .btn, .modal-header, .modal-footer, .btn-close { display: none !important; }
         }
-        
+
         /* CSS KALENDER REKONSILIASI CANGGIH */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
         .calendar-day-header { text-align: center; font-weight: 900; font-size: 0.8rem; color: #6c757d; padding-bottom: 5px; }
@@ -92,11 +93,13 @@
             .cal-indicator { font-size: 0.55rem; padding: 2px 4px; flex-direction: column; align-items: flex-start; }
             .cal-indicator span:last-child { display: none; } /* Sembunyikan ikon di HP agar muat */
         }
+
         /* CSS TIMELINE REKAM JEJAK */
         .timeline-wrapper { border-left: 3px solid #dee2e6; margin-left: 20px; padding-left: 25px; position: relative; }
         .timeline-item { position: relative; margin-bottom: 2rem; }
         .timeline-icon { position: absolute; left: -46px; top: 0; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; border: 4px solid #fff; box-shadow: 0 0 0 2px #dee2e6; z-index: 1; }
         .timeline-content { background: #f8f9fa; padding: 18px; border-radius: 12px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        
         /* CSS DRAG & DROP DAN PROGRESS BAR */
         .drop-zone { border: 2px dashed #a5b4fc; background-color: #f8faff; transition: all 0.3s ease; cursor: pointer; position: relative; }
         .drop-zone:hover, .drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; transform: scale(1.01); }
@@ -104,6 +107,7 @@
         .file-count-badge { font-size: 0.75rem; position: absolute; top: 10px; right: 10px; }
         .progress-swal { height: 18px; border-radius: 10px; background-color: #e9ecef; box-shadow: inset 0 1px 2px rgba(0,0,0,.1); }
         .progress-swal .progress-bar { font-size: 0.7rem; font-weight: bold; line-height: 18px; transition: width 0.4s ease; }
+        
         /* Animasi Tambahan untuk Menu Analisa */
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -112,10 +116,11 @@
         /* Desain Switch Tab Baru */
         #pills-tab .btn.active { background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #212529 !important; border: 1px solid #dee2e6; }
         #pills-tab .btn { color: #6c757d; border: 1px solid transparent; }
+        
         /* CSS Animasi Menu Navigasi */
         .sidebar .nav-link:hover { background-color: #f8f9fa; transform: translateX(3px); }
         .sidebar .nav-link.active { background-color: #e0e7ff; color: #4f46e5 !important; font-weight: 900; border-right: 4px solid #4f46e5; }
-        .floating-bottom-nav { z-index: 1050; padding-bottom: env(safe-area-inset-bottom); }
+        
         /* SMART ONBOARDING WIZARD */
         .onboarding-step { display: none; animation: fadeUpIn 0.5s ease forwards; }
         .onboarding-step.active { display: block; }
@@ -123,6 +128,7 @@
         .step-indicator.active { background: #4f46e5; transform: scale(1.5); width: 16px; border-radius: 10px; }
         .onboarding-icon-wrapper { width: 85px; height: 85px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; font-size: 3rem; }
         @keyframes fadeUpIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         /* ========================================== */
         /* 8. RESPONSIVE A4 DOCUMENT PREVIEW          */
         /* ========================================== */
