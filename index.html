@@ -551,15 +551,19 @@
                         </div>
                     </div>
 
-                    <!-- Modern Segmented Tabs -->
-                    <div class="bg-light p-1 rounded-pill shadow-sm mb-4 border d-flex flex-nowrap overflow-auto hide-scrollbar" role="tablist">
-                        <button class="btn flex-fill active rounded-pill fw-bold py-2 text-nowrap transition-all" id="tab-op-form" data-bs-toggle="pill" data-bs-target="#op-form-tab" type="button" style="font-size: 0.85rem;">
-                            <i class="bi bi-pencil-square text-primary me-1"></i> Form Input B/A
-                        </button>
-                        <button class="btn flex-fill rounded-pill fw-bold py-2 text-nowrap transition-all text-secondary" id="tab-op-riwayat" data-bs-toggle="pill" data-bs-target="#op-riwayat-tab" type="button" style="font-size: 0.85rem;" onclick="fetchOpnameHistory()">
-                            <i class="bi bi-clock-history text-danger me-1"></i> Riwayat & Arsip B/A
-                        </button>
-                    </div>
+                   <!-- Modern Segmented Tabs (DIPERBAIKI) -->
+                    <ul class="nav nav-pills bg-light p-1 rounded-pill shadow-sm mb-4 border d-flex flex-nowrap overflow-auto hide-scrollbar" role="tablist">
+                        <li class="nav-item flex-fill" role="presentation">
+                            <button class="nav-link active w-100 rounded-pill fw-bold py-2 text-nowrap transition-all" id="tab-op-form" data-bs-toggle="pill" data-bs-target="#op-form-tab" type="button" style="font-size: 0.85rem;">
+                                <i class="bi bi-pencil-square text-primary me-1"></i> Form Input B/A
+                            </button>
+                        </li>
+                        <li class="nav-item flex-fill" role="presentation">
+                            <button class="nav-link w-100 rounded-pill fw-bold py-2 text-nowrap transition-all" id="tab-op-riwayat" data-bs-toggle="pill" data-bs-target="#op-riwayat-tab" type="button" style="font-size: 0.85rem;" onclick="fetchOpnameHistory()">
+                                <i class="bi bi-clock-history text-danger me-1"></i> Riwayat & Arsip B/A
+                            </button>
+                        </li>
+                    </ul>
 
                     <div class="tab-content">
                         <!-- TAB 1: INPUT FORM SUPER INTERAKTIF -->
