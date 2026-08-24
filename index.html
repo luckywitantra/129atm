@@ -977,50 +977,74 @@
 
     <!-- ALL MODALS -->
     <!-- MODAL PENGATURAN (SYSTEM SETTINGS) -->
+    <!-- MODAL SYSTEM SETTINGS & KOP SURAT -->
     <div class="modal fade" id="modal-system-settings" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-5 border-0 shadow-lg bg-light">
-                <div class="modal-header bg-gradient-playful text-white border-0 py-3">
-                    <h6 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2"></i> Pengaturan Sistem</h6>
+            <div class="modal-content rounded-4 border-0 shadow-lg bg-light">
+                <div class="modal-header bg-dark text-white border-0 py-3 rounded-top-4">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-gear-fill me-2"></i> Pengaturan Sistem & Kop Surat</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-               <div class="modal-body p-4 bg-secondary-subtle">
+                <div class="modal-body p-4 bg-secondary-subtle custom-scroll">
+                    
                     <!-- UPLOAD LOGO KOP SURAT -->
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4 p-3">
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4 p-3 bouncy-hover">
                         <h6 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-image text-primary me-2"></i> Logo Kop Surat BA</h6>
                         <div class="row g-3">
                             <div class="col-md-6 text-center">
                                 <label class="small fw-bold text-muted mb-2">Logo Kiri (Bankaltimtara)</label>
-                                <div class="border rounded-3 p-2 bg-light mb-2 d-flex align-items-center justify-content-center" style="height: 80px;">
-                                    <img id="previewLogoKiri" src="" style="max-height: 60px; max-width: 100%; display: none;">
-                                    <span id="textLogoKiri" class="text-muted small"><i class="bi bi-image"></i> Belum ada logo</span>
+                                <div class="border border-primary-subtle rounded-3 p-2 bg-light mb-2 d-flex align-items-center justify-content-center" style="height: 90px;">
+                                    <img id="previewLogoKiri" src="" style="max-height: 70px; max-width: 100%; display: none;">
+                                    <span id="textLogoKiri" class="text-muted small"><i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i>Pilih Logo Kiri</span>
                                 </div>
-                                <input type="file" id="uploadLogoKiri" class="form-control form-control-sm rounded-pill" accept="image/png, image/jpeg">
+                                <input type="file" id="uploadLogoKiri" class="form-control form-control-sm rounded-pill" accept="image/png, image/jpeg" onchange="previewLocalImage(this, 'previewLogoKiri', 'textLogoKiri')">
                             </div>
                             <div class="col-md-6 text-center">
                                 <label class="small fw-bold text-muted mb-2">Logo Kanan (BPD Bersama)</label>
-                                <div class="border rounded-3 p-2 bg-light mb-2 d-flex align-items-center justify-content-center" style="height: 80px;">
-                                    <img id="previewLogoKanan" src="" style="max-height: 60px; max-width: 100%; display: none;">
-                                    <span id="textLogoKanan" class="text-muted small"><i class="bi bi-image"></i> Belum ada logo</span>
+                                <div class="border border-primary-subtle rounded-3 p-2 bg-light mb-2 d-flex align-items-center justify-content-center" style="height: 90px;">
+                                    <img id="previewLogoKanan" src="" style="max-height: 70px; max-width: 100%; display: none;">
+                                    <span id="textLogoKanan" class="text-muted small"><i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i>Pilih Logo Kanan</span>
                                 </div>
-                                <input type="file" id="uploadLogoKanan" class="form-control form-control-sm rounded-pill" accept="image/png, image/jpeg">
+                                <input type="file" id="uploadLogoKanan" class="form-control form-control-sm rounded-pill" accept="image/png, image/jpeg" onchange="previewLocalImage(this, 'previewLogoKanan', 'textLogoKanan')">
                             </div>
                         </div>
                     </div>
 
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4 p-3">
+                    <!-- IDENTITAS KANTOR -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4 p-3 bouncy-hover">
                         <h6 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-building-fill text-primary me-2"></i> Identitas Kantor & Pimpinan</h6>
                         <div class="row g-3">
-                            <div class="col-md-12"><label class="small fw-bold text-muted mb-1">Nama Cabang / KCP</label><input type="text" id="cfgCabang" class="form-control rounded-pill bg-light border-0 fw-bold"></div>
-                            <div class="col-md-12"><label class="small fw-bold text-muted mb-1">Alamat Lengkap & Kontak (Muncul di Kop)</label><textarea id="cfgAlamat" class="form-control rounded-4 bg-light border-0 fw-bold" rows="3" placeholder="Jl. Propinsi No. 01...&#10;Telp: (0542)..."></textarea></div>
-                            <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Pimpinan / Penyelia</label><input type="text" id="cfgPimpinan" class="form-control rounded-pill bg-light border-0 fw-bold"></div>
-                            <div class="col-md-6"><label class="small fw-bold text-muted mb-1">Admin Rekon / KCP</label><input type="text" id="cfgAdmin" class="form-control rounded-pill bg-light border-0 fw-bold"></div>
+                            <div class="col-md-12">
+                                <label class="small fw-bold text-muted mb-1">Nama Cabang / KCP</label>
+                                <input type="text" id="cfgCabang" class="form-control rounded-pill bg-light border-0 fw-bold">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="small fw-bold text-muted mb-1">Alamat Lengkap & Kontak (Akan Muncul di Kop Surat)</label>
+                                <textarea id="cfgAlamat" class="form-control rounded-4 bg-light border-0 fw-bold" rows="3" placeholder="Jl. Propinsi No. 01...&#10;Telp: (0542)..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-muted mb-1">Pimpinan / Penyelia</label>
+                                <input type="text" id="cfgPimpinan" class="form-control rounded-pill bg-light border-0 fw-bold">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-muted mb-1">Admin Rekon / KCP</label>
+                                <input type="text" id="cfgAdmin" class="form-control rounded-pill bg-light border-0 fw-bold">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card bg-white border-0 shadow-sm rounded-4 p-3" id="tellerConfigContainer">
+                    <!-- PENANGGUNG JAWAB ATM -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 p-3 bouncy-hover" id="tellerConfigContainer">
                         <!-- Di-generate otomatis dari JS -->
                     </div>
+                </div>
+                
+                <!-- FOOTER DENGAN TOMBOL SIMPAN -->
+                <div class="modal-footer border-0 bg-white rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill fw-bold px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary rounded-pill fw-bold px-4 shadow-sm bouncy-hover" onclick="superApp.saveBAConfig()">
+                        <i class="bi bi-save me-1"></i> Simpan Pengaturan
+                    </button>
                 </div>
             </div>
         </div>
