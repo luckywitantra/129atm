@@ -1468,3 +1468,63 @@ function updateNavigationBadges() {
         }
     }, 500); // Tunggu sebentar agar banner completeness selesai di-render
 }
+
+// ==========================================
+// 12. SMART ONBOARDING WIZARD
+// ==========================================
+let currentOnboardingStep = 1;
+const totalOnboardingSteps = 5;
+
+superApp.openOnboarding = function() {
+    new bootstrap.Modal(document.getElementById('onboardingModal')).show();
+};
+
+superApp.nextOnboardingStep = function() {
+    if (currentOnboardingStep < totalOnboardingSteps) {
+        // Hilangkan yang lama
+        document.getElementById(`step${currentOnboardingStep}`).classList.remove('active');
+        document.querySelectorAll('.step-indicator')[currentOnboardingStep-1].classList.remove('active');
+        
+        currentOnboardingStep++;
+        
+        // Munculkan yang baru
+        document.getElementById(`step${currentOnboardingStep}`).classList.add('active');
+        document.querySelectorAll('.step-indicator')[currentOnboardingStep-1].classList.add('active');
+        
+        // Ubah tombol di step terakhir
+        if (currentOnboardingStep === totalOnboardingSteps) {
+            let btn = document.getElementById('btnNextOnboarding');
+            btn.innerHTML = '<i class="bi bi-stars"></i> Mulai Bekerja';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-dark');
+            btn.onclick = superApp.closeOnboarding;
+        }
+    }
+};
+
+superApp.closeOnboarding = function() {
+    const modalInstance = bootstrap.Modal.getInstance(document.getElementById('onboardingModal'));
+    if (modalInstance) modalInstance.hide();
+    
+    // Tanamkan ke memori LocalStorage agar tidak muncul lagi besok
+    localStorage.setItem('reconOnboardingDone', 'true');
+    
+    // Beri sapaan penutup manis
+    setTimeout(() => {
+        PlayfulAlert.fire({
+            title: 'Siap Dimulai!',
+            text: 'Selamat bekerja. Dasbor Anda sudah siap menerima data.',
+            icon: 'success',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    }, 500);
+};
+
+// Deteksi Otomatis Saat Aplikasi Dimuat
+document.addEventListener("DOMContentLoaded", () => {
+    // Jika belum ada memori 'reconOnboardingDone' di browser
+    if (!localStorage.getItem('reconOnboardingDone')) {
+        setTimeout(superApp.openOnboarding, 1500); // Munculkan popup setelah loading selesai (1.5 detik)
+    }
+});
