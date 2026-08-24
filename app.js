@@ -2028,15 +2028,21 @@ function geserBulan(arah) {
 // INTERACTIVE GUIDED TOUR: OPNAME ATM (SPOTLIGHT EDITION)
 // ==========================================
 
-// Fungsi pembersih sorotan
+// Fungsi pembersih sorotan (Diperbarui)
 function clearTourSpotlight() {
     document.querySelectorAll('.tour-spotlight').forEach(el => {
         el.classList.remove('tour-spotlight');
     });
+    // Kembalikan Sidebar dan Header ke posisi normal
+    document.body.classList.remove('tour-active'); 
 }
 
 function startOpnameTour() {
     clearTourSpotlight();
+    
+    // AKTIFKAN MODE TOUR: Tenggelamkan Sidebar dan Header
+    document.body.classList.add('tour-active'); 
+
     let tabForm = document.getElementById('tab-op-form');
     if (tabForm) tabForm.click();
 
@@ -2045,16 +2051,20 @@ function startOpnameTour() {
         html: 'Tur profesional ini akan memandu Anda memahami cara menghitung uang fisik laci dan mencetak Berita Acara.',
         icon: 'info',
         position: 'center',
-        backdrop: false, // Latar belakang biru dongker pekat
+        backdrop: false, // Tetap matikan backdrop bawaan
         confirmButtonText: 'Mulai Tur (<span id="tour-step">1</span>/4)',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
         showCancelButton: true,
         cancelButtonText: 'Lewati',
-        customClass: { popup: 'rounded-4 shadow-lg' }
+        // Trik Khusus: Berikan efek spotlight langsung ke kotak dialog ini untuk Step 1
+        customClass: { popup: 'rounded-4 shadow-lg tour-spotlight' } 
     }).then((result) => {
         if (result.isConfirmed) {
             tourStep2();
+        } else {
+            // Jika user klik "Lewati" di awal, bersihkan layar
+            clearTourSpotlight();
         }
     });
 }
