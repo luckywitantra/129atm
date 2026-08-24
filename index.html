@@ -645,47 +645,115 @@
 
                 <!-- ARSIP UNIVERSAL -->
                 <div id="arsip" class="page-section d-none fade-in">
-                    <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
-                        <h4 class="fw-bold mb-0 text-dark">Arsip Universal</h4>
-                        <button class="btn btn-primary btn-sm rounded-pill fw-bold shadow-sm bouncy-hover" onclick="superApp.fetchUniversalData()"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+                    <!-- Header & Tombol Aksi -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-2 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-black mb-0 text-dark d-flex align-items-center">
+                                <i class="bi bi-archive-fill text-primary me-2"></i> Arsip Universal
+                            </h4>
+                            <p class="text-muted small fw-medium mb-0 mt-1">Pusat rekam jejak (Audit Trail) seluruh kasus selisih dari awal tahun hingga detik ini.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="superApp.fetchUniversalData()">
+                            <i class="bi bi-cloud-download-fill me-1"></i> Tarik Data Cloud
+                        </button>
                     </div>
 
-                    <div class="card bg-white border-0 shadow-sm rounded-4 p-3 mb-4">
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-3"><input type="text" id="arsipCari" class="form-control rounded-pill bg-light border-0 px-3" placeholder="Cari Resi / ATM..." oninput="changePage('arsipPage', 1); superApp.renderArsip();"></div>
-                            <div class="col-md-3">
-                                <select id="arsipStatus" class="form-select rounded-pill bg-light border-0 px-3 fw-bold text-secondary" onchange="changePage('arsipPage', 1); superApp.renderArsip();">
-                                    <option value="">Semua Status</option>
-                                    <option value="selesai">Selesai (Ditutup)</option>
-                                    <option value="belum">Menggantung (Belum)</option>
+                    <!-- KARTU SUMMARY ARSIP (Live Widgets) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-dark text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover overflow-hidden position-relative h-100">
+                                <i class="bi bi-collection-fill position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -15px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <span class="badge bg-white text-dark rounded-pill mb-2 fw-bold shadow-sm"><i class="bi bi-folder2-open"></i> Total Histori</span>
+                                    <h2 class="fw-black mb-0 text-white" id="arsipTotSemua">0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Seluruh Kasus Tercatat</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover overflow-hidden position-relative h-100">
+                                <i class="bi bi-check-circle-fill position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -15px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <span class="badge bg-white text-success rounded-pill mb-2 fw-bold shadow-sm"><i class="bi bi-shield-check"></i> Ditutup (Aman)</span>
+                                    <h2 class="fw-black mb-0 text-white" id="arsipTotSelesai">0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Kasus Berhasil Diselesaikan</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-danger text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover overflow-hidden position-relative h-100">
+                                <i class="bi bi-hourglass-split position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -15px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <span class="badge bg-white text-danger rounded-pill mb-2 fw-bold shadow-sm"><i class="bi bi-exclamation-triangle-fill"></i> Menggantung</span>
+                                    <h2 class="fw-black mb-0 text-white" id="arsipTotBelum">0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Kasus Belum Terselesaikan</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOOLBAR FILTER & PENCARIAN -->
+                    <div class="card bg-white border border-light shadow-sm rounded-pill mb-4 p-2">
+                        <div class="row g-2 align-items-center px-2">
+                            <div class="col-12 col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="arsipCari" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="Cari ID Mesin atau No. Resi..." oninput="changePage('arsipPage', 1); superApp.renderArsip();">
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="date" id="arsipTgl" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-secondary" onchange="changePage('arsipPage', 1); superApp.renderArsip();" title="Filter Tanggal Transaksi">
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <select id="arsipStatus" class="form-select form-select-sm bg-dark text-white border-0 rounded-pill px-3 fw-bold shadow-sm" onchange="changePage('arsipPage', 1); superApp.renderArsip();">
+                                    <option value="">Semua Status Penyelesaian</option>
+                                    <option value="selesai">Hanya Kasus Selesai (Ditutup)</option>
+                                    <option value="belum">Hanya Kasus Menggantung</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="table-responsive rounded-4 border">
-                            <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
-                                <thead class="table-light"><tr><th>TANGGAL</th><th>ATM</th><th>RESI</th><th>NOMINAL</th><th>STATUS</th><th class="text-end pe-3">AKSI</th></tr></thead>
-                                <tbody id="arsipTbody"></tbody>
-                            </table>
-                        </div>
-                        <div id="arsipPagination"></div>
                     </div>
+
+                    <!-- TABEL ARSIP -->
+                    <div class="table-responsive rounded-4 shadow-sm bg-white border">
+                        <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
+                            <thead class="table-secondary border-secondary">
+                                <tr>
+                                    <th width="15%" class="ps-3">TGL TRANSAKSI</th>
+                                    <th width="15%">ID MESIN</th>
+                                    <th width="15%">NOMOR RESI</th>
+                                    <th width="20%">NOMINAL SELISIH</th>
+                                    <th width="15%">STATUS</th>
+                                    <th width="20%" class="text-center pe-3">AUDIT TRAIL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="arsipTbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="arsipPagination" class="mt-2"></div>
                 </div>
 
                 <!-- MODAL REKAM JEJAK (AUDIT TRAIL) -->
                 <div class="modal fade" id="jejakModal" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content rounded-4 border-0 shadow-lg">
-                            <div class="modal-header border-0 bg-dark text-white rounded-top-4 pb-4">
-                                <div><h5 class="fw-black mb-0"><i class="bi bi-diagram-3-fill text-warning me-2"></i> Rekam Jejak Transaksi</h5><small class="text-white-50" id="jejakSub">ATM - Resi</small></div>
+                            <div class="modal-header border-0 bg-dark text-white rounded-top-4 pb-4" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%);">
+                                <div>
+                                    <h5 class="fw-black mb-1"><i class="bi bi-diagram-3-fill text-warning me-2"></i> Kronologi Audit Trail</h5>
+                                    <span class="badge bg-light text-dark rounded-pill shadow-sm px-3 py-2 fw-bold" id="jejakSub">ATM - Resi</span>
+                                </div>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-4 bg-white" style="margin-top: -15px; border-radius: 15px 15px 0 0;">
+                            <div class="modal-body p-4 bg-white" style="margin-top: -20px; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 20px rgba(0,0,0,0.1);">
                                 <div class="timeline-wrapper" id="jejakTimeline">
                                     <!-- Dibangun otomatis oleh JS -->
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 bg-light rounded-bottom-4">
-                                <button type="button" class="btn btn-outline-dark rounded-pill fw-bold px-4" data-bs-dismiss="modal">Tutup</button>
+                            <div class="modal-footer border-0 bg-light rounded-bottom-4 justify-content-center">
+                                <button type="button" class="btn btn-dark rounded-pill fw-bold px-5 shadow-sm bouncy-hover" data-bs-dismiss="modal">Tutup Rekam Jejak</button>
                             </div>
                         </div>
                     </div>
