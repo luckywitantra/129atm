@@ -34,7 +34,7 @@ let globalSelisihData = [], globalOpnameData = [], activeResolveRow = null;
 let globalConfig = {}; 
 let globalHistMap = new Map(), currentDetailData = [], detailType = ''; 
 
-let pageState = { analisaKurang: 1, analisaLebih: 1, analisaSelesai: 1, master: 1, opname: 1, uploadHist: 1, histDetail: 1 };
+let pageState = { analisaKurang: 1, analisaLebih: 1, analisaSelesai: 1, master: 1, opname: 1, uploadHist: 1, histDetail: 1, arsipPage: 1 };
 const PAGE_SIZE = 10;
 
 function getActivePeriod() {
@@ -1006,6 +1006,182 @@ function renderCalendar() {
     
     grid.innerHTML = html;
 }
+
+// ==========================================
+// 11. ENGINE ARSIP & REKAM JEJAK UNIVERSAL
+// ==========================================
+let universalDataCache = { selisih: [], opname: [] };
+
+superApp.fetchUniversalData = async function() {
+    document.getElementById('arsipTbody').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border text-primary mb-2"></div><br>Menarik riwayat seluruh dimensi waktu...</td></tr>`;
+    try {
+        const result = await apiCall('getUniversal');
+        if(result && result.success) {
+            universalDataCache = result.data;
+            // Urutkan dari yang terbaru
+            universalDataCache.selisih.sort((a,b) => new Date(b[0]) - new Date(a[0]));
+            superApp.renderArsip();
+        }
+    } catch (e) { PlayfulAlert.fire('Error', 'Gagal memuat arsip universal.', 'error'); }
+};
+
+superApp.renderArsip = function() {
+    let raw = universalDataCache.selisih;
+    const term = document.getElementById('arsipCari').value.toLowerCase();
+    const stat = document.getElementById('arsipStatus').value;
+
+    let filtered = raw.filter(r => {
+        let match = true;
+        if(term) match = match && (String(r[1]).toLowerCase().includes(term) || String(r[2]).toLowerCase().includes(term));
+        if(stat) {
+            let isSelesai = String(r[5]).toLowerCase() !== 'belum';
+            if(stat === 'selesai' && !isSelesai) match = false;
+            if(stat === 'belum' && isSelesai) match = false;
+        }
+        return match;
+    });
+
+    const pageData = filtered.slice((pageState.arsipPage - 1) * PAGE_SIZE, pageState.arsipPage * PAGE_SIZE);
+    const tbody = document.getElementById('arsipTbody');
+    
+    if(pageData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-1"></i> Arsip kosong/tidak ditemukan.</td></tr>`;
+        document.getElementById('arsipPagination').innerHTML = '';
+        return;
+    }
+
+    tbody.innerHTML = pageData.map(r => {
+        const isSelesai = String(r[5]).toLowerCase() !== 'belum';
+        const badgeColor = r[4].includes('LEBIH') ? 'bg-success' : 'bg-danger';
+        const statusBadge = isSelesai ? `<span class="badge bg-primary rounded-pill"><i class="bi bi-check-all"></i> Ditutup</span>` : `<span class="badge bg-warning text-dark rounded-pill"><i class="bi bi-hourglass-split"></i> Gantung</span>`;
+        const rawStr = encodeURIComponent(JSON.stringify(r));
+        return `
+            <tr>
+                <td class="fw-medium text-secondary" style="font-size:0.75rem">${String(r[0]).substring(0,10)}</td>
+                <td><span class="badge bg-secondary rounded-pill">${r[1]}</span></td>
+                <td class="fw-bold">${r[2]}</td>
+                <td><span class="badge ${badgeColor} rounded-pill shadow-sm">${formatRp(r[3])}</span></td>
+                <td>${statusBadge}</td>
+                <td class="text-end"><button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm bouncy-hover" onclick="superApp.bukaJejak('${rawStr}')"><i class="bi bi-diagram-3-fill text-warning"></i> Lihat Jejak</button></td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('arsipPagination').innerHTML = renderPagination(filtered.length, pageState.arsipPage, PAGE_SIZE, 'arsipPage');
+};
+
+superApp.bukaJejak = function(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr));
+    const tglTrx = String(row[0]).substring(0,10);
+    const atm = String(row[1]).trim();
+    const resi = String(row[2]);
+    const nominal = parseFloat(row[3]);
+    const jenis = row[4];
+    const isSelesai = String(row[5]).toLowerCase() !== 'belum';
+    const ket = row[6] || '-';
+    const tglAnalisa = row[7] || tglTrx;
+
+    document.getElementById('jejakSub').innerText = `${atm} | Resi: ${resi}`;
+
+    // 1. NODE: INSIDEN SELISIH
+    const icon1 = jenis.includes('LEBIH') ? 'bg-success bi-arrow-up-circle' : 'bg-danger bi-arrow-down-circle';
+    let html = `
+        <div class="timeline-item fade-in" style="animation-delay: 0.1s;">
+            <div class="timeline-icon ${icon1} shadow"><i class="bi"></i></div>
+            <div class="timeline-content">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-dark rounded-pill">1. Kejadian Awal</span>
+                    <small class="text-muted fw-bold">${tglTrx}</small>
+                </div>
+                <h6 class="fw-black mb-1">${jenis}</h6>
+                <p class="mb-0 text-secondary small">Sistem mendeteksi ada anomali transaksi senilai <b class="text-primary">${formatRp(nominal)}</b> pada proses analisa tanggal ${String(tglAnalisa).substring(0,10)}.</p>
+            </div>
+        </div>
+    `;
+
+    // 2. MENCARI PASANGAN OPNAME (PENGISIAN ATM)
+    let tglBAselesai = null;
+    let matchBA = ket.match(/tanggal (\d{4}-\d{2}-\d{2})/);
+    if(matchBA) tglBAselesai = matchBA[1];
+
+    let matchedOpname = null;
+    if(tglBAselesai) {
+        matchedOpname = universalDataCache.opname.find(o => String(o[1]).substring(0,10) === tglBAselesai && String(o[2]).trim() === atm);
+    } else {
+        // Cari opname terdekat SETELAH tanggal transaksi
+        let dTrx = new Date(tglTrx + "T00:00:00");
+        let possible = universalDataCache.opname.filter(o => String(o[2]).trim() === atm && new Date(String(o[1]).substring(0,10) + "T00:00:00") >= dTrx);
+        if(possible.length > 0) {
+            possible.sort((a,b) => new Date(String(a[1]).substring(0,10)) - new Date(String(b[1]).substring(0,10)));
+            matchedOpname = possible[0];
+        }
+    }
+
+    if(matchedOpname) {
+        let opWaktu = String(matchedOpname[1]).substring(0,16);
+        let sSblm = parseFloat(matchedOpname[3]) || 0;
+        let sTmbh = parseFloat(matchedOpname[4]) || 0;
+        let sFisik = parseFloat(matchedOpname[6]) || 0;
+        let sSelisih = parseFloat(matchedOpname[7]) || 0;
+
+        html += `
+        <div class="timeline-item fade-in" style="animation-delay: 0.2s;">
+            <div class="timeline-icon bg-warning shadow"><i class="bi bi-safe-fill text-dark"></i></div>
+            <div class="timeline-content border-warning-subtle">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-warning text-dark rounded-pill">2. Opname & Pengisian ATM</span>
+                    <small class="text-muted fw-bold">${opWaktu.replace('T', ' ')}</small>
+                </div>
+                <div class="row text-center mt-2 g-2">
+                    <div class="col-4 border-end"><span class="d-block small text-muted" style="font-size:0.6rem">SALDO AWAL</span><span class="fw-bold" style="font-size:0.8rem">${formatRp(sSblm)}</span></div>
+                    <div class="col-4 border-end"><span class="d-block small text-muted" style="font-size:0.6rem">KAS DITAMBAH</span><span class="fw-bold text-success" style="font-size:0.8rem">${formatRp(sTmbh)}</span></div>
+                    <div class="col-4"><span class="d-block small text-muted" style="font-size:0.6rem">FISIK LACI</span><span class="fw-black text-dark" style="font-size:0.8rem">${formatRp(sFisik)}</span></div>
+                </div>
+                <div class="mt-2 p-2 bg-light rounded text-center border">
+                    <span class="small fw-bold">Hasil Akhir: Terdapat ${sSelisih > 0 ? 'Kelebihan Uang Fisik' : 'Kekurangan Uang Fisik'} senilai <b class="${sSelisih>0?'text-success':'text-danger'}">${formatRp(Math.abs(sSelisih))}</b></span>
+                </div>
+            </div>
+        </div>`;
+    } else {
+        html += `
+        <div class="timeline-item fade-in" style="animation-delay: 0.2s;">
+            <div class="timeline-icon bg-secondary shadow"><i class="bi bi-dash"></i></div>
+            <div class="timeline-content bg-light opacity-75">
+                <span class="badge bg-secondary rounded-pill mb-2">2. Riwayat Pengisian (Opname)</span>
+                <p class="mb-0 text-muted small fst-italic">Belum ada Berita Acara Opname fisik ATM yang terikat dengan transaksi ini.</p>
+            </div>
+        </div>`;
+    }
+
+    // 3. NODE: STATUS PENYELESAIAN
+    if (isSelesai) {
+        html += `
+        <div class="timeline-item fade-in" style="animation-delay: 0.3s;">
+            <div class="timeline-icon bg-primary shadow"><i class="bi bi-check-all"></i></div>
+            <div class="timeline-content border-primary-subtle bg-primary-subtle">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="badge bg-primary rounded-pill">3. Kasus Ditutup (Selesai)</span>
+                    <small class="text-primary fw-bold">Berhasil Diselesaikan</small>
+                </div>
+                <p class="mb-2 text-dark small fw-medium"><i class="bi bi-quote text-secondary fs-5"></i> ${ket.split('|||')[0]}</p>
+                <button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm w-100" onclick="generateBA('${rawStr}')"><i class="bi bi-printer"></i> Cetak Ulang B/A Penyelesaian</button>
+            </div>
+        </div>`;
+    } else {
+        html += `
+        <div class="timeline-item fade-in" style="animation-delay: 0.3s;">
+            <div class="timeline-icon bg-danger shadow" style="animation: pulse-red 2s infinite;"><i class="bi bi-hourglass-split"></i></div>
+            <div class="timeline-content border-danger-subtle bg-danger-subtle">
+                <span class="badge bg-danger rounded-pill mb-2">3. Status Saat Ini</span>
+                <h6 class="fw-bold text-danger mb-0">Transaksi Masih Menggantung!</h6>
+                <p class="mb-0 text-dark small mt-1">Harap segera selesaikan anomali ini di menu "Analisa" atau sesuaikan dengan Berita Acara Opname.</p>
+            </div>
+        </div>`;
+    }
+
+    document.getElementById('jejakTimeline').innerHTML = html;
+    new bootstrap.Modal(document.getElementById('jejakModal')).show();
+};
 
 superApp.printLaporan = function() {
     const style = document.createElement('style');
