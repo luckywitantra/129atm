@@ -83,6 +83,14 @@
         .file-count-badge { font-size: 0.75rem; position: absolute; top: 10px; right: 10px; }
         .progress-swal { height: 18px; border-radius: 10px; background-color: #e9ecef; box-shadow: inset 0 1px 2px rgba(0,0,0,.1); }
         .progress-swal .progress-bar { font-size: 0.7rem; font-weight: bold; line-height: 18px; transition: width 0.4s ease; }
+        /* Animasi Tambahan untuk Menu Analisa */
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .pulse-animation { animation: pulse 1.5s infinite; }
+        
+        /* Desain Switch Tab Baru */
+        #pills-tab .btn.active { background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #212529 !important; border: 1px solid #dee2e6; }
+        #pills-tab .btn { color: #6c757d; border: 1px solid transparent; }
     </style>
 </head>
 <body>
@@ -293,54 +301,174 @@
                 </div> <!-- PENUTUP ID UPLOAD YANG BENAR DI SINI -->
                
 
-                <!-- ANALISA -->
+              <!-- ANALISA -->
                 <div id="analisa" class="page-section d-none fade-in">
-                    <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
-                        <h4 class="fw-bold mb-0 text-dark">Hasil Analisa</h4>
+                    <!-- Header & Tombol Aksi -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 mt-2 border-bottom pb-3">
                         <div>
-                            <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover" onclick="triggerAnalysis()"><i class="bi bi-lightning-charge-fill text-dark"></i> Proses</button>
-                            <button class="btn btn-dark btn-sm rounded-pill fw-bold shadow-sm bouncy-hover ms-1" onclick="superApp.bukaLaporanModal()"><i class="bi bi-file-earmark-pdf-fill"></i> Cetak Laporan</button>
+                            <h4 class="fw-black mb-0 text-dark d-flex align-items-center">
+                                <i class="bi bi-radar text-primary me-2 pulse-animation"></i> Hasil Analisa AI
+                            </h4>
+                            <p class="text-muted small fw-medium mb-0 mt-1">Pencocokan silang data GL dan EJ secara otomatis.</p>
                         </div>
-                    </div>
-                    <div class="data-completeness-banner"></div>
-
-                    <!-- Summary & Hierarki -->
-                    <div class="row g-2 mb-3">
-                        <div class="col-6"><div class="card bg-danger-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-danger mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH KURANG</p><h5 id="totalKurangRp" class="text-danger fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-down-circle-fill text-danger opacity-50 fs-2"></i></div></div></div>
-                        <div class="col-6"><div class="card bg-success-subtle border-0 shadow-sm rounded-4 p-2 bouncy-hover"><div class="d-flex justify-content-between align-items-center"><div><p class="text-success mb-0 small fw-bold" style="font-size: 0.7rem;">SELISIH LEBIH</p><h5 id="totalLebihRp" class="text-success fw-black mb-0">Rp 0</h5></div><i class="bi bi-arrow-up-circle-fill text-success opacity-50 fs-2"></i></div></div></div>
-                    </div>
-
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-3 bouncy-hover">
-                        <h6 class="fw-bold text-dark mb-3" style="font-size: 0.85rem;"><i class="bi bi-bar-chart-fill text-primary"></i> Hierarki Penyelesaian Selisih</h6>
-                        <div class="row text-center mb-2">
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Total Temuan</span><h6 class="fw-black text-dark mb-0" id="hierarki-tot-selisih">Rp 0</h6></div>
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Selesai</span><h6 class="fw-black text-success mb-0" id="hierarki-tot-selesai">Rp 0</h6></div>
-                            <div class="col-4"><span class="small text-muted fw-bold" style="font-size: 0.65rem;">Gantung</span><h6 class="fw-black text-danger mb-0" id="hierarki-tot-belum">Rp 0</h6></div>
-                        </div>
-                        <div class="progress rounded-pill shadow-inner" style="height: 6px;"><div id="hierarki-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
-                    </div>
-
-                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-3 p-2">
-                        <div class="row g-1 align-items-end">
-                            <div class="col-4 col-md-3"><input type="text" id="filterResiAn" list="dl-resi" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Cari Resi..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"></div>
-                            <div class="col-4 col-md-3"><input type="text" id="filterAtmAn" list="dl-atm" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="ID ATM..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"></div>
-                            <div class="col-4 col-md-3"><input type="number" id="filterNominalAn" list="dl-nominal" class="form-control form-control-sm rounded-pill bg-light border-0 px-3" placeholder="Rp..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"></div>
-                            <div class="col-12 col-md-3"><select id="sortDateAn" class="form-select form-select-sm rounded-pill bg-light border-0 px-3 text-secondary fw-bold" onchange="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()"><option value="desc">Sortir: Terbaru</option><option value="asc">Sortir: Terlama</option></select></div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="triggerAnalysis()">
+                                <i class="bi bi-lightning-charge-fill text-dark me-1"></i> Proses Analisa
+                            </button>
+                            <button class="btn btn-dark btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="superApp.bukaLaporanModal()">
+                                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Cetak Laporan
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="alert bg-primary-subtle border-0 text-primary py-2 px-3 rounded-pill shadow-sm d-flex align-items-center justify-content-between mb-3" style="font-size: 0.75rem;"><div><i class="bi bi-robot me-1 fs-6"></i> <strong>Smart AI Scanner aktif.</strong> Sistem otomatis mencocokkan selisih dengan Riwayat BA Opname.</div></div>
+                    <div class="data-completeness-banner"></div>
 
-                    <ul class="nav nav-pills gap-1 p-1 bg-white border rounded-pill shadow-sm mb-3 text-center d-flex flex-nowrap overflow-auto hide-scrollbar" id="pills-tab" role="tablist">
-                        <li class="nav-item flex-fill"><button class="nav-link active rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button" style="font-size: 0.8rem;">Kurang <span class="badge bg-white text-danger ms-1 rounded-pill" id="countKurang">0</span></button></li>
-                        <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button" style="font-size: 0.8rem;">Lebih <span class="badge bg-danger text-white ms-1 rounded-pill" id="countLebih">0</span></button></li>
-                        <li class="nav-item flex-fill"><button class="nav-link rounded-pill fw-bold w-100 py-1 text-nowrap text-success" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button" style="font-size: 0.8rem;"><i class="bi bi-check2-all"></i> Selesai</button></li>
-                    </ul>
+                    <!-- KARTU SUMMARY UTAMA (Live Widgets) -->
+                    <div class="row g-3 mb-4">
+                        <!-- Widget Selisih Kurang -->
+                        <div class="col-md-6">
+                            <div class="card bg-danger text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover position-relative overflow-hidden h-100">
+                                <i class="bi bi-arrow-down-circle-fill position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -20px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="badge bg-white text-danger shadow-sm rounded-pill fw-bold px-2 py-1" style="font-size: 0.65rem;">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> UANG MESIN HILANG
+                                        </span>
+                                    </div>
+                                    <h2 id="totalKurangRp" class="fw-black mb-0 mt-2 text-white" style="letter-spacing: -1px;">Rp 0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Total Nominal Selisih Kurang (Gantung)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Widget Selisih Lebih -->
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white border-0 shadow-sm rounded-4 p-4 bouncy-hover position-relative overflow-hidden h-100">
+                                <i class="bi bi-arrow-up-circle-fill position-absolute end-0 bottom-0 opacity-25" style="font-size: 7rem; margin-bottom: -20px; margin-right: -10px;"></i>
+                                <div class="position-relative z-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="badge bg-white text-success shadow-sm rounded-pill fw-bold px-2 py-1" style="font-size: 0.65rem;">
+                                            <i class="bi bi-info-circle-fill"></i> UANG MESIN SISA
+                                        </span>
+                                    </div>
+                                    <h2 id="totalLebihRp" class="fw-black mb-0 mt-2 text-white" style="letter-spacing: -1px;">Rp 0</h2>
+                                    <p class="small text-white-50 fw-medium mb-0 mt-1">Total Nominal Selisih Lebih (Gantung)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- KARTU HIERARKI PENYELESAIAN -->
+                    <div class="card bg-white border-0 shadow-sm rounded-4 mb-4 p-4 bouncy-hover">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-dark mb-0"><i class="bi bi-bar-chart-steps text-primary me-2"></i> Progress Penyelesaian Kasus</h6>
+                            <span class="badge bg-light text-secondary border rounded-pill">Bulan Ini</span>
+                        </div>
+                        <div class="row text-center mb-3 g-2">
+                            <div class="col-4 border-end border-light">
+                                <span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;"><i class="bi bi-search text-secondary"></i> Total Temuan</span>
+                                <h5 class="fw-black text-dark mb-0" id="hierarki-tot-selisih">Rp 0</h5>
+                            </div>
+                            <div class="col-4 border-end border-light">
+                                <span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;"><i class="bi bi-check-all text-success"></i> Diselesaikan</span>
+                                <h5 class="fw-black text-success mb-0" id="hierarki-tot-selesai">Rp 0</h5>
+                            </div>
+                            <div class="col-4">
+                                <span class="small text-muted fw-bold d-block mb-1" style="font-size: 0.7rem;"><i class="bi bi-hourglass-split text-danger"></i> Menggantung</span>
+                                <h5 class="fw-black text-danger mb-0" id="hierarki-tot-belum">Rp 0</h5>
+                            </div>
+                        </div>
+                        <div class="progress rounded-pill shadow-inner bg-secondary-subtle" style="height: 10px;">
+                            <div id="hierarki-progress" class="progress-bar bg-success progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- SMART AI SCANNER BANNER -->
+                    <div class="alert border-0 text-dark py-3 px-4 rounded-4 shadow-sm mb-4 d-flex align-items-center" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
+                        <div class="bg-white rounded-circle p-2 shadow-sm me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="bi bi-robot fs-4 text-primary" style="animation: bounce 2s infinite;"></i>
+                        </div>
+                        <div>
+                            <strong class="d-block mb-1 fs-6">Smart AI Scanner Sedang Aktif</strong>
+                            <span class="small opacity-75 fw-medium">Sistem secara otomatis menelusuri riwayat <b>BA Opname Fisik</b> untuk mencarikan kompensasi (tambalan) bagi transaksi yang selisih.</span>
+                        </div>
+                    </div>
+
+                    <!-- TOOLBAR FILTER & PENCARIAN -->
+                    <div class="card bg-white border border-light shadow-sm rounded-pill mb-4 p-2">
+                        <div class="row g-2 align-items-center px-2">
+                            <div class="col-4 col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-receipt"></i></span>
+                                    <input type="text" id="filterResiAn" list="dl-resi" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="Cari Resi..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()">
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-hdd-rack"></i></span>
+                                    <input type="text" id="filterAtmAn" list="dl-atm" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="ID Mesin..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()">
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-0 text-muted pe-1"><i class="bi bi-cash"></i></span>
+                                    <input type="number" id="filterNominalAn" list="dl-nominal" class="form-control bg-light border-0 rounded-pill px-3 fw-bold text-dark" placeholder="Nominal (Rp)..." oninput="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()">
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <select id="sortDateAn" class="form-select form-select-sm bg-dark text-white border-0 rounded-pill px-3 fw-bold shadow-sm" onchange="changePage('analisaKurang', 1); changePage('analisaLebih', 1); changePage('analisaSelesai', 1); renderSelisihTablesFiltered()">
+                                    <option value="desc">Urutkan: Transaksi Terbaru</option>
+                                    <option value="asc">Urutkan: Transaksi Terlama</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB KATEGORI SELISIH -->
+                    <div class="bg-light p-1 rounded-pill shadow-sm mb-3 border d-flex flex-nowrap overflow-auto hide-scrollbar" id="pills-tab" role="tablist">
+                        <button class="btn flex-fill active rounded-pill fw-bold py-2 text-nowrap transition-all position-relative" id="tab-kurang" data-bs-toggle="pill" data-bs-target="#kurang" type="button" style="font-size: 0.85rem;">
+                            <i class="bi bi-arrow-down-circle text-danger me-1"></i> Kasus Kurang 
+                            <span class="badge bg-danger text-white ms-1 rounded-pill shadow-sm position-absolute top-0 start-100 translate-middle" id="countKurang" style="margin-left:-15px; margin-top:10px;">0</span>
+                        </button>
+                        <button class="btn flex-fill rounded-pill fw-bold py-2 text-nowrap transition-all position-relative" id="tab-lebih" data-bs-toggle="pill" data-bs-target="#lebih" type="button" style="font-size: 0.85rem;">
+                            <i class="bi bi-arrow-up-circle text-success me-1"></i> Kasus Lebih 
+                            <span class="badge bg-success text-white ms-1 rounded-pill shadow-sm position-absolute top-0 start-100 translate-middle" id="countLebih" style="margin-left:-15px; margin-top:10px;">0</span>
+                        </button>
+                        <button class="btn flex-fill rounded-pill fw-bold py-2 text-nowrap transition-all" id="tab-selesai" data-bs-toggle="pill" data-bs-target="#selesai" type="button" style="font-size: 0.85rem;">
+                            <i class="bi bi-check2-all text-primary me-1"></i> Selesai Ditutup
+                        </button>
+                    </div>
+
+                    <!-- ISI TABEL TAB -->
                     <div class="tab-content" id="pills-tabContent">
-                        <div class="tab-pane fade show active" id="kurang" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyKurang"></tbody></table></div><div id="paginationAnalisaKurang"></div></div>
-                        <div class="tab-pane fade" id="lebih" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-light"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Keterangan / Saran AI</th><th>Aksi</th></tr></thead><tbody id="tableBodyLebih"></tbody></table></div><div id="paginationAnalisaLebih"></div></div>
-                        <div class="tab-pane fade" id="selesai" role="tabpanel"><div class="table-responsive rounded-4 shadow-sm bg-white border"><table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap"><thead class="table-success"><tr><th>Tanggal</th><th>ATM</th><th>Resi</th><th>Nominal</th><th>Alasan Selesai</th><th>Aksi</th></tr></thead><tbody id="tableBodySelesai"></tbody></table></div><div id="paginationAnalisaSelesai"></div></div>
+                        <div class="tab-pane fade show active" id="kurang" role="tabpanel">
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border">
+                                <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
+                                    <thead class="table-danger border-danger-subtle"><tr><th>TANGGAL</th><th>MESIN</th><th>NO RESI</th><th>NOMINAL SELISIH</th><th>KETERANGAN / REKOMENDASI AI</th><th class="text-center">AKSI</th></tr></thead>
+                                    <tbody id="tableBodyKurang"></tbody>
+                                </table>
+                            </div>
+                            <div id="paginationAnalisaKurang"></div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="lebih" role="tabpanel">
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border">
+                                <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
+                                    <thead class="table-success border-success-subtle"><tr><th>TANGGAL</th><th>MESIN</th><th>NO RESI</th><th>NOMINAL SELISIH</th><th>KETERANGAN / REKOMENDASI AI</th><th class="text-center">AKSI</th></tr></thead>
+                                    <tbody id="tableBodyLebih"></tbody>
+                                </table>
+                            </div>
+                            <div id="paginationAnalisaLebih"></div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="selesai" role="tabpanel">
+                            <div class="table-responsive rounded-4 shadow-sm bg-white border">
+                                <table class="table table-hover table-sm table-custom-compact align-middle mb-0 text-nowrap">
+                                    <thead class="table-primary border-primary-subtle"><tr><th>TANGGAL</th><th>MESIN</th><th>NO RESI</th><th>NOMINAL SELISIH</th><th>ALASAN PENYELESAIAN</th><th class="text-center">AKSI</th></tr></thead>
+                                    <tbody id="tableBodySelesai"></tbody>
+                                </table>
+                            </div>
+                            <div id="paginationAnalisaSelesai"></div>
+                        </div>
                     </div>
                 </div>
 
