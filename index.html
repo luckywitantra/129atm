@@ -123,6 +123,73 @@
         .step-indicator.active { background: #4f46e5; transform: scale(1.5); width: 16px; border-radius: 10px; }
         .onboarding-icon-wrapper { width: 85px; height: 85px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; font-size: 3rem; }
         @keyframes fadeUpIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* ========================================== */
+        /* 8. RESPONSIVE A4 DOCUMENT PREVIEW          */
+        /* ========================================== */
+        .kertas-a4 {
+            background-color: #fff;
+            color: #000;
+            font-family: 'Times New Roman', Times, serif;
+            box-sizing: border-box;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Mode Tampilan Layar (Desktop & Mobile) */
+        @media screen {
+            .kertas-a4 {
+                width: 100%;
+                max-width: 210mm; /* Tidak akan lebih besar dari A4 */
+                padding: 4% 5%; /* Padding mengambang/fleksibel */
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            }
+            
+            /* AJAIB: Pengecilan Proporsional Otomatis untuk Layar HP */
+            @media (max-width: 576px) {
+                .kertas-a4 { padding: 15px; }
+                .kop-kiri, .kop-kanan { width: 22% !important; }
+                .kop-tengah { width: 56% !important; }
+                .kop-tengah strong { font-size: 11px !important; }
+                .kop-tengah span { font-size: 9px !important; }
+                .kop-logo { max-height: 35px !important; }
+                
+                .kertas-a4 h5 { font-size: 13px !important; }
+                .kertas-a4 h6 { font-size: 12px !important; }
+                .kertas-a4 p, .kertas-a4 table { font-size: 11px !important; line-height: 1.3 !important; }
+                
+                .kertas-a4 table td { padding: 2px !important; white-space: normal; } /* Cegah tabel tergencet ekstrim */
+                .ttd-area p { font-size: 10px !important; }
+                
+                .qr-area { bottom: 10px !important; left: 10px !important; }
+                .qr-area img { width: 55px !important; }
+                .qr-area p { font-size: 7px !important; }
+            }
+        }
+
+        /* Mode Cetak Mesin Printer (Kembali ke A4 Asli) */
+        @media print {
+            .kertas-a4 {
+                width: 210mm !important;
+                height: 297mm !important;
+                padding: 15mm 20mm !important;
+                max-width: none !important;
+                box-shadow: none !important;
+            }
+            .kop-kiri, .kop-kanan { width: 25% !important; }
+            .kop-tengah { width: 50% !important; }
+            .kop-tengah strong { font-size: 13px !important; }
+            .kop-tengah span { font-size: 11px !important; }
+            .kop-logo { max-height: 55px !important; }
+            
+            .kertas-a4 h5 { font-size: 16px !important; }
+            .kertas-a4 h6 { font-size: 14px !important; }
+            .kertas-a4 p, .kertas-a4 table { font-size: 13.5px !important; line-height: 1.4 !important; }
+            
+            .ttd-area p { font-size: 12px !important; }
+            .qr-area { bottom: 15mm !important; left: 20mm !important; }
+            .qr-area img { width: 70px !important; }
+            .qr-area p { font-size: 8px !important; }
+        }
     </style>
 </head>
 <body>
@@ -1179,7 +1246,7 @@
         </div>
     </div>
 
-   <!-- MODAL CETAK SURAT B/A PENYELESAIAN (1 HALAMAN RAPI) -->
+   <!-- MODAL CETAK B/A PENYELESAIAN (RESPONSIVE) -->
     <div class="modal fade" id="beritaAcaraModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
@@ -1188,32 +1255,47 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-secondary-subtle d-flex justify-content-center custom-scroll">
-                    <!-- Area Kertas -->
-                    <div id="printBAPenyelesaianArea" class="bg-white text-dark shadow my-4 position-relative" style="width: 210mm; height: 297mm; padding: 15mm 20mm; font-family: 'Times New Roman', Times, serif; box-sizing: border-box;">
+                    
+                    <!-- AREA KERTAS DENGAN KELAS BARU -->
+                    <div id="printBAPenyelesaianArea" class="kertas-a4 my-4">
                         
                         <!-- KOP SURAT -->
                         <div class="d-flex justify-content-between align-items-center border-bottom border-dark border-2 pb-2 mb-3">
-                            <div style="width: 25%; text-align: left;"><img id="cetakKop_logoKiri1" src="" style="max-height: 55px; max-width: 100%; display: none;"></div>
-                            <div style="width: 50%; text-align: left; font-size: 11.5px; line-height: 1.2;"><strong style="color: #0070c0; font-size: 13px;">PT. BPD Kaltim Kaltara</strong><br><span id="cetak_cabang" class="fw-bold">Kantor Cabang...</span><br><span id="cetak_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br><span>www.bankaltimtara.co.id</span></div>
-                            <div style="width: 25%; text-align: right;"><img id="cetakKop_logoKanan1" src="" style="max-height: 55px; max-width: 100%; display: none;"></div>
+                            <div class="kop-kiri text-start"><img id="cetakKop_logoKiri1" src="" class="kop-logo" style="display: none;"></div>
+                            <div class="kop-tengah text-start" style="line-height: 1.2;">
+                                <strong style="color: #0070c0;">PT. BPD Kaltim Kaltara</strong><br>
+                                <span id="cetak_cabang" class="fw-bold">Kantor Cabang...</span><br>
+                                <span id="cetak_alamat" style="white-space: pre-wrap;">Jl. Propinsi No. 01...</span><br>
+                                <span>www.bankaltimtara.co.id</span>
+                            </div>
+                            <div class="kop-kanan text-end"><img id="cetakKop_logoKanan1" src="" class="kop-logo" style="display: none;"></div>
                         </div>
                         
                         <div class="text-center mb-3">
-                            <h5 class="fw-bolder text-decoration-underline mb-0" style="font-size: 16px;">BERITA ACARA</h5>
-                            <h6 class="fw-bolder mb-0" style="font-size: 14px;">PENYELESAIAN SELISIH ATM</h6>
-                            <h6 class="fw-bolder" id="cetak_atm_judul" style="font-size: 14px;"></h6>
+                            <h5 class="fw-bolder text-decoration-underline mb-0">BERITA ACARA</h5>
+                            <h6 class="fw-bolder mb-0">PENYELESAIAN SELISIH ATM</h6>
+                            <h6 class="fw-bolder" id="cetak_atm_judul"></h6>
                         </div>
                         
-                        <p style="text-align: justify; line-height: 1.4; font-size: 14px;" class="mb-2">Pada hari ini <b id="cetak_hari"></b> Tanggal <b id="cetak_tgl"></b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm"></b>, dengan nominal sebesar <b><span id="cetak_nominal"></span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:</p>
-                        <table class="table table-borderless table-sm mb-2 ms-3" style="font-size: 14px; line-height: 1.2;"><tr><td width="25%">No. Rekening</td><td width="2%">:</td><td id="cetak_rek" class="fw-bold"></td></tr><tr><td>Nama</td><td>:</td><td id="cetak_nama" class="fw-bold"></td></tr><tr><td>No. Referensi</td><td>:</td><td id="cetak_resi" class="fw-bold"></td></tr><tr><td>Transaksi</td><td>:</td><td id="cetak_trx"></td></tr><tr><td>Problem</td><td>:</td><td id="cetak_problem"></td></tr></table>
-                        <p style="text-align: justify; line-height: 1.4; font-size: 14px;" class="mb-2"><b>Keterangan:</b> <span id="cetak_keterangan"></span></p>
-                        <p style="text-align: justify; line-height: 1.4; font-size: 14px;" class="mb-2 mt-2"><b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:</p>
+                        <p style="text-align: justify;" class="mb-2">Pada hari ini <b id="cetak_hari"></b> Tanggal <b id="cetak_tgl"></b> telah dilakukan penyelesaian selisih pada mesin ATM <b id="cetak_atm"></b>, dengan nominal sebesar <b><span id="cetak_nominal"></span>.-</b> Dari hasil pemeriksaan Electronic Journal terdapat transaksi gagal dengan data sebagai berikut:</p>
+                        <table class="table table-borderless table-sm mb-2 ms-2">
+                            <tr><td width="28%">No. Rekening</td><td width="2%">:</td><td id="cetak_rek" class="fw-bold"></td></tr>
+                            <tr><td>Nama</td><td>:</td><td id="cetak_nama" class="fw-bold"></td></tr>
+                            <tr><td>No. Referensi</td><td>:</td><td id="cetak_resi" class="fw-bold"></td></tr>
+                            <tr><td>Transaksi</td><td>:</td><td id="cetak_trx"></td></tr>
+                            <tr><td>Problem</td><td>:</td><td id="cetak_problem"></td></tr>
+                        </table>
+                        <p style="text-align: justify;" class="mb-2"><b>Keterangan:</b> <span id="cetak_keterangan"></span></p>
+                        <p style="text-align: justify;" class="mb-2 mt-2"><b>Penyelesaian:</b> Dilakukan jurnal sebagai berikut:</p>
                         
-                        <table class="table table-bordered table-sm text-center border-dark mb-2" style="font-size: 13px;"><thead class="fw-bold align-middle"><tr><th>Debet</th><th>Kredit</th><th>Nominal</th><th>Keterangan</th></tr></thead><tbody class="align-middle"><tr><td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td><td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td><td class="fw-bold" id="cetak_jurnal_nom"></td><td id="cetak_jurnal_ket"></td></tr></tbody></table>
-                        <p style="text-align: justify; line-height: 1.4; font-size: 14px;" class="mb-3">Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait. Atas perhatian dan kerjasamanya disampaikan terima kasih.</p>
+                        <table class="table table-bordered table-sm text-center border-dark mb-2 align-middle">
+                            <thead class="fw-bold"><tr><th>Debet</th><th>Kredit</th><th>Nominal</th><th>Keterangan</th></tr></thead>
+                            <tbody><tr><td>1299000105<br><small>KWJBN SGR-ATM DLM PENYELESAIAN</small></td><td><span id="cetak_kredit_rek"></span><br><small id="cetak_kredit_nama"></small></td><td class="fw-bold" id="cetak_jurnal_nom"></td><td id="cetak_jurnal_ket"></td></tr></tbody>
+                        </table>
+                        <p style="text-align: justify;" class="mb-3">Demikian berita acara ini kami sampaikan, untuk dapat diproses lebih lanjut oleh unit terkait. Atas perhatian dan kerjasamanya disampaikan terima kasih.</p>
                         
                         <!-- Tanda Tangan Section -->
-                        <div class="row text-center" style="font-size: 13px;">
+                        <div class="row text-center ttd-area">
                             <div class="col-12 text-end mb-2"><span id="cetak_kota"></span>, <span id="cetak_tgl_ttd"></span></div>
                             <div class="col-8">
                                 <p class="mb-4 pb-2 fw-bold">TIM SKO ATM</p>
@@ -1226,120 +1308,112 @@
                                 <p class="mb-4 pb-2 fw-bold">Mengetahui,</p>
                                 <p class="fw-bold text-decoration-underline mb-0" id="cetak_pimpinan"></p><p>Pemimpin</p>
                             </div>
-                            
-                            <!-- QR Code diposisikan Absolute agar tidak memakan ruang tabel -->
-                            <div class="position-absolute" style="bottom: 15mm; left: 20mm; text-align: left;">
-                                <img id="qrBAPenyelesaian" src="" width="70" class="border p-1 rounded-2">
-                                <p class="text-muted mt-1 mb-0" style="font-size:8px;">Scan untuk e-Document</p>
+                            <!-- QR Code diposisikan Absolute -->
+                            <div class="position-absolute qr-area text-start">
+                                <img id="qrBAPenyelesaian" src="" class="border p-1 rounded-2">
+                                <p class="text-muted mt-1 mb-0">Scan e-Document</p>
                             </div>
                         </div>
 
                     </div>
                 </div>
                 <div class="modal-footer rounded-0 py-2">
-                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printBAPenyelesaianArea', 'BA_Penyelesaian_Selisih')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
-                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printBAPenyelesaianArea')"><i class="bi bi-printer-fill"></i> Cetak A4 / PDF</button>
+                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printBAPenyelesaianArea', 'BA_Penyelesaian')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printBAPenyelesaianArea')"><i class="bi bi-printer-fill"></i> Cetak A4</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CETAK BA OPNAME FISIK (1 HALAMAN RAPI) -->
+    <!-- MODAL CETAK BA OPNAME FISIK (RESPONSIVE) -->
     <div class="modal fade" id="baOpnameModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content rounded-0 border-0 shadow">
                 <div class="modal-header bg-dark text-white rounded-0 py-2">
-                    <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau Berita Acara Opname</h6>
+                    <h6 class="modal-title fw-bold"><i class="bi bi-printer"></i> Pratinjau BA Opname</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 bg-light d-flex justify-content-center custom-scroll">
-                    <!-- Area Kertas -->
-                    <div id="printBAOpnameArea" class="bg-white text-dark shadow-sm my-4 position-relative" style="width: 210mm; height: 297mm; padding: 15mm 20mm; font-family: 'Times New Roman', serif; box-sizing: border-box;">
+                    
+                    <!-- AREA KERTAS DENGAN KELAS BARU -->
+                    <div id="printBAOpnameArea" class="kertas-a4 my-4">
                         
                         <!-- KOP SURAT -->
                         <div class="d-flex justify-content-between align-items-center border-bottom border-dark border-2 pb-2 mb-2">
-                            <div style="width: 25%; text-align: left;"><img id="cetakKop_logoKiri2" src="" style="max-height: 55px; max-width: 100%; display: none;"></div>
-                            <div style="width: 50%; text-align: left; font-size: 11px; line-height: 1.2;">
-                                <strong style="color: #0070c0; font-size: 12.5px;">PT BANK PEMBANGUNAN DAERAH</strong><br>
-                                <strong style="color: #0070c0; font-size: 12.5px;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
+                            <div class="kop-kiri text-start"><img id="cetakKop_logoKiri2" src="" class="kop-logo" style="display: none;"></div>
+                            <div class="kop-tengah text-start" style="line-height: 1.2;">
+                                <strong style="color: #0070c0;">PT BANK PEMBANGUNAN DAERAH</strong><br>
+                                <strong style="color: #0070c0;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
                                 <span id="cetakOp_cabang_header" class="fw-bold">KANTOR CABANG PEMBANTU BABULU</span>
                             </div>
-                            <div style="width: 25%; text-align: right;"><img id="cetakKop_logoKanan2" src="" style="max-height: 55px; max-width: 100%; display: none;"></div>
+                            <div class="kop-kanan text-end"><img id="cetakKop_logoKanan2" src="" class="kop-logo" style="display: none;"></div>
                         </div>
 
                         <div class="text-center mb-3">
-                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline" style="font-size: 15px;">BERITA ACARA PENGISIAN ATM</h5>
+                            <h5 class="fw-bolder mb-0 text-uppercase text-decoration-underline">BERITA ACARA PENGISIAN ATM</h5>
                         </div>
                         
                         <!-- PARAGRAF PEMBUKA -->
-                        <p style="text-align: justify; line-height: 1.4; font-size: 13.5px;" class="mb-2">
-                            Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin atm PT Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text">...</span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut :
-                        </p>
+                        <p style="text-align: justify;" class="mb-2">Pada hari ini <b id="cetakHari">...</b> tanggal <b id="cetakTgl">...</b> jam <b id="cetakJam">...</b> WITA bahwa telah dilakukan pengisian kas ATM (Cash Opname) pada mesin atm PT Bank Pembangunan Kalimantan Timur Dan Kalimantan Utara <span id="cetakOp_cabang_text">...</span> dengan ATM ID <b id="cetakAtm">...</b> dengan rincian sebagai berikut :</p>
 
                         <!-- TABEL RINCIAN -->
-                        <table class="table table-borderless table-sm w-100 mb-2" style="line-height: 1.3; font-size: 13.5px;">
-                            <tr><td width="3%">1.</td><td width="55%">Saldo Kas Sebelum Pengisian (System Core)</td><td width="3%">: Rp</td><td id="cetakSysSebelum" class="text-end pe-3">0</td></tr>
-                            <tr><td>2.</td><td>Saldo Kas Yang Ditambahkan (System Core)</td><td>: Rp</td><td id="cetakSysTambah" class="text-end pe-3">0</td></tr>
-                            <tr><td>3.</td><td>Saldo Kas Setelah Penambahan (System Core)</td><td>: Rp</td><td id="cetakSysTotal" class="text-end pe-3 fw-bold">0</td></tr>
-                            <tr><td>4.</td><td>Saldo Kas Menurut Jumlah Fisik</td><td>: Rp</td><td id="cetakFisik" class="text-end pe-3 fw-bold">0</td></tr>
-                            <tr><td>5.</td><td>Selisih Kurang Saldo Kas</td><td>: Rp</td><td id="cetakKurang" class="text-end pe-3">0</td></tr>
-                            <tr><td>6.</td><td>Selisih Lebih</td><td>: Rp</td><td id="cetakLebih" class="text-end pe-3">0</td></tr>
+                        <table class="table table-borderless table-sm w-100 mb-2">
+                            <tr><td width="3%">1.</td><td width="55%">Saldo Kas Sebelum Pengisian (System Core)</td><td width="3%">: Rp</td><td id="cetakSysSebelum" class="text-end pe-1">0</td></tr>
+                            <tr><td>2.</td><td>Saldo Kas Yang Ditambahkan (System Core)</td><td>: Rp</td><td id="cetakSysTambah" class="text-end pe-1">0</td></tr>
+                            <tr><td>3.</td><td>Saldo Kas Setelah Penambahan (System Core)</td><td>: Rp</td><td id="cetakSysTotal" class="text-end pe-1 fw-bold">0</td></tr>
+                            <tr><td>4.</td><td>Saldo Kas Menurut Jumlah Fisik</td><td>: Rp</td><td id="cetakFisik" class="text-end pe-1 fw-bold">0</td></tr>
+                            <tr><td>5.</td><td>Selisih Kurang Saldo Kas</td><td>: Rp</td><td id="cetakKurang" class="text-end pe-1">0</td></tr>
+                            <tr><td>6.</td><td>Selisih Lebih</td><td>: Rp</td><td id="cetakLebih" class="text-end pe-1">0</td></tr>
                         </table>
 
                         <!-- PARAGRAF PENUTUP -->
-                        <p style="text-align: justify; line-height: 1.4; font-size: 13.5px;" class="mb-1">
-                            Sebagai lampiran kami sampaikan struk jurnal mesin atm sebelum dan setelah dilakukan pengisian selain itu kami telah melakukan pemeriksaan terhadap mesin atm tersebut, dimana <b>TIDAK TERDAPAT ATM yang tertahan</b>.
-                        </p>
-                        <p style="text-align: justify; line-height: 1.4; font-size: 13.5px;" class="mb-3">Demikian berita acara ini dibuat sesuai dengan keadaan yang sebenarnya.</p>
+                        <p style="text-align: justify;" class="mb-1">Sebagai lampiran kami sampaikan struk jurnal mesin atm sebelum dan setelah dilakukan pengisian selain itu kami telah melakukan pemeriksaan terhadap mesin atm tersebut, dimana <b>TIDAK TERDAPAT ATM yang tertahan</b>.</p>
+                        <p style="text-align: justify;" class="mb-3">Demikian berita acara ini dibuat sesuai dengan keadaan yang sebenarnya.</p>
 
                         <!-- KOP PENGANTAR TANDA TANGAN -->
-                        <div class="text-center mb-2" style="font-size: 12px; line-height: 1.2;">
+                        <div class="text-center mb-2 kop-tengah" style="line-height: 1.2;">
                             <strong style="color: #0070c0;">PT BANK PEMBANGUNAN DAERAH</strong><br>
                             <strong style="color: #0070c0;">KALIMANTAN TIMUR DAN KALIMANTAN UTARA</strong><br>
                             <span id="cetakOp_cabang_sub" class="fw-bold">KANTOR CABANG PEMBANTU BABULU</span>
                         </div>
 
-                        <p class="fw-bold mb-1" style="font-size: 12px;">Petugas Pelaksana :</p>
+                        <p class="fw-bold mb-1 ttd-area">Petugas Pelaksana :</p>
 
                         <!-- STRUKTUR 4 TANDA TANGAN -->
-                        <div class="row" style="font-size: 12px; line-height: 1.3;">
+                        <div class="row ttd-area" style="line-height: 1.3;">
                             <div class="col-6 mb-2">
                                 <p class="mb-0">1. <b id="cetakOp_petugasTellerName">SUCI AINUL FITRI</b></p>
-                                <p class="mb-3 text-uppercase text-muted" style="font-size: 10px;">JABATAN : TELLER</p>
-                                <p class="mb-0 text-secondary">Tanda Tangan ..................................................</p>
+                                <p class="mb-2 text-uppercase text-muted" style="font-size: 85%;">JABATAN : TELLER</p>
+                                <p class="mb-0 text-secondary">Tanda Tangan ...........................................</p>
                             </div>
                             <div class="col-6 mb-2">
                                 <p class="mb-0">2. <b id="cetakOp_petugasAdminName">FISTRI ARIANDINI</b></p>
-                                <p class="mb-3 text-uppercase text-muted" style="font-size: 10px;">JABATAN : STAF ADMINISTRASI CABANG</p>
-                                <p class="mb-0 text-secondary">Tanda Tangan ..................................................</p>
+                                <p class="mb-2 text-uppercase text-muted" style="font-size: 85%;">JABATAN : STAF ADMINISTRASI CABANG</p>
+                                <p class="mb-0 text-secondary">Tanda Tangan ...........................................</p>
                             </div>
                             <div class="col-6 mb-1">
                                 <p class="mb-0">3. <b id="cetakOp_petugasSecurityName">DADAN</b></p>
-                                <p class="mb-3 text-uppercase text-muted" style="font-size: 10px;">JABATAN : SECURITY</p>
-                                <p class="mb-0 text-secondary">Tanda Tangan ..................................................</p>
+                                <p class="mb-2 text-uppercase text-muted" style="font-size: 85%;">JABATAN : SECURITY</p>
+                                <p class="mb-0 text-secondary">Tanda Tangan ...........................................</p>
                             </div>
                             
-                            <!-- Mengetahui Pemimpin (Diberi Spasi Lebar) -->
-                            <div class="col-12 text-center mt-3 mb-5">
-                                <p class="mb-0 fw-bold">Mengetahui,</p>
-                            </div>
-                            <!-- Margin top besar (mt-5 & pt-4) sebagai ruang tanda tangan fisik -->
-                            <div class="col-12 text-center mt-5 pt-4">
+                            <div class="col-12 text-center mt-2 mb-3"><p class="mb-0 fw-bold">Mengetahui,</p></div>
+                            <div class="col-12 text-center mt-3">
                                 <p class="fw-bold text-decoration-underline mb-0" id="cetakOp_pimpinanName">ENDY PRATAMA</p>
                                 <p class="mb-0" id="cetakOp_pimpinanJabatan">Pemimpin Capem</p>
                             </div>
                             
-                            <!-- QR Code diposisikan Absolute agar muat -->
-                            <div class="position-absolute" style="bottom: 15mm; left: 20mm; text-align: left;">
-                                <img id="qrBAOpname" src="" width="65" class="border p-1 rounded-2">
-                                <p class="text-muted mt-1 mb-0" style="font-size:8px;">Scan untuk e-Document</p>
+                            <!-- QR Code diposisikan Absolute -->
+                            <div class="position-absolute qr-area text-start">
+                                <img id="qrBAOpname" src="" class="border p-1 rounded-2">
+                                <p class="text-muted mt-1 mb-0">Scan e-Document</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer rounded-0 py-2">
-                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printBAOpnameArea', 'BA_Opname_Fisik_ATM')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
-                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printBAOpnameArea')"><i class="bi bi-printer-fill"></i> Cetak A4 / PDF</button>
+                    <button class="btn btn-outline-primary fw-bold shadow-sm bouncy-hover" onclick="exportHTMLToDoc('printBAOpnameArea', 'BA_Opname_Fisik')"><i class="bi bi-file-word-fill"></i> Download DOCX</button>
+                    <button class="btn btn-success fw-bold shadow-sm bouncy-hover" onclick="cetakPDF('printBAOpnameArea')"><i class="bi bi-printer-fill"></i> Cetak A4</button>
                 </div>
             </div>
         </div>
