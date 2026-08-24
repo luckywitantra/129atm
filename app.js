@@ -756,7 +756,9 @@ function previewBAOpname() {
     // 4 Penanda Tangan Resmi
     safeSet('cetakOp_petugasTellerName', globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'SUCI AINUL FITRI');
     safeSet('cetakOp_petugasAdminName', globalConfig.cfgAdmin || 'FISTRI ARIANDINI');
-    safeSet('cetakOp_petugasSecurityName', globalConfig.cfgSecurity || 'DADAN');
+   // --- GANTI BAGIAN SECURITY MENJADI INI ---
+    let inputSecurity = document.getElementById('opSecurityName') ? document.getElementById('opSecurityName').value.trim() : '';
+    safeSet('cetakOp_petugasSecurityName', inputSecurity || globalConfig.cfgSecurity || 'DADAN');
     safeSet('cetakOp_pimpinanName', globalConfig.cfgPimpinan || 'ENDY PRATAMA');
     safeSet('cetakOp_pimpinanJabatan', `Pemimpin ${namaCabang}`);
 
@@ -1883,4 +1885,43 @@ async function runEDocumentVerifier() {
 // Memicu pengecekan otomatis saat aplikasi selesai dimuat
 document.addEventListener("DOMContentLoaded", () => {
     runEDocumentVerifier();
+});
+
+// ==========================================
+// AUTO-DETECT MESIN ATM (SMART SUGGESTION)
+// ==========================================
+function populateAtmSuggestions() {
+    let atmSet = new Set();
+    
+    // 1. Ekstrak dari Pengaturan Penanggung Jawab Teller
+    if (typeof globalConfig !== 'undefined') {
+        Object.keys(globalConfig).forEach(key => {
+            if (key.startsWith('cfgTeller_')) atmSet.add(key.replace('cfgTeller_', '').toUpperCase());
+        });
+    }
+    
+    // 2. Ekstrak dari Riwayat Opname Sebelumnya
+    if (typeof globalOpnameData !== 'undefined') {
+        globalOpnameData.forEach(r => {
+            if (r[2]) atmSet.add(String(r[2]).trim().toUpperCase());
+        });
+    }
+    
+    // Masukkan semua ID unik yang ditemukan ke dalam Datalist
+    const dlAtm = document.getElementById('dl-atm');
+    if (dlAtm) {
+        dlAtm.innerHTML = '';
+        atmSet.forEach(atm => {
+            if(atm && atm.length > 2) dlAtm.innerHTML += `<option value="${atm}">`;
+        });
+    }
+}
+
+// Pasang pendeteksi otomatis saat petugas mengeklik/fokus ke kolom ID Mesin ATM
+document.addEventListener("DOMContentLoaded", () => {
+    let opAtmInput = document.getElementById('opAtmId');
+    if(opAtmInput) {
+        opAtmInput.addEventListener('focus', populateAtmSuggestions);
+        opAtmInput.addEventListener('click', populateAtmSuggestions);
+    }
 });
