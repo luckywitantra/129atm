@@ -2045,7 +2045,7 @@ function startOpnameTour() {
         html: 'Tur profesional ini akan memandu Anda memahami cara menghitung uang fisik laci dan mencetak Berita Acara.',
         icon: 'info',
         position: 'center',
-        backdrop: 'rgba(10, 37, 64, 0.85)', // Latar belakang biru dongker pekat
+        backdrop: false, // Latar belakang biru dongker pekat
         confirmButtonText: 'Mulai Tur (<span id="tour-step">1</span>/4)',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
@@ -2077,7 +2077,7 @@ function tourStep2() {
         html: 'Ketik atau pilih <b>ID Mesin ATM</b>. Tentukan juga waktu pelaksanaan opname dan ubah nama <b>Security</b> jika diperlukan.',
         icon: 'question',
         position: 'bottom-end', // Pop-up pindah ke pojok kanan bawah agar tidak menutupi sorotan
-        backdrop: 'rgba(10, 37, 64, 0.85)',
+        backdrop: false,
         confirmButtonText: 'Selanjutnya (2/4) <i class="bi bi-arrow-right"></i>',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
@@ -2110,7 +2110,7 @@ function tourStep3() {
         html: 'Masukkan saldo sistem dan uang <b>Fisik Laci</b>. Sistem akan otomatis menghitung selisih secara <i>Real-time</i>.',
         icon: 'warning',
         position: 'bottom-start', // Pop-up pindah ke pojok kiri bawah
-        backdrop: 'rgba(10, 37, 64, 0.85)',
+        backdrop: false,
         confirmButtonText: 'Selanjutnya (3/4) <i class="bi bi-arrow-right"></i>',
         confirmButtonColor: '#4f46e5',
         allowOutsideClick: false,
@@ -2140,7 +2140,7 @@ function tourStep4() {
         html: 'Tekan <b>Pratinjau</b> untuk melihat lembar A4 resmi. Jika sudah klop, tekan <b>Simpan ke Database</b>.',
         icon: 'success',
         position: 'top', // Pop-up pindah ke atas
-        backdrop: 'rgba(10, 37, 64, 0.85)',
+        backdrop: false,
         confirmButtonText: 'Selesai 🚀',
         confirmButtonColor: '#198754',
         allowOutsideClick: false,
