@@ -95,6 +95,13 @@
         .sidebar .nav-link:hover { background-color: #f8f9fa; transform: translateX(3px); }
         .sidebar .nav-link.active { background-color: #e0e7ff; color: #4f46e5 !important; font-weight: 900; border-right: 4px solid #4f46e5; }
         .floating-bottom-nav { z-index: 1050; padding-bottom: env(safe-area-inset-bottom); }
+        /* SMART ONBOARDING WIZARD */
+        .onboarding-step { display: none; animation: fadeUpIn 0.5s ease forwards; }
+        .onboarding-step.active { display: block; }
+        .step-indicator { width: 8px; height: 8px; border-radius: 50%; background: #dee2e6; display: inline-block; margin: 0 4px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .step-indicator.active { background: #4f46e5; transform: scale(1.5); width: 16px; border-radius: 10px; }
+        .onboarding-icon-wrapper { width: 85px; height: 85px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; font-size: 3rem; }
+        @keyframes fadeUpIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -1135,6 +1142,76 @@
     <!-- SCRIPT -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- SMART ONBOARDING WIZARD MODAL -->
+    <div class="modal fade" id="onboardingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-body p-0">
+                    <div class="p-5 text-center">
+                        
+                        <!-- Step 1: Welcome -->
+                        <div class="onboarding-step active" id="step1">
+                            <div class="onboarding-icon-wrapper bg-primary-subtle text-primary shadow-inner mb-4">
+                                <i class="bi bi-rocket-takeoff-fill" style="animation: bounce 2s infinite;"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">Selamat Datang di ReconPro</h4>
+                            <p class="text-muted small fw-medium" style="line-height: 1.6;">Sistem Rekonsiliasi Pintar yang akan mengubah cara Anda mengelola selisih kas ATM. Mari ikuti tur singkat ini untuk memahami alur kerja aplikasi.</p>
+                        </div>
+                        
+                        <!-- Step 2: Upload -->
+                        <div class="onboarding-step" id="step2">
+                            <div class="onboarding-icon-wrapper bg-info-subtle text-info shadow-inner mb-4">
+                                <i class="bi bi-cloud-arrow-up-fill"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">1. Upload Cerdas</h4>
+                            <p class="text-muted small fw-medium" style="line-height: 1.6;">Tarik dan lepas (<i>Drag & Drop</i>) seluruh file GL dan EJ sekaligus. Sistem dilengkapi tameng pelindung yang akan menolak file jika Anda tidak sengaja menukarnya.</p>
+                        </div>
+
+                        <!-- Step 3: Analisa AI -->
+                        <div class="onboarding-step" id="step3">
+                            <div class="onboarding-icon-wrapper bg-warning-subtle text-warning shadow-inner mb-4">
+                                <i class="bi bi-robot"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">2. Analisa Kecerdasan Buatan</h4>
+                            <p class="text-muted small fw-medium" style="line-height: 1.6;">Sistem otomatis menyisir ribuan data lintas bulan, menemukan anomali (selisih), dan merekomendasikan Berita Acara Opname mana yang bisa digunakan sebagai kompensasi.</p>
+                        </div>
+
+                        <!-- Step 4: Opname & B/A -->
+                        <div class="onboarding-step" id="step4">
+                            <div class="onboarding-icon-wrapper bg-success-subtle text-success shadow-inner mb-4">
+                                <i class="bi bi-safe-fill"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">3. Opname & Cetak B/A</h4>
+                            <p class="text-muted small fw-medium" style="line-height: 1.6;">Gunakan kalkulator visual untuk menghitung uang laci. Setelah selisih klop, Anda bisa mencetak Berita Acara PDF yang rapi hanya dengan satu kali klik.</p>
+                        </div>
+
+                        <!-- Step 5: Arsip -->
+                        <div class="onboarding-step" id="step5">
+                            <div class="onboarding-icon-wrapper bg-dark-subtle text-dark shadow-inner mb-4">
+                                <i class="bi bi-diagram-3-fill"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">4. Arsip Universal</h4>
+                            <p class="text-muted small fw-medium" style="line-height: 1.6;">Pantau kesehatan rekonsiliasi dari menu Dasbor, atau buka Arsip Universal untuk menelusuri <i>Audit Trail</i> (Rekam Jejak) seluruh kasus dari awal tahun!</p>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light d-flex justify-content-between align-items-center px-4 py-3">
+                    <button class="btn btn-link text-muted fw-bold text-decoration-none small" onclick="superApp.closeOnboarding()">Lewati</button>
+                    <div id="onboardingIndicators">
+                        <span class="step-indicator active"></span>
+                        <span class="step-indicator"></span>
+                        <span class="step-indicator"></span>
+                        <span class="step-indicator"></span>
+                        <span class="step-indicator"></span>
+                    </div>
+                    <button class="btn btn-primary rounded-pill fw-bold px-4 shadow-sm bouncy-hover" id="btnNextOnboarding" onclick="superApp.nextOnboardingStep()">Selanjutnya <i class="bi bi-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="app.js"></script>
 </body>
 </html>
