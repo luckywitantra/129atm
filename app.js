@@ -675,6 +675,14 @@ function renderDataMaster() {
     const selisihKeys = new Set();
     (databaseData.selisih||[]).forEach(row => { selisihKeys.add(`${String(row[0]).substring(0,10)}_${String(row[1]).trim()}_${String(row[2]).trim()}`); });
 
+    // --- TAMBAHKAN 4 BARIS INI UNTUK MENGHIDUPKAN WIDGET ---
+    if (document.getElementById('dmTotalGL')) {
+        document.getElementById('dmTotalGL').innerText = formatNum(databaseData.gl ? databaseData.gl.length : 0);
+        document.getElementById('dmTotalEJ').innerText = formatNum(databaseData.ej ? databaseData.ej.length : 0);
+        document.getElementById('dmTotalSelisih').innerText = formatNum(selisihKeys.size);
+    }
+    // ---------------------------------------------------------
+    
     let combinedData = [];
     (databaseData.gl||[]).forEach(row => { combinedData.push({ sumber: 'GL', tanggal: String(row[1]).substring(0,10), atm: row[2], resi: row[3], nominal: row[4], ket: `${row[5]}`, isSelisih: selisihKeys.has(`${String(row[1]).substring(0,10)}_${String(row[2]).trim()}_${String(row[3]).trim()}`) }); });
     (databaseData.ej||[]).forEach(row => { combinedData.push({ sumber: 'EJ', tanggal: String(row[1]).substring(0,10), atm: row[2], resi: row[3], nominal: row[4], ket: `Status: ${row[5]}`, isSelisih: selisihKeys.has(`${String(row[1]).substring(0,10)}_${String(row[2]).trim()}_${String(row[3]).trim()}`) }); });
