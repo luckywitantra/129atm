@@ -1165,10 +1165,28 @@ superApp.renderArsip = function() {
     let raw = universalDataCache.selisih;
     const term = document.getElementById('arsipCari').value.toLowerCase();
     const stat = document.getElementById('arsipStatus').value;
+    const tgl = document.getElementById('arsipTgl').value; // Ambil nilai filter tanggal baru
 
+    // 1. Hitung Live Metrics untuk Widget Raksasa
+    let totSemua = 0, totSelesai = 0, totBelum = 0;
+    raw.forEach(r => {
+        totSemua++;
+        if (String(r[5]).toLowerCase() !== 'belum') totSelesai++;
+        else totBelum++;
+    });
+    
+    // Tembakkan angka ke HTML
+    if(document.getElementById('arsipTotSemua')) {
+        document.getElementById('arsipTotSemua').innerText = formatNum(totSemua);
+        document.getElementById('arsipTotSelesai').innerText = formatNum(totSelesai);
+        document.getElementById('arsipTotBelum').innerText = formatNum(totBelum);
+    }
+
+    // 2. Eksekusi Filter Pencarian
     let filtered = raw.filter(r => {
         let match = true;
         if(term) match = match && (String(r[1]).toLowerCase().includes(term) || String(r[2]).toLowerCase().includes(term));
+        if(tgl) match = match && (String(r[0]).substring(0,10) === tgl);
         if(stat) {
             let isSelesai = String(r[5]).toLowerCase() !== 'belum';
             if(stat === 'selesai' && !isSelesai) match = false;
@@ -1181,7 +1199,7 @@ superApp.renderArsip = function() {
     const tbody = document.getElementById('arsipTbody');
     
     if(pageData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-1"></i> Arsip kosong/tidak ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-1"></i> Arsip kosong / Tidak ditemukan.</td></tr>`;
         document.getElementById('arsipPagination').innerHTML = '';
         return;
     }
@@ -1189,16 +1207,16 @@ superApp.renderArsip = function() {
     tbody.innerHTML = pageData.map(r => {
         const isSelesai = String(r[5]).toLowerCase() !== 'belum';
         const badgeColor = r[4].includes('LEBIH') ? 'bg-success' : 'bg-danger';
-        const statusBadge = isSelesai ? `<span class="badge bg-primary rounded-pill"><i class="bi bi-check-all"></i> Ditutup</span>` : `<span class="badge bg-warning text-dark rounded-pill"><i class="bi bi-hourglass-split"></i> Gantung</span>`;
+        const statusBadge = isSelesai ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1"><i class="bi bi-check-all"></i> Selesai Ditutup</span>` : `<span class="badge bg-warning-subtle text-danger border border-warning-subtle rounded-pill px-3 py-1" style="animation: pulse-red 2s infinite;"><i class="bi bi-hourglass-split"></i> Menggantung</span>`;
         const rawStr = encodeURIComponent(JSON.stringify(r));
         return `
             <tr>
-                <td class="fw-medium text-secondary" style="font-size:0.75rem">${String(r[0]).substring(0,10)}</td>
-                <td><span class="badge bg-secondary rounded-pill">${r[1]}</span></td>
-                <td class="fw-bold">${r[2]}</td>
-                <td><span class="badge ${badgeColor} rounded-pill shadow-sm">${formatRp(r[3])}</span></td>
+                <td class="fw-medium text-secondary ps-3" style="font-size:0.8rem">${String(r[0]).substring(0,10)}</td>
+                <td><span class="badge bg-secondary rounded-pill shadow-sm">${r[1]}</span></td>
+                <td class="fw-bold text-dark">${r[2]}</td>
+                <td><span class="badge ${badgeColor} rounded-pill shadow-sm px-3 py-1" style="font-size: 0.75rem;">${formatRp(r[3])}</span></td>
                 <td>${statusBadge}</td>
-                <td class="text-end"><button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm bouncy-hover" onclick="superApp.bukaJejak('${rawStr}')"><i class="bi bi-diagram-3-fill text-warning"></i> Lihat Jejak</button></td>
+                <td class="text-center pe-3"><button class="btn btn-sm btn-dark rounded-pill fw-bold shadow-sm bouncy-hover" onclick="superApp.bukaJejak('${rawStr}')"><i class="bi bi-diagram-3-fill text-warning me-1"></i> Telusuri Jejak</button></td>
             </tr>
         `;
     }).join('');
