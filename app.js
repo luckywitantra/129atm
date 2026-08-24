@@ -99,6 +99,71 @@ async function fetchConfig() {
     } catch (e) { console.error("Gagal memuat konfigurasi cloud", e); }
 }
 
+// ==========================================
+// UTILITAS FILE READER & FAKE PROGRESS BAR
+// ==========================================
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = e => reject(e);
+        reader.readAsText(file);
+    });
+}
+
+let progressInterval;
+function showProgressAlert(title, text) {
+    Swal.fire({
+        title: `<h5 class="fw-black mb-0">${title}</h5>`,
+        html: `<p class="small text-muted mb-3">${text}</p>
+               <div class="progress progress-swal"><div id="swalProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 0%">0%</div></div>`,
+        allowOutsideClick: false, showConfirmButton: false, buttonsStyling: false
+    });
+}
+
+function updateProgress(percent) {
+    const pb = document.getElementById('swalProgressBar');
+    if(pb) { pb.style.width = Math.round(percent) + '%'; pb.innerText = Math.round(percent) + '%'; }
+}
+
+function startFakeProgress(maxPercent = 90) {
+    let p = 0;
+    progressInterval = setInterval(() => {
+        p += Math.random() * 5; // Naik acak
+        if (p > maxPercent) p = maxPercent;
+        updateProgress(p);
+    }, 400);
+}
+
+function stopFakeProgress() {
+    clearInterval(progressInterval);
+    updateProgress(100);
+    setTimeout(() => { Swal.close(); }, 600); // Tutup otomatis saat 100%
+}
+
+// Inisialisasi Efek Visual Drag & Drop
+document.addEventListener("DOMContentLoaded", () => {
+    ['dzGL', 'dzEJ'].forEach(id => {
+        const zone = document.getElementById(id);
+        const input = zone ? zone.querySelector('input[type="file"]') : null;
+        const badge = zone ? zone.querySelector('.file-count-badge') : null;
+        if(!zone || !input) return;
+
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', e => { e.preventDefault(); zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', e => {
+            e.preventDefault(); zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                if(badge) { badge.innerText = `${input.files.length} File`; badge.classList.remove('d-none'); }
+            }
+        });
+        input.addEventListener('change', () => {
+            if(input.files.length && badge) { badge.innerText = `${input.files.length} File`; badge.classList.remove('d-none'); }
+        });
+    });
+});
+
 function renderTellerConfig() {
     const container = document.getElementById('tellerConfigContainer');
     if(!container) return;
@@ -165,14 +230,27 @@ function populateDatalist(listId, dataSet) {
 }
 
 // ==========================================
-// 2. PARSER DATA & PREVIEW UPLOAD
+// 2. PARSER DATA (MULTI-FILE) & PREVIEW UPLOAD
 // ==========================================
-function processGL() {
-    const file = document.getElementById('glFile').files[0];
-    if (!file) return PlayfulAlert.fire('Error', 'Pilih file GL terlebih dahulu!', 'error');
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result; const lines = text.split('\n'); const glData = [];
+async function processGL() {
+    const fileInput = document.getElementById('glFile');
+    const files = fileInput.files;
+    if (!files.length) return PlayfulAlert.fire('Error', 'Silakan pilih/tarik file GL terlebih dahulu!', 'error');
+
+    let glData = [];
+    showProgressAlert('Membaca File GL...', 'Sedang mengekstrak ribuan baris data...');
+    let processedFiles = 0;
+
+    for (let file of files) {
+        let text = await readFileAsText(file);
+        
+        // [ANTI-ERROR] VALIDASI FILE TERTUKAR
+        if (text.includes("TRANSACTION START") || text.includes("PIN ENTERED") || text.includes("CASH TAKEN")) {
+            Swal.close();
+            return PlayfulAlert.fire('File Tertukar!', `File <b>${file.name}</b> sepertinya adalah file Jurnal Mesin (EJ). Anda menaruhnya di kolom GL.`, 'error');
+        }
+
+        const lines = text.split('\n');
         const regex = /^\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})\s+.*?\s+(\w*(?:\d{4})KTM\d+)\s+([\d,]+(?:\.\d+)?)/;
         lines.forEach(line => {
             const match = line.match(regex);
@@ -185,22 +263,42 @@ function processGL() {
                 glData.push([formatTgl, atm, noResi, nominal, 'TARIK TUNAI', match[2]]);
             }
         });
+        processedFiles++;
+        updateProgress((processedFiles / files.length) * 100);
+    }
+    
+    setTimeout(() => {
+        Swal.close();
+        if(glData.length === 0) return PlayfulAlert.fire('Data Kosong', 'Tidak ada data GL yang valid pada file ini.', 'warning');
         showPreviewModal(glData, 'GL');
-    }; reader.readAsText(file);
+    }, 500);
 }
 
-function processEJ() {
-    const file = document.getElementById('ejFile').files[0];
-    if (!file) return PlayfulAlert.fire('Error', 'Pilih file EJ terlebih dahulu!', 'error');
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result; const lines = text.split('\n'); const ejData = [];
+async function processEJ() {
+    const fileInput = document.getElementById('ejFile');
+    const files = fileInput.files;
+    if (!files.length) return PlayfulAlert.fire('Error', 'Silakan pilih/tarik file EJ terlebih dahulu!', 'error');
+
+    let ejData = [];
+    showProgressAlert('Membaca File EJ...', 'Sedang merakit jurnal mesin...');
+    let processedFiles = 0;
+
+    for (let file of files) {
+        let text = await readFileAsText(file);
+        
+        // [ANTI-ERROR] VALIDASI FILE TERTUKAR
+        if (!text.includes("TRANSACTION START") && !text.includes("PIN ENTERED") && !text.includes("EMV AID")) {
+            Swal.close();
+            return PlayfulAlert.fire('File Tertukar!', `File <b>${file.name}</b> sepertinya BUKAN file Jurnal Mesin. Pastikan ini bukan file GL.`, 'error');
+        }
+
+        const lines = text.split('\n');
         let currentTx = {}; let isLookingForJumlah = false; let lastValidAtmId = 'UNKNOWN'; let lastValidDate = '';
         
         function saveCurrentTransaction() {
             if (currentTx.noResi) {
                 if (!currentTx.tanggal) currentTx.tanggal = lastValidDate;
-                if (currentTx.cashTaken) { currentTx.status = "SUKSES"; } 
+                if (currentTx.cashTaken) currentTx.status = "SUKSES";
                 else if (!currentTx.status) {
                     if (currentTx.jenis === "TARIK TUNAI" && (!currentTx.nominal || currentTx.nominal === 0)) currentTx.status = "GAGAL - TIDAK ADA UANG KELUAR";
                     else if (currentTx.nominal > 0) {
@@ -255,9 +353,15 @@ function processEJ() {
             if (line.match(/TRANSACTION \d+ FAILED/i) && !currentTx.cashTaken) currentTx.status = "GAGAL - TRANSACTION FAILED";
         }
         if (currentTx.noResi) saveCurrentTransaction();
+        processedFiles++;
+        updateProgress((processedFiles / files.length) * 100);
+    }
+    
+    setTimeout(() => {
+        Swal.close();
         if (ejData.length === 0) return PlayfulAlert.fire('Data Kosong', 'Tidak ditemukan transaksi pada file EJ ini.', 'warning');
         showPreviewModal(ejData, 'EJ');
-    }; reader.readAsText(file);
+    }, 500);
 }
 
 function showPreviewModal(data, type) {
@@ -281,14 +385,49 @@ document.getElementById('btnConfirmUpload').addEventListener('click', () => {
 });
 
 async function sendToBackend(action, data) {
-    PlayfulAlert.fire({ title: 'Menyinkronkan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    showProgressAlert('Menyinkronkan ke Cloud...', 'Sedang mendistribusikan puluhan ribu data ke database bulanan...');
+    startFakeProgress(95); // Simulasikan loading naik pelan-pelan sampai 95%
+    
     try {
         const result = await apiCall(action, data);
-        if(result && result.success) {
-            PlayfulAlert.fire('Berhasil!', `Data didistribusikan otomatis ke Sheet bulan transaksi. Dimasukkan: <b>${result.data.added}</b> baris baru.`, 'success');
-            fetchDatabaseData(); 
-        } else PlayfulAlert.fire('Error Backend', result ? result.message : 'Koneksi terputus', 'error');
-    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+        stopFakeProgress(); // Paksa loading jadi 100% karena data berhasil diterima
+        
+        setTimeout(() => {
+            if(result && result.success) {
+                PlayfulAlert.fire('Berhasil!', `Data sukses disimpan. Dimasukkan: <b>${result.data.added}</b> baris baru.`, 'success');
+                // Hapus badge dan input
+                document.querySelectorAll('.file-count-badge').forEach(el => el.classList.add('d-none'));
+                document.getElementById('glFile').value = ""; document.getElementById('ejFile').value = "";
+                fetchDatabaseData(); 
+            } else PlayfulAlert.fire('Error Backend', result ? result.message : 'Koneksi terputus', 'error');
+        }, 500);
+    } catch (err) { 
+        Swal.close();
+        PlayfulAlert.fire('Error', err.toString(), 'error'); 
+    }
+}
+
+async function triggerAnalysis() {
+    showProgressAlert('Analisa AI Berjalan...', 'Sedang mencocokkan data lintas bulan. Ini mungkin memakan waktu beberapa detik...');
+    startFakeProgress(92);
+    
+    try {
+        const result = await apiCall('analyze');
+        stopFakeProgress();
+        
+        setTimeout(() => {
+            if(result && result.success) {
+                const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan bulan ini berhasil dimuat.";
+                const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
+                PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
+                globalSelisihData = result.data.tableData;
+                renderSelisihTablesFiltered(); 
+            } else PlayfulAlert.fire('Gagal', result ? result.message : 'Koneksi terputus', 'error');
+        }, 500);
+    } catch (err) { 
+        Swal.close();
+        PlayfulAlert.fire('Error', err.toString(), 'error'); 
+    }
 }
 
 function renderUploadHistory() {
@@ -330,19 +469,7 @@ function renderHistoryDetailTable() {
 // ==========================================
 // 4. ANALISA SELISIH (AI MATCHER & HIERARKI)
 // ==========================================
-async function triggerAnalysis() {
-    PlayfulAlert.fire({ title: 'Menganalisa Pintar...', allowOutsideClick: false }); PlayfulAlert.showLoading();
-    try {
-        const result = await apiCall('analyze');
-        if(result && result.success) {
-            const alertMsg = result.data.infoMsg ? result.data.infoMsg : "Perhitungan bulan ini berhasil dimuat.";
-            const iconType = alertMsg.includes('ditangguhkan') ? 'info' : 'success';
-            PlayfulAlert.fire('Analisa Selesai', alertMsg, iconType);
-            globalSelisihData = result.data.tableData;
-            renderSelisihTablesFiltered(); 
-        } else PlayfulAlert.fire('Gagal', result ? result.message : 'Koneksi terputus', 'error');
-    } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
-}
+
 
 async function fetchSelisihData() {
     try {
