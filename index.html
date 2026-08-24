@@ -272,6 +272,21 @@
             pointer-events: none; /* Mencegah user mengklik menu saat tour */
             transition: z-index 0.2s ease;
         }
+        /* ========================================== */
+        /* 8. GUIDED TOUR OVERRIDES (ANTI-OVERLAP)    */
+        /* ========================================== */
+        body.tour-active .sidebar,
+        body.tour-active .navbar,
+        body.tour-active .navbar-premium,
+        body.tour-active .floating-bottom-nav {
+            z-index: 0 !important;
+            
+            /* Trik Kebal Badai: Gelapkan menu secara fisik! */
+            filter: brightness(0.15) !important; 
+            
+            pointer-events: none !important;
+            transition: filter 0.4s ease-in-out, z-index 0.4s ease-in-out;
+        }
     </style>
 </head>
 <body>
