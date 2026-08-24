@@ -621,28 +621,62 @@ function renderSelisihTablesFiltered() {
 // ==========================================
 // 5. PENYELESAIAN (INSTA-SYNC) & B/A PDF
 // ==========================================
+// ==========================================
+// PENYELESAIAN, CETAK PDF ANTI-BLANK, & DOCX EXPORT
+// ==========================================
 function openResolveModal(rawStr, encodedSaran = '') {
-    activeResolveRow = JSON.parse(decodeURIComponent(rawStr)); let saranText = encodedSaran ? decodeURIComponent(encodedSaran) : ''; let nominal = formatRp(activeResolveRow[3]); let tglTrx = String(activeResolveRow[0]).substring(0,10);
+    activeResolveRow = JSON.parse(decodeURIComponent(rawStr)); 
+    let saranText = encodedSaran ? decodeURIComponent(encodedSaran) : ''; 
+    let nominal = formatRp(activeResolveRow[3]); 
+    let tglTrx = String(activeResolveRow[0]).substring(0,10);
+    
     document.getElementById('resolveInfoBox').innerHTML = `<h6 class="fw-bold mb-1"><i class="bi bi-info-circle"></i> Info Transaksi</h6><p class="mb-1 small">ATM: <b>${activeResolveRow[1]}</b> | Tgl: <b>${tglTrx}</b> | Resi: <b>${activeResolveRow[2]}</b></p><p class="mb-1 small text-danger fw-bold">Nominal Selisih: ${nominal}</p>${saranText ? `<hr class="my-2"><p class="mb-0 small text-success fw-bold"><i class="bi bi-robot"></i> Rekomendasi AI: ${saranText}</p>` : ''}`;
+    
+    // Set default tanggal hari ini
+    let today = new Date().toISOString().split('T')[0];
+    document.getElementById('resTanggal').value = today;
+
     let existingReason = activeResolveRow[6] || '';
     if (existingReason.toLowerCase() === 'belum' || existingReason === '') {
         if(saranText) document.getElementById('resolveReason').value = `Transaksi ATM tidak tercatat pada EJ dengan keterangan GAGAL sehingga terjadi selisih lebih ${nominal} pada mesin ${activeResolveRow[1]}. ${saranText}`;
         else document.getElementById('resolveReason').value = `Transaksi ATM tidak tercatat pada EJ dengan keterangan COMMUNICATION ERROR sehingga terjadi selisih pada mesin ${activeResolveRow[1]}`;
-    } else { document.getElementById('resolveReason').value = existingReason; }
-    document.getElementById('resRekening').value = ''; document.getElementById('resNama').value = '';
+        document.getElementById('resRekening').value = ''; document.getElementById('resNama').value = '';
+    } else { 
+        // Mode Edit: Pecah JSON dari Keterangan
+        let parts = existingReason.split('|||');
+        document.getElementById('resolveReason').value = parts[0].trim();
+        if(parts.length > 1) {
+            try {
+                let detail = JSON.parse(parts[1].trim());
+                document.getElementById('resRekening').value = detail.rek || '';
+                document.getElementById('resNama').value = detail.nama || '';
+                document.getElementById('resTrx').value = detail.trx || 'Tarik Tunai On Us';
+                document.getElementById('resProblem').value = detail.problem || 'Transaksi terdebet namun uang tidak keluar';
+                if(detail.tglSelesai) document.getElementById('resTanggal').value = detail.tglSelesai;
+            } catch(e){}
+        }
+    }
     new bootstrap.Modal(document.getElementById('resolveModal')).show();
 }
 
 async function submitResolve() {
-    const reason = document.getElementById('resolveReason').value.trim(); const rekening = document.getElementById('resRekening').value.trim() || "-"; const nama = document.getElementById('resNama').value.trim().toUpperCase() || "-"; const trx = document.getElementById('resTrx').value; const problem = document.getElementById('resProblem').value;
-    if(!reason) return PlayfulAlert.fire('Tunggu dulu!', 'Harap isi keterangan penyelesaian.', 'warning');
-    let finalKeterangan = `${reason} ||| ${JSON.stringify({rek: rekening, nama: nama, trx: trx, problem: problem})}`;
+    const reason = document.getElementById('resolveReason').value.trim(); 
+    const rekening = document.getElementById('resRekening').value.trim() || "-"; 
+    const nama = document.getElementById('resNama').value.trim().toUpperCase() || "-"; 
+    const trx = document.getElementById('resTrx').value; 
+    const problem = document.getElementById('resProblem').value;
+    const tglSelesai = document.getElementById('resTanggal').value;
+
+    if(!reason || !tglSelesai) return PlayfulAlert.fire('Tunggu dulu!', 'Harap isi Tanggal dan Keterangan penyelesaian.', 'warning');
+    
+    // Simpan tanggal penyelesaian di dalam JSON agar tidak merusak struktur database
+    let finalKeterangan = `${reason} ||| ${JSON.stringify({rek: rekening, nama: nama, trx: trx, problem: problem, tglSelesai: tglSelesai})}`;
     bootstrap.Modal.getInstance(document.getElementById('resolveModal')).hide();
     
     const tglSafe = String(activeResolveRow[0]).substring(0,10); const atmSafe = String(activeResolveRow[1]).trim(); const resiSafe = String(activeResolveRow[2]).trim();
     const payload = { tanggal: tglSafe, atm: atmSafe, resi: resiSafe, status: 'Selesai', keterangan: finalKeterangan };
     
-    PlayfulAlert.fire({ title: 'Menyimpan & Membuat B/A...', allowOutsideClick: false }); PlayfulAlert.showLoading();
+    PlayfulAlert.fire({ title: 'Menyimpan Data...', allowOutsideClick: false }); PlayfulAlert.showLoading();
     try {
         const result = await apiCall('updateSelisih', payload);
         if(result && result.success) {
@@ -650,9 +684,123 @@ async function submitResolve() {
             let targetRow = globalSelisihData.find(r => String(r[0]).substring(0,10) === tglSafe && String(r[1]).trim() === atmSafe && String(r[2]).trim() === resiSafe);
             if (targetRow) { targetRow[5] = 'Selesai'; targetRow[6] = finalKeterangan; }
             activeResolveRow[5] = 'Selesai'; activeResolveRow[6] = finalKeterangan; 
-            renderSelisihTablesFiltered(); renderOpnameTable(); generateBA(encodeURIComponent(JSON.stringify(activeResolveRow))); 
+            renderSelisihTablesFiltered(); renderOpnameTable(); renderDashboard();
+            generateBA(encodeURIComponent(JSON.stringify(activeResolveRow))); 
         } else PlayfulAlert.fire('Gagal', 'Gagal update ke database', 'error');
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
+}
+
+function generateBA(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr)); 
+    const tglTrx = String(row[0]).substring(0,10); const atmId = row[1]; const resi = row[2]; const nominalRaw = formatRp(row[3]);
+    let reasonText = row[6] || ''; 
+    let detail = {rek: ".......", nama: ".......", trx: "Tarik Tunai On Us", problem: "Transaksi terdebet namun uang tidak keluar", tglSelesai: new Date().toISOString().split('T')[0]};
+    
+    if (reasonText.includes('|||')) { 
+        let parts = reasonText.split('|||'); reasonText = parts[0].trim(); 
+        try { detail = { ...detail, ...JSON.parse(parts[1].trim()) }; } catch(e){} 
+    }
+
+    let dateObj = new Date(detail.tglSelesai); 
+    let hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; 
+    let bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    let tglCetak = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    
+    let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let kota = namaCabang.replace('Kantor Cabang Pembantu', '').replace('Kantor Cabang', '').trim();
+    
+    document.getElementById('cetak_cabang').innerText = namaCabang; document.getElementById('cetak_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    document.getElementById('cetak_pimpinan').innerText = globalConfig.cfgPimpinan || 'ENDY PRATAMA'; document.getElementById('cetak_admin').innerText = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
+    document.getElementById('cetak_teller').innerText = globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF';
+    document.getElementById('cetak_kota').innerText = kota; document.getElementById('cetak_tgl_ttd').innerText = tglCetak;
+    document.getElementById('cetak_atm_judul').innerText = atmId; document.getElementById('cetak_hari').innerText = hariArr[dateObj.getDay()];
+    document.getElementById('cetak_tgl').innerText = tglCetak; document.getElementById('cetak_atm').innerText = `${atmId} (${namaCabang})`;
+    document.getElementById('cetak_nominal').innerText = nominalRaw; document.getElementById('cetak_rek').innerText = detail.rek;
+    document.getElementById('cetak_nama').innerText = detail.nama; document.getElementById('cetak_resi').innerText = `${resi}${atmId.replace('KTM','')}`;
+    document.getElementById('cetak_trx').innerText = detail.trx; document.getElementById('cetak_problem').innerText = detail.problem;
+    document.getElementById('cetak_jurnal_ket').innerText = detail.problem; document.getElementById('cetak_keterangan').innerText = reasonText;
+    document.getElementById('cetak_kredit_rek').innerText = detail.rek; document.getElementById('cetak_kredit_nama').innerText = detail.nama; document.getElementById('cetak_jurnal_nom').innerText = nominalRaw;
+    
+    // Set QR Code
+    let qrData = encodeURIComponent(`https://reconpro.app/verify/ba?id=${resi}&atm=${atmId}&tgl=${detail.tglSelesai}`);
+    document.getElementById('qrBAPenyelesaian').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+
+    new bootstrap.Modal(document.getElementById('beritaAcaraModal')).show();
+}
+
+function previewBAOpname() {
+    let atmId = document.getElementById('opAtmId').value || "......."; let waktuInput = document.getElementById('opWaktu').value;
+    if (!waktuInput) return PlayfulAlert.fire('Oops!', 'Isi waktu pelaksanaan dulu ya.', 'warning');
+    let dateObj = new Date(waktuInput); let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]; let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0; let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0; let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
+    let selisih = fisik - sSblm; 
+    
+    let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let admin = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
+    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase(); document.getElementById('cetakOp_cabang_text').innerText = namaCabang; document.getElementById('cetakOp_cabang_text2').innerText = namaCabang;
+    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    
+    document.getElementById('cetakOp_petugas1').innerText = `( ${globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF'} )`; document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
+    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
+    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
+    
+    // Set QR Code
+    let qrData = encodeURIComponent(`https://reconpro.app/verify/opname?atm=${atmId}&tgl=${waktuInput}`);
+    document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+
+    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
+}
+
+function printRiwayatBAOpname(rawStr) {
+    const row = JSON.parse(decodeURIComponent(rawStr)); let waktuInput = row[1]; let atmId = row[2]; let sSblm = parseFloat(row[3]) || 0; let sTmbh = parseFloat(row[4]) || 0; let fisik = parseFloat(row[6]) || 0; let selisih = parseFloat(row[7]) || 0;
+    let dateObj = new Date(waktuInput.replace(' ', 'T')); let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]; let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
+    let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let admin = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
+    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase(); document.getElementById('cetakOp_cabang_text').innerText = namaCabang; document.getElementById('cetakOp_cabang_text2').innerText = namaCabang;
+    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
+    
+    document.getElementById('cetakOp_petugas1').innerText = `( ${globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF'} )`; document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
+    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`; document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
+    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
+    
+    // Set QR Code
+    let qrData = encodeURIComponent(`https://reconpro.app/verify/opname?atm=${atmId}&tgl=${waktuInput}`);
+    document.getElementById('qrBAOpname').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+
+    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
+}
+
+// ---------------------------------------------------------
+// FUNGSI PRINT PDF ANTI-BLANK & DOWNLOAD DOCX
+// ---------------------------------------------------------
+
+// Mengatasi PDF Blank Putih dengan mengubah class target
+function cetakPDF(areaId) {
+    const area = document.getElementById(areaId);
+    area.classList.add('print-active-area'); // Memberi kelas pelindung
+    window.print();
+    setTimeout(() => { area.classList.remove('print-active-area'); }, 1000); // Mencabut kelas setelah print selesai
+}
+
+// Meng-ekspor isi HTML menjadi file Word (.docx)
+function exportHTMLToDoc(elementId, filename = '') {
+    const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Berita Acara</title></head><body>";
+    const postHtml = "</body></html>";
+    const html = preHtml + document.getElementById(elementId).innerHTML + postHtml;
+    
+    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+    filename = filename ? filename + '.doc' : 'Berita_Acara.doc';
+    
+    const downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+    
+    if(navigator.msSaveOrOpenBlob) {
+        navigator.msSaveOrOpenBlob(blob, filename); // IE10+
+    } else {
+        downloadLink.href = url;
+        downloadLink.download = filename;
+        downloadLink.click();
+    }
+    document.body.removeChild(downloadLink);
 }
 
 async function revertSelisih(rawStr) {
@@ -675,29 +823,7 @@ async function revertSelisih(rawStr) {
     } catch (err) { PlayfulAlert.fire('Error', err.toString(), 'error'); }
 }
 
-function generateBA(rawStr) {
-    const row = JSON.parse(decodeURIComponent(rawStr)); const tglTrx = String(row[0]).substring(0,10); const atmId = row[1]; const resi = row[2]; const nominalRaw = formatRp(row[3]);
-    let reasonText = row[6] || ''; let detail = {rek: ".......", nama: ".......", trx: "Tarik Tunai On Us", problem: "Transaksi terdebet namun uang tidak keluar"};
-    if (reasonText.includes('|||')) { let parts = reasonText.split('|||'); reasonText = parts[0].trim(); try { detail = JSON.parse(parts[1].trim()); } catch(e){} }
 
-    let dateObj = new Date(); let hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]; let bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    let tglCetak = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-    let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let kota = namaCabang.replace('Kantor Cabang Pembantu', '').trim();
-    
-    document.getElementById('cetak_cabang').innerText = namaCabang; document.getElementById('cetak_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
-    document.getElementById('cetak_pimpinan').innerText = globalConfig.cfgPimpinan || 'ENDY PRATAMA'; document.getElementById('cetak_admin').innerText = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
-    document.getElementById('cetak_teller').innerText = globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF';
-    document.getElementById('cetak_kota').innerText = kota; document.getElementById('cetak_tgl_ttd').innerText = tglCetak;
-    document.getElementById('cetak_atm_judul').innerText = atmId; document.getElementById('cetak_hari').innerText = hariArr[dateObj.getDay()];
-    document.getElementById('cetak_tgl').innerText = tglCetak; document.getElementById('cetak_atm').innerText = `${atmId} (${namaCabang})`;
-    document.getElementById('cetak_nominal').innerText = nominalRaw; document.getElementById('cetak_rek').innerText = detail.rek;
-    document.getElementById('cetak_nama').innerText = detail.nama; document.getElementById('cetak_resi').innerText = `${resi}${atmId.replace('KTM','')}`;
-    document.getElementById('cetak_trx').innerText = detail.trx; document.getElementById('cetak_problem').innerText = detail.problem;
-    document.getElementById('cetak_jurnal_ket').innerText = detail.problem; document.getElementById('cetak_keterangan').innerText = reasonText;
-    document.getElementById('cetak_kredit_rek').innerText = detail.rek; document.getElementById('cetak_kredit_nama').innerText = detail.nama; document.getElementById('cetak_jurnal_nom').innerText = nominalRaw;
-    
-    new bootstrap.Modal(document.getElementById('beritaAcaraModal')).show();
-}
 
 function showDetailPopup(rowDataStr) {
     const row = JSON.parse(decodeURIComponent(rowDataStr));
@@ -858,40 +984,6 @@ function updateOpnameSmartInfo() {
     infoPanel.classList.remove('d-none');
 }
 
-function previewBAOpname() {
-    let atmId = document.getElementById('opAtmId').value || "......."; let waktuInput = document.getElementById('opWaktu').value;
-    if (!waktuInput) return PlayfulAlert.fire('Oops!', 'Isi waktu pelaksanaan dulu ya.', 'warning');
-    let dateObj = new Date(waktuInput); let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]; let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-    let sSblm = parseFloat(document.getElementById('opSysSebelum').value) || 0; let sTmbh = parseFloat(document.getElementById('opSysTambah').value) || 0; let fisik = parseFloat(document.getElementById('opFisik').value) || 0;
-    let selisih = fisik - sSblm; 
-    
-    let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let admin = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
-    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase(); document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
-    
-    // --- BARIS INI DITAMBAHKAN UNTUK KOP SURAT ---
-    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
-    
-    document.getElementById('cetakOp_petugas1').innerText = `( ${globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF'} )`; document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
-    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-    document.getElementById('cetakJam').innerText = dateObj.toTimeString().substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
-    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
-    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
-}
-
-function printRiwayatBAOpname(rawStr) {
-    const row = JSON.parse(decodeURIComponent(rawStr)); let waktuInput = row[1]; let atmId = row[2]; let sSblm = parseFloat(row[3]) || 0; let sTmbh = parseFloat(row[4]) || 0; let fisik = parseFloat(row[6]) || 0; let selisih = parseFloat(row[7]) || 0;
-    let dateObj = new Date(waktuInput.replace(' ', 'T')); let hariArr = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]; let bulanArr = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
-    let namaCabang = globalConfig.cfgCabang || 'Kantor Cabang Pembantu Babulu'; let admin = globalConfig.cfgAdmin || 'SUCI AINUL FITRI';
-    document.getElementById('cetakOp_cabang').innerText = namaCabang.toUpperCase(); document.getElementById('cetakOp_cabang_text').innerText = namaCabang;
-    
-    // --- BARIS INI DITAMBAHKAN UNTUK KOP SURAT ---
-    document.getElementById('cetakOp_alamat').innerText = globalConfig.cfgAlamat || 'Jl. Propinsi KM. 48 RT. 05 RW. 02';
-    
-    document.getElementById('cetakOp_petugas1').innerText = `( ${globalConfig['cfgTeller_' + atmId.toUpperCase()] || 'TELLER AKTIF'} )`; document.getElementById('cetakOp_petugas2').innerText = `( ${admin} )`;
-    document.getElementById('cetakHari').innerText = hariArr[dateObj.getDay()]; document.getElementById('cetakTgl').innerText = `${dateObj.getDate()} ${bulanArr[dateObj.getMonth()]} ${dateObj.getFullYear()}`; document.getElementById('cetakJam').innerText = String(dateObj.toTimeString()).substring(0,5); document.getElementById('cetakAtm').innerText = atmId.toUpperCase();
-    document.getElementById('cetakSysSebelum').innerText = formatNum(sSblm); document.getElementById('cetakSysTambah').innerText = formatNum(sTmbh); document.getElementById('cetakSysTotal').innerText = formatNum(sSblm + sTmbh); document.getElementById('cetakFisik').innerText = formatNum(fisik); document.getElementById('cetakKurang').innerText = formatNum(selisih < 0 ? Math.abs(selisih) : 0); document.getElementById('cetakLebih').innerText = formatNum(selisih > 0 ? selisih : 0);
-    new bootstrap.Modal(document.getElementById('baOpnameModal')).show();
-}
 
 async function fetchOpnameHistory() {
     document.getElementById('tableBodyOpname').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></td></tr>`;
