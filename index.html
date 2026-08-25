@@ -329,6 +329,11 @@
                                 <span><i class="bi bi-grid-1x2-fill me-2 text-primary"></i> Dasbor Utama</span>
                             </a>
                         </li>
+                         <li class="nav-item">
+                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('opname')">
+                                <span><i class="bi bi-safe me-2 text-danger"></i> Opname ATM</span>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('pusatdata')">
                                 <span><i class="bi bi-server me-2 text-info"></i> Pusat Data</span>
@@ -341,11 +346,7 @@
                                 <span class="badge bg-danger rounded-pill shadow-sm d-none" id="navBadgeAnalisa">0</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('opname')">
-                                <span><i class="bi bi-safe me-2 text-danger"></i> Opname ATM</span>
-                            </a>
-                        </li>
+                       
                         <li class="nav-item">
                             <a class="nav-link menu-btn py-2 text-secondary d-flex justify-content-between align-items-center rounded-3 transition-all" href="#" onclick="showPage('arsip'); superApp.fetchUniversalData();">
                                 <span><i class="bi bi-archive-fill me-2 text-dark"></i> Arsip Universal</span>
@@ -1309,6 +1310,9 @@
                     <a href="#" class="nav-item position-relative text-center text-decoration-none active-bottom menu-btn flex-fill py-1 rounded-pill" onclick="showPage('dashboard')">
                         <i class="bi bi-grid-1x2-fill fs-5 d-block text-primary bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Dasbor</span>
                     </a>
+                     <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')">
+                        <i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Opname</span>
+                    </a>
                     <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('pusatdata')">
                         <i class="bi bi-server fs-5 d-block bouncy-hover"></i>
                         <span class="position-absolute top-0 start-50 translate-middle badge rounded-circle bg-warning border border-2 border-white p-1 d-none pulse-animation" id="navBadgeUploadMobile" style="margin-left: 8px; margin-top: 5px;"><span class="visually-hidden">Alert</span></span>
@@ -1319,9 +1323,7 @@
                         <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger border border-2 border-white d-none" id="navBadgeAnalisaMobile" style="font-size: 0.5rem; margin-left: 10px; margin-top: 5px; padding: 2px 4px;">0</span>
                         <span style="font-size: 0.6rem;" class="fw-bold">Analisa</span>
                     </a>
-                    <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('opname')">
-                        <i class="bi bi-safe fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Opname</span>
-                    </a>
+                   
                     <a href="#" class="nav-item position-relative text-center text-decoration-none text-secondary menu-btn flex-fill py-1 rounded-pill" onclick="showPage('arsip'); superApp.fetchUniversalData();">
                         <i class="bi bi-archive-fill fs-5 d-block bouncy-hover"></i><span style="font-size: 0.6rem;" class="fw-bold">Arsip</span>
                     </a>
