@@ -645,25 +645,29 @@
                 </div>
                
 
-              <!-- ANALISA -->
+            <!-- ========================================== -->
+                <!-- 3. ANALISA AI (Pencocokan Cerdas)          -->
+                <!-- ========================================== -->
                 <div id="analisa" class="page-section d-none fade-in">
-                    <!-- Header & Tombol Aksi -->
+                    <!-- Header dengan Tombol Tour -->
                     <div class="d-flex justify-content-between align-items-center mb-4 mt-2 border-bottom pb-3">
                         <div>
                             <h4 class="fw-black mb-0 text-dark d-flex align-items-center">
-                                <i class="bi bi-radar text-primary me-2 pulse-animation"></i> Hasil Analisa AI
+                                <i class="bi bi-search text-warning me-2 pulse-animation"></i> Analisa & Pencocokan AI
                             </h4>
-                            <p class="text-muted small fw-medium mb-0 mt-1">Pencocokan silang data GL dan EJ secara otomatis.</p>
+                            <p class="text-muted small fw-medium mb-0 mt-1">Mesin pencocokan pintar untuk mendeteksi anomali (selisih) antara data Sistem vs Mesin.</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="triggerAnalysis()">
-                                <i class="bi bi-lightning-charge-fill text-dark me-1"></i> Proses Analisa
+                            <button class="btn btn-outline-warning btn-sm rounded-pill fw-bold text-dark shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="startAnalisaTour()">
+                                <i class="bi bi-magic me-1"></i> Panduan Analisa
                             </button>
-                            <button class="btn btn-dark btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="superApp.bukaLaporanModal()">
-                                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Cetak Laporan
+                            <!-- Pastikan tombol eksekusi Anda memiliki ID ini agar bisa disorot -->
+                            <button id="btnRunAnalisa" class="btn btn-warning btn-sm rounded-pill fw-bold shadow-sm bouncy-hover px-3 d-flex align-items-center" onclick="jalankanAnalisaAI()">
+                                <i class="bi bi-lightning-charge-fill me-1"></i> Jalankan Analisa AI
                             </button>
                         </div>
                     </div>
+
                     
                     <div class="data-completeness-banner"></div>
 
