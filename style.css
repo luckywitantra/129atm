@@ -1,102 +1,208 @@
 /* ========================================== */
-        /* 1. ROOT VARIABLES & BASE TYPOGRAPHY        */
-        /* ========================================== */
-        :root {
-            --primary-color: #4f46e5;
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-            --banking-gradient: linear-gradient(135deg, #0a2540 0%, #1a4373 100%);
-            --bg-light: #f8faff;
-        }
+/* 1. ROOT VARIABLES & BASE TYPOGRAPHY        */
+/* ========================================== */
+:root {
+    --primary-color: #4f46e5;
+    --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    --banking-gradient: linear-gradient(135deg, #0a2540 0%, #1a4373 100%);
+    --bg-light: #f4f7fe;
+}
 
-        body {
-            background-color: var(--bg-light);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            padding-top: 60px; /* Spacer untuk fixed top header */
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+body {
+    background-color: var(--bg-light);
+    font-family: 'Quicksand', sans-serif; /* Sudah disinkronkan ke Quicksand */
+    padding-top: 60px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
 
-        /* CUSTOM SCROLLBAR ALA MACOS */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; overflow-x: auto; }
+/* CUSTOM SCROLLBAR ALA MACOS */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; overflow-x: auto; }
 
-        /* ========================================== */
-        /* 2. KARTU & EFEK GLASSMORPHISM              */
-        /* ========================================== */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-        }
-        
-        .shadow-inner {
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06) !important;
-        }
+/* ========================================== */
+/* 2. KARTU, EFEK & ANIMASI GLOBAL            */
+/* ========================================== */
+.glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 24px !important;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+}
 
-        /* ========================================== */
-        /* 3. ANIMASI INTERAKTIF (UX ENHANCEMENTS)    */
-        /* ========================================== */
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.shadow-inner { box-shadow: inset 0 2px 4px rgba(0,0,0,0.06) !important; }
 
-        .bouncy-hover { transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease; }
-        .bouncy-hover:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 8px 15px rgba(0,0,0,0.08) !important; }
+/* Animasi Fade & Bouncy */
+.fade-in { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
-        @keyframes pulse-primary { 0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); } 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); } }
-        
-        .pulse-animation { animation: pulse-primary 2s infinite; }
-        .pulse-red-animation { animation: pulse-red 2s infinite; }
+.bouncy-hover { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.bouncy-hover:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
 
-        /* ========================================== */
-        /* 4. NAVIGASI (SIDEBAR & BOTTOM MOBILE)      */
-        /* ========================================== */
-        .sidebar {
-            border-right: 1px solid rgba(0,0,0,0.05);
-            background: #ffffff;
-            z-index: 1000;
-        }
-        .sidebar .nav-link { color: #6c757d; font-weight: 500; }
-        .sidebar .nav-link:hover { background-color: #f8faff; transform: translateX(4px); color: var(--primary-color); }
-        .sidebar .nav-link.active {
-            background-color: #eef2ff;
-            color: var(--primary-color) !important;
-            font-weight: 800;
-            border-right: 4px solid var(--primary-color);
-        }
+@keyframes pulse-primary { 0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); } 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); } }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.5); } 70% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
 
-        .floating-bottom-nav { z-index: 1050; padding-bottom: env(safe-area-inset-bottom); background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); }
-        .bottom-nav .nav-item { flex: 1; color: #6c757d; transition: color 0.3s; }
-        .active-bottom { color: var(--primary-color) !important; font-weight: 800; }
-        .active-bottom i { transform: scale(1.15); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.pulse-animation { animation: pulse-primary 2s infinite; }
+.pulse-red-animation { animation: pulse-red 2s infinite; }
 
-        /* ========================================== */
-        /* 5. TABEL DAN KONTEN SPESIFIK               */
-        /* ========================================== */
-        .table-custom-compact th, .table-custom-compact td { padding: 0.6rem 0.5rem; vertical-align: middle; font-size: 0.8rem; }
-        .table-custom-compact thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; border-bottom: 2px solid #e9ecef; }
-        
-        /* Baris Tabel yang Bisa Diklik */
-        .table-clickable tbody tr { cursor: pointer; transition: all 0.2s; }
-        .table-clickable tbody tr:hover { background-color: #f8faff !important; transform: scale(1.002); box-shadow: 0 4px 6px rgba(0,0,0,0.03); }
+/* ========================================== */
+/* 3. NAVIGASI (SIDEBAR & BOTTOM MOBILE)      */
+/* ========================================== */
+.sidebar {
+    border-right: 1px solid rgba(0,0,0,0.05);
+    background: #ffffff;
+    z-index: 1000;
+}
+.sidebar .nav-link { border-radius: 16px; transition: all 0.2s; font-weight: 700; color: #6c757d; }
+.sidebar .nav-link:hover { background-color: #f8faff; transform: translateX(4px); color: var(--primary-color); }
+.sidebar .nav-link.active { background-color: #eef2ff; color: var(--primary-color) !important; font-weight: 900; border-right: 4px solid var(--primary-color); }
 
-        /* Penanda Baris Data Master */
-        .row-selisih { border-left: 4px solid #dc3545 !important; background-color: #fffafb !important; }
-        .row-aman { border-left: 4px solid #198754 !important; }
+.floating-bottom-nav { 
+    z-index: 1050; 
+    bottom: 15px !important; 
+    left: 15px !important; 
+    right: 15px !important; 
+    border-radius: 30px !important; 
+    background: rgba(255,255,255,0.95) !important; 
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important; 
+    border: 1px solid rgba(0,0,0,0.05); 
+}
+.bottom-nav .nav-item { flex: 1; color: #6c757d; transition: color 0.3s; }
+.active-bottom { color: var(--primary-color) !important; font-weight: 800; }
+.active-bottom i { transform: scale(1.15); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        /* ========================================== */
-        /* 6. DARK MODE ADJUSTMENTS                   */
-        /* ========================================== */
-        [data-bs-theme="dark"] body { background-color: #121212; color: #e0e0e0; }
-        [data-bs-theme="dark"] .glass-card, 
-        [data-bs-theme="dark"] .sidebar, 
-        [data-bs-theme="dark"] .floating-bottom-nav,
-        [data-bs-theme="dark"] .card { background: #1e1e1e !important; border-color: #2d2d2d !important; }
-        [data-bs-theme="dark"] .sidebar { border-right: 1px solid rgba(255,255,255,0.05); }
-        [data-bs-theme="dark"] .table-light, [data-bs-theme="dark"] .bg-light { background-color: #2d2d2d !important; color: #e0e0e0 !important;}
+/* ========================================== */
+/* 4. TABEL & KONTEN SPESIFIK                 */
+/* ========================================== */
+.table-custom-compact th, .table-custom-compact td { padding: 0.5rem 0.75rem !important; vertical-align: middle; font-size: 0.85rem; }
+.table-custom-compact thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; border-bottom: 2px solid #e9ecef; color: #6c757d; }
+.table-clickable tbody tr { cursor: pointer; transition: all 0.2s; }
+.table-clickable tbody tr:hover { background-color: #f8faff !important; transform: scale(1.002); box-shadow: 0 4px 6px rgba(0,0,0,0.03); }
+.row-selisih { border-left: 4px solid #dc3545 !important; background-color: #fffafb !important; }
+.row-aman { border-left: 4px solid #198754 !important; }
+.tabular-nums { font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+
+/* Switch Tab Baru */
+#pills-tab .btn.active { background-color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #212529 !important; border: 1px solid #dee2e6; }
+#pills-tab .btn { color: #6c757d; border: 1px solid transparent; }
+
+/* Drag & Drop Zone */
+.drop-zone { border: 2px dashed #a5b4fc; background-color: #f8faff; transition: all 0.3s ease; cursor: pointer; position: relative; }
+.drop-zone:hover, .drop-zone.dragover { background-color: #e0e7ff; border-color: #4f46e5; transform: scale(1.01); }
+.drop-zone input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+.file-count-badge { font-size: 0.75rem; position: absolute; top: 10px; right: 10px; }
+
+/* ========================================== */
+/* 5. KALENDER REKONSILIASI CANGGIH           */
+/* ========================================== */
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.calendar-day-header { text-align: center; font-weight: 900; font-size: 0.8rem; color: #6c757d; padding-bottom: 5px; }
+.calendar-cell { background: #f8f9fa; border-radius: 12px; padding: 8px; min-height: 95px; border: 1px solid #e9ecef; display: flex; flex-direction: column; overflow: hidden; }
+.calendar-cell.active { background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-color: #dee2e6; cursor: pointer; transition: all 0.2s; }
+.calendar-cell.active:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); border-color: #667eea; }
+.cal-date { font-weight: 800; font-size: 1.1rem; color: #343a40; margin-bottom: 5px; line-height: 1; }
+.cal-indicator { font-size: 0.65rem; font-weight: 700; padding: 3px 6px; border-radius: 4px; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; }
+.cal-gl { background: #cfe2ff; color: #084298; }
+.cal-ej { background: #d1e7dd; color: #0f5132; }
+.cal-selisih-bad { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; animation: pulse-red 2s infinite; }
+.cal-selisih-good { background: #cff4fc; color: #055160; }
+
+@media (max-width: 768px) {
+    .calendar-grid { gap: 4px; }
+    .calendar-cell { padding: 4px; min-height: 75px; border-radius: 8px; }
+    .cal-date { font-size: 0.95rem; }
+    .cal-indicator { font-size: 0.55rem; padding: 2px 4px; flex-direction: column; align-items: flex-start; }
+    .cal-indicator span:last-child { display: none; }
+}
+
+/* ========================================== */
+/* 6. PREMIUM HEADER & DARK MODE              */
+/* ========================================== */
+.navbar-premium {
+    background: rgba(10, 37, 64, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.navbar-brand-text { font-family: 'Segoe UI', system-ui, sans-serif; letter-spacing: 1px; }
+.brand-light { color: #8ec5fc; }
+
+[data-bs-theme="dark"] body { background-color: #121212; color: #e0e0e0; }
+[data-bs-theme="dark"] .glass-card, 
+[data-bs-theme="dark"] .sidebar, 
+[data-bs-theme="dark"] .floating-bottom-nav,
+[data-bs-theme="dark"] .card { background: #1e1e1e !important; border-color: #2d2d2d !important; }
+[data-bs-theme="dark"] .sidebar { border-right: 1px solid rgba(255,255,255,0.05); }
+[data-bs-theme="dark"] .table-light, [data-bs-theme="dark"] .bg-light { background-color: #2d2d2d !important; color: #e0e0e0 !important;}
+
+/* ========================================== */
+/* 7. GUIDED TOUR OVERRIDES                   */
+/* ========================================== */
+.tour-spotlight {
+    position: relative !important;
+    z-index: 1050 !important; 
+    background-color: #ffffff !important;
+    border-radius: 16px;
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 1), 0 0 30px rgba(79, 70, 229, 0.8), 0 0 0 9999px rgba(10, 37, 64, 0.85) !important;
+    pointer-events: none;
+    transition: all 0.4s ease-in-out;
+    animation: pulse-tour 2s infinite;
+}
+@keyframes pulse-tour { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
+body.tour-active .sidebar,
+body.tour-active .navbar,
+body.tour-active .floating-bottom-nav {
+    z-index: 0 !important;
+    filter: brightness(0.15) !important; 
+    pointer-events: none !important;
+    transition: filter 0.4s ease-in-out, z-index 0.4s ease-in-out;
+}
+
+/* ========================================== */
+/* 8. PRINT & RESPONSIVE A4 DOCUMENT          */
+/* ========================================== */
+@page { size: A4 portrait; margin: 0mm; }
+
+@media print {
+    body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body * { visibility: hidden !important; }
+    
+    .print-active-area, .print-active-area * { visibility: visible !important; }
+    .print-active-area {
+        position: absolute !important; left: 0 !important; top: 0 !important;
+        width: 210mm !important; height: 297mm !important;
+        margin: 0 auto !important; padding: 15mm 20mm !important;
+        box-shadow: none !important; border: none !important;
+        background: white !important; z-index: 999999 !important;
+        overflow: hidden !important; box-sizing: border-box !important;
+    }
+    .modal { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: hidden !important; background: transparent !important; }
+    .btn, .modal-header, .modal-footer, .btn-close { display: none !important; }
+}
+
+/* Kertas A4 Tampilan Layar */
+.kertas-a4 { background-color: #fff; color: #000; font-family: 'Times New Roman', Times, serif; box-sizing: border-box; margin: 0 auto; position: relative; }
+@media screen {
+    .kertas-a4 { width: 100%; max-width: 210mm; padding: 4% 5%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    @media (max-width: 576px) {
+        .kertas-a4 { padding: 15px; }
+        .kop-kiri, .kop-kanan { width: 25% !important; display: flex; align-items: center; justify-content: center; }
+        .kop-tengah { width: 50% !important; padding: 0 5px; }
+        .kop-tengah strong { font-size: 10px !important; }
+        .kop-tengah span { font-size: 9px !important; }
+        .kop-logo { max-width: 100% !important; height: auto !important; max-height: 40px !important; object-fit: contain; }
+        .kertas-a4 table { font-size: 10.5px !important; line-height: 1.2 !important; }
+        .kertas-a4 table td { padding: 2px !important; }
+        .kertas-a4 table td:nth-child(3) { white-space: nowrap !important; width: 1% !important; }
+    }
+}
+@media print {
+    .kertas-a4 { width: 210mm !important; height: 297mm !important; padding: 15mm 20mm !important; max-width: none !important; box-shadow: none !important; }
+    .kop-logo { max-height: 55px !important; }
+}
