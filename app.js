@@ -871,22 +871,27 @@ function printRiwayatBAOpname(rawStr) {
 }
 
 // ==========================================
-// FUNGSI PRINT PDF INSTAN (ZERO-DELAY FIX)
+// FUNGSI PRINT PDF (ANTI FREEZE & ANTI HASH #)
 // ==========================================
-function cetakPDF(areaId) {
+function cetakPDF(areaId, event = null) {
+    // 1. BLOKIR NAVIGASI URL '#' (Mencegah bentrok halaman)
+    if (event) {
+        event.preventDefault();
+    }
+
     const printArea = document.getElementById(areaId);
     if (!printArea) return;
 
     const originalParent = printArea.parentNode; 
     const originalNextSibling = printArea.nextSibling; 
 
-    // 1. Kunci kertas untuk mode cetak
+    // 2. Kunci kertas untuk mode cetak
     printArea.classList.add('print-active-area');
 
-    // 2. Kumpulkan elemen body ke dalam Array statis
+    // 3. Kumpulkan elemen body ke dalam Array statis
     const bodyChildren = Array.from(document.body.children);
     
-    // 3. Sembunyikan semua UI di latar belakang
+    // 4. Sembunyikan semua UI di latar belakang
     bodyChildren.forEach(el => {
         if (el.id !== areaId && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE' && el.tagName !== 'LINK') {
             el.classList.add('d-none-print-temp');
@@ -894,26 +899,26 @@ function cetakPDF(areaId) {
         }
     });
 
-    // 4. Pindahkan kertas ke luar modal (ke <body> utama) untuk di-print
+    // 5. Pindahkan kertas ke luar modal untuk di-print
     document.body.appendChild(printArea);
 
     let isRestored = false;
 
-    // 5. Fungsi pemulihan instan (Dipanggil secepat kilat begitu dialog cetak ditutup)
+    // 6. Fungsi pemulihan yang jauh lebih AMAN (Tanpa membuat body menghilang)
     const restoreUI = () => {
         if (isRestored) return;
         isRestored = true;
 
         printArea.classList.remove('print-active-area');
         
-        // Kembalikan kertas persis ke posisi asalnya di dalam Modal
+        // Kembalikan kertas persis ke posisi asalnya
         if (originalNextSibling) {
             originalParent.insertBefore(printArea, originalNextSibling);
         } else {
             originalParent.appendChild(printArea);
         }
 
-        // Munculkan kembali seluruh elemen UI aplikasi dengan paksa
+        // Munculkan kembali seluruh elemen UI aplikasi dengan aman
         document.querySelectorAll('.d-none-print-temp').forEach(el => {
             el.classList.remove('d-none-print-temp');
             el.style.display = '';
@@ -922,24 +927,21 @@ function cetakPDF(areaId) {
         // Hapus event listener
         window.removeEventListener('afterprint', restoreUI);
         
-        // Paksa browser merender ulang layar secara instan (Menghilangkan efek freeze)
-        window.requestAnimationFrame(() => {
-            document.body.style.display = 'none';
-            document.body.offsetHeight; // Trigger reflow
-            document.body.style.display = '';
-        });
+        // Trigger Reflow aman (Memaksa browser sadar tanpa mematikan layar)
+        window.dispatchEvent(new Event('resize'));
     };
 
-    // Daftarkan event afterprint
     window.addEventListener('afterprint', restoreUI);
 
-    // 6. Eksekusi perintah cetak browser
-    window.print();
-
-    // Jaring pengaman darurat (Fallback 300ms setelah jendela print ditutup/dibatalkan)
+    // 7. Beri jeda 100ms agar DOM selesai menyembunyikan elemen sebelum Printer memblokir memori
     setTimeout(() => {
-        restoreUI();
-    }, 400); 
+        window.print();
+        
+        // Jaring pengaman darurat 500ms
+        setTimeout(() => {
+            restoreUI();
+        }, 500); 
+    }, 100);
 }
 
 // Meng-ekspor isi HTML menjadi file Word (.docx)
