@@ -871,13 +871,10 @@ function printRiwayatBAOpname(rawStr) {
 }
 
 // ==========================================
-// FUNGSI PRINT PDF (ANTI FREEZE & ANTI HASH #)
+// FUNGSI PRINT PDF (DENGAN SOFT-REFRESH ANTI FREEZE)
 // ==========================================
 function cetakPDF(areaId, event = null) {
-    // 1. BLOKIR NAVIGASI URL '#' (Mencegah bentrok halaman)
-    if (event) {
-        event.preventDefault();
-    }
+    if (event) event.preventDefault();
 
     const printArea = document.getElementById(areaId);
     if (!printArea) return;
@@ -885,13 +882,12 @@ function cetakPDF(areaId, event = null) {
     const originalParent = printArea.parentNode; 
     const originalNextSibling = printArea.nextSibling; 
 
-    // 2. Kunci kertas untuk mode cetak
+    // 1. Kunci kertas untuk mode cetak
     printArea.classList.add('print-active-area');
 
-    // 3. Kumpulkan elemen body ke dalam Array statis
     const bodyChildren = Array.from(document.body.children);
     
-    // 4. Sembunyikan semua UI di latar belakang
+    // 2. Sembunyikan UI
     bodyChildren.forEach(el => {
         if (el.id !== areaId && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE' && el.tagName !== 'LINK') {
             el.classList.add('d-none-print-temp');
@@ -899,45 +895,57 @@ function cetakPDF(areaId, event = null) {
         }
     });
 
-    // 5. Pindahkan kertas ke luar modal untuk di-print
     document.body.appendChild(printArea);
-
     let isRestored = false;
 
-    // 6. Fungsi pemulihan yang jauh lebih AMAN (Tanpa membuat body menghilang)
+    // 3. Fungsi Pemulihan Layar (Soft-Refresh)
     const restoreUI = () => {
         if (isRestored) return;
         isRestored = true;
 
         printArea.classList.remove('print-active-area');
         
-        // Kembalikan kertas persis ke posisi asalnya
         if (originalNextSibling) {
             originalParent.insertBefore(printArea, originalNextSibling);
         } else {
             originalParent.appendChild(printArea);
         }
 
-        // Munculkan kembali seluruh elemen UI aplikasi dengan aman
         document.querySelectorAll('.d-none-print-temp').forEach(el => {
             el.classList.remove('d-none-print-temp');
             el.style.display = '';
         });
 
-        // Hapus event listener
-        window.removeEventListener('afterprint', restoreUI);
+        // =======================================================
+        // 🔥 SOFT-REFRESH: SAPU BERSIH LAYAR HITAM BOOTSTRAP 🔥
+        // =======================================================
+        // A. Hancurkan semua bayangan hitam yang nyangkut di layar
+        document.querySelectorAll('.modal-backdrop').forEach(bd => bd.remove());
         
-        // Trigger Reflow aman (Memaksa browser sadar tanpa mematikan layar)
-        window.dispatchEvent(new Event('resize'));
+        // B. Buka kembali kunci scroll halaman
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = 'auto';
+        document.body.style.paddingRight = '0px';
+        
+        // C. Tutup popup/modal secara elegan agar layar bersih
+        document.querySelectorAll('.modal.show').forEach(modalEl => {
+            if (typeof bootstrap !== 'undefined') {
+                let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+            }
+        });
+        // =======================================================
+
+        window.removeEventListener('afterprint', restoreUI);
     };
 
     window.addEventListener('afterprint', restoreUI);
 
-    // 7. Beri jeda 100ms agar DOM selesai menyembunyikan elemen sebelum Printer memblokir memori
+    // 4. Eksekusi Cetak dengan Jeda Aman
     setTimeout(() => {
         window.print();
         
-        // Jaring pengaman darurat 500ms
+        // Jaring pengaman 500ms jika event afterprint gagal tertangkap browser
         setTimeout(() => {
             restoreUI();
         }, 500); 
