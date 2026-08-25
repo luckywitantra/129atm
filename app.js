@@ -2268,3 +2268,177 @@ function generatePipelineReport() {
     // Isi Tabel Detail
     document.getElementById('pipe_tbody').innerHTML = trHTML;
 }
+
+// ==========================================
+// INTERACTIVE GUIDED TOUR: ANALISA AI (CROSS-PAGE EDITION)
+// ==========================================
+
+function startAnalisaTour() {
+    clearTourSpotlight();
+    document.body.classList.add('tour-active'); 
+    showPage('analisa'); // Pastikan user berada di halaman analisa
+
+    Swal.fire({
+        title: '🧠 Selamat Datang di Otak AI',
+        html: 'Ini adalah jantung utama aplikasi ReconPro. Modul ini akan mencocokkan ribuan baris data <b>Sistem (GL)</b> dan <b>Mesin (EJ)</b> dalam hitungan detik untuk melacak selisih uang.',
+        icon: 'info',
+        position: 'center',
+        backdrop: false, 
+        confirmButtonText: 'Mulai Tur (<span id="tour-step">1</span>/5)',
+        confirmButtonColor: '#4f46e5',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Lewati',
+        customClass: { popup: 'rounded-4 shadow-lg tour-spotlight' } 
+    }).then((result) => {
+        if (result.isConfirmed) {
+            tourAnalisaStep2();
+        } else {
+            clearTourSpotlight();
+        }
+    });
+}
+
+function tourAnalisaStep2() {
+    clearTourSpotlight();
+    
+    // Keajaiban: Navigasi otomatis ke halaman Pusat Data -> Upload
+    showPage('pusatdata');
+    let tabUpload = document.getElementById('tab-data-upload');
+    if (tabUpload) tabUpload.click();
+
+    // Beri jeda 400ms agar animasi pindah halaman selesai sebelum mencari elemen
+    setTimeout(() => {
+        let dzGL = document.getElementById('dzGL');
+        let dzEJ = document.getElementById('dzEJ');
+        
+        if (dzGL && dzEJ) {
+            dzGL.closest('.row').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            dzGL.classList.add('tour-spotlight');
+            dzEJ.classList.add('tour-spotlight');
+        }
+
+        Swal.fire({
+            title: '1️⃣ Tarik Data (Pusat Data)',
+            html: 'Sebelum AI bisa bekerja, Anda harus mengunggah datanya. Tarik & lepas file mentah <b>GL (Sistem)</b> dan file Jurnal <b>EJ (Mesin)</b> ke dalam kotak ini.',
+            icon: 'question',
+            position: 'bottom', // Pop-up di bawah agar tidak menutupi kotak
+            backdrop: false,
+            confirmButtonText: 'Selanjutnya (2/5) <i class="bi bi-arrow-right"></i>',
+            confirmButtonColor: '#4f46e5',
+            allowOutsideClick: false,
+            showCancelButton: true,
+            cancelButtonText: 'Kembali',
+        }).then((result) => {
+            if (dzGL) dzGL.classList.remove('tour-spotlight');
+            if (dzEJ) dzEJ.classList.remove('tour-spotlight');
+
+            if (result.isConfirmed) {
+                tourAnalisaStep3();
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                startAnalisaTour();
+            }
+        });
+    }, 400);
+}
+
+function tourAnalisaStep3() {
+    clearTourSpotlight();
+    
+    // Auto-kembali ke halaman Analisa
+    showPage('analisa');
+
+    setTimeout(() => {
+        let btnRun = document.getElementById('btnRunAnalisa');
+        if (btnRun) {
+            btnRun.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            btnRun.classList.add('tour-spotlight');
+        }
+
+        Swal.fire({
+            title: '2️⃣ Eksekusi Pencocokan',
+            html: 'Setelah data diunggah, kembali ke menu ini dan tekan tombol <b>Jalankan Analisa AI</b>. Sistem akan otomatis mengawinkan data berdasarkan ID, Resi, dan Nominal.',
+            icon: 'warning',
+            position: 'bottom-end',
+            backdrop: false,
+            confirmButtonText: 'Selanjutnya (3/5) <i class="bi bi-arrow-right"></i>',
+            confirmButtonColor: '#4f46e5',
+            allowOutsideClick: false,
+            showCancelButton: true,
+            cancelButtonText: 'Kembali',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                tourAnalisaStep4();
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                tourAnalisaStep2();
+            }
+        });
+    }, 400);
+}
+
+function tourAnalisaStep4() {
+    clearTourSpotlight();
+    
+    // Asumsi: Mencari baris kartu summary di menu analisa
+    let rowCards = document.querySelector('#analisa .row'); 
+    if (rowCards) {
+        rowCards.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        rowCards.classList.add('tour-spotlight');
+    }
+
+    Swal.fire({
+        title: '3️⃣ Pantauan Anomali',
+        html: 'Hasil analisa instan akan ditampilkan di Dashboard ini. Anda bisa melihat total transaksi yang <b>Aman (Klop)</b>, serta rincian potensi <b>Uang Lebih</b> dan <b>Uang Kurang</b>.',
+        icon: 'info',
+        position: 'bottom',
+        backdrop: false,
+        confirmButtonText: 'Selanjutnya (4/5) <i class="bi bi-arrow-right"></i>',
+        confirmButtonColor: '#4f46e5',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Kembali',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            tourAnalisaStep5();
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            tourAnalisaStep3();
+        }
+    });
+}
+
+function tourAnalisaStep5() {
+    clearTourSpotlight();
+    
+    // Mencari tabel hasil analisa
+    let tableEl = document.querySelector('#analisa .table-responsive'); 
+    if (tableEl) {
+        tableEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        tableEl.classList.add('tour-spotlight');
+    }
+
+    Swal.fire({
+        title: '4️⃣ Tabel Resolusi & Tindak Lanjut',
+        html: 'Tabel ini telah difilter <b>HANYA</b> menampilkan data bermasalah. Klik tombol <span class="badge bg-primary">Tindak Lanjut</span> pada tiap baris untuk membuat Berita Acara Penyelesaian.',
+        icon: 'success',
+        position: 'top',
+        backdrop: false,
+        confirmButtonText: 'Selesai 🚀',
+        confirmButtonColor: '#198754',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'Kembali',
+    }).then((result) => {
+        clearTourSpotlight();
+        if (result.dismiss === Swal.DismissReason.cancel) {
+            tourAnalisaStep4();
+        } else {
+            Swal.fire({
+                title: '🎉 Master Analisa AI',
+                text: 'Anda sekarang siap membasmi selisih ATM dalam hitungan detik!',
+                icon: 'success',
+                timer: 2500,
+                showConfirmButton: false
+            });
+        }
+    });
+}
